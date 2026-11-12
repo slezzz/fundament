@@ -214,7 +214,19 @@ function matchName(name: string, brand: BrandRecord, domain: ParsedDomain): Impe
   return hit;
 }
 
+/** Same hostname → same answer; one analysis asks several times, navigations repeat hosts. */
+const impersonationCache = new Map<string, ImpersonationHit | null>();
+
 export function detectImpersonation(domain: ParsedDomain): ImpersonationHit | null {
+  const cacheKey = domain.hostname;
+  if (impersonationCache.has(cacheKey)) return impersonationCache.get(cacheKey) ?? null;
+  const hit = detectImpersonationUncached(domain);
+  if (impersonationCache.size >= 2000) impersonationCache.clear();
+  impersonationCache.set(cacheKey, hit);
+  return hit;
+}
+
+function detectImpersonationUncached(domain: ParsedDomain): ImpersonationHit | null {
   const name = registrableName(domain);
   const subLabels = unicodeSubLabels(domain);
   const host = domain.hostname;
