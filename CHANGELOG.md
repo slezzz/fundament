@@ -21,6 +21,8 @@
 ### Language
 - Every warning, reason, and explanation now follows the browser language (German and English). Copy lives in one catalog (`src/engine/i18n/signals.ts`); a test fails if any signal the engine can emit lacks a translation or uses mismatched placeholders.
 - Explanations shortened to what is wrong and what to do; hygiene findings say they are not a threat. Warnings name only the brand's main domain.
+- German copy uses informal "du" throughout (matching the original voice); a test rejects formal "Sie".
+- Onboarding describes the current protections (feed, ClickFix, wallet drainers, browser health, extension watch).
 
 ### Added
 - Third-party notices (Phishing.Database MIT, Public Suffix List MPL-2.0, Majestic Million CC BY 3.0) in the package and the dashboard.

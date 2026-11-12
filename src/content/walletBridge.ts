@@ -119,7 +119,7 @@
   }
 
   const SAFE_TEXT = german
-    ? "Fundament hat einen Befehl blockiert, den diese Webseite in Ihre Zwischenablage kopieren wollte. Fügen Sie niemals Befehle von Webseiten in Ausführen (Win+R), PowerShell oder das Terminal ein."
+    ? "Fundament hat einen Befehl blockiert, den diese Webseite in deine Zwischenablage kopieren wollte. Füge niemals Befehle von Webseiten in Ausführen (Win+R), PowerShell oder das Terminal ein."
     : "Fundament blocked a command this website tried to copy to your clipboard. Never paste commands from a website into Run (Win+R), PowerShell, or Terminal.";
 
   /* ----------------------------------------------------- clipboard hijack */
@@ -276,12 +276,12 @@
       if (/^Permit/i.test(primary) || (typed?.message && "spender" in typed.message && ("value" in typed.message || "details" in typed.message))) {
         return {
           what: german
-            ? "eine Permit-Signatur, mit der eine fremde Adresse Ihre Token abziehen darf"
+            ? "eine Permit-Signatur, mit der eine fremde Adresse deine Token abziehen darf"
             : "a Permit signature that lets another address pull your tokens",
         };
       }
       if (/^OrderComponents$/i.test(primary)) {
-        return { what: german ? "eine Marktplatz-Listung (Seaport) Ihrer NFTs" : "a marketplace listing (Seaport) of your NFTs" };
+        return { what: german ? "eine Marktplatz-Listung (Seaport) deiner NFTs" : "a marketplace listing (Seaport) of your NFTs" };
       }
       return null;
     }
@@ -324,7 +324,7 @@
           ping("wallet-drainer");
           const host = location.hostname;
           const text = german
-            ? `Fundament: ${host} fordert ${danger.what} an.\n\nWallet-Drainer leeren Konten mit genau dieser Anfrage. Nur fortfahren, wenn Sie diese Seite kennen und die Aktion selbst gestartet haben.\n\nAn die Wallet weitergeben?`
+            ? `Fundament: ${host} fordert ${danger.what} an.\n\nWallet-Drainer leeren Konten mit genau dieser Anfrage. Nur fortfahren, wenn du diese Seite kennst und die Aktion selbst gestartet hast.\n\nAn die Wallet weitergeben?`
             : `Fundament: ${host} is requesting ${danger.what}.\n\nWallet drainers empty accounts with exactly this request. Only continue if you know this site and started this action yourself.\n\nPass it to your wallet?`;
           if (!nativeConfirm(text)) {
             return Promise.reject(Object.assign(new Error("User rejected the request (Fundament)."), { code: 4001 }));

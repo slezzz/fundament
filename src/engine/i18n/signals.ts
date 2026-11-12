@@ -37,7 +37,7 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "ip-local": {
     en: ["Local network device", "This address is inside your own network (router, NAS, printer)."],
-    de: ["Gerät im eigenen Netz", "Diese Adresse liegt in Ihrem eigenen Netzwerk (Router, NAS, Drucker)."],
+    de: ["Gerät im eigenen Netz", "Diese Adresse liegt in deinem eigenen Netzwerk (Router, NAS, Drucker)."],
   },
   "ip-public": {
     en: ["IP address instead of a name", "Real sign-in pages almost never use a bare IP address."],
@@ -49,11 +49,11 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   popular: {
     en: ["Established site", "One of the 50,000 most-linked websites. Its name is not treated as a brand lookalike."],
-    de: ["Etablierte Website", "Gehört zu den 50.000 meistverlinkten Websites. Ihr Name wird nicht als Marken-Imitat gewertet."],
+    de: ["Etablierte Website", "Gehört zu den 50.000 meistverlinkten Websites. Der Name wird nicht als Marken-Imitat gewertet."],
   },
   "free-hosting": {
     en: ["Free hosting", "Published on $1, where anyone can create a site. Banks, shops, and wallets never ask you to sign in there."],
-    de: ["Kostenloses Hosting", "Veröffentlicht auf $1, wo jeder eine Seite anlegen kann. Banken, Shops und Wallets lassen Sie dort nie anmelden."],
+    de: ["Kostenloses Hosting", "Veröffentlicht auf $1, wo jeder eine Seite anlegen kann. Banken, Shops und Wallets lassen dich dort nie anmelden."],
   },
   "cloud-hosting": {
     en: ["Cloud app hosting", "Runs on $1, which hosts company apps and phishing kits alike."],
@@ -65,7 +65,7 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   blocklist: {
     en: ["On your blocklist", "You blocked this site yourself."],
-    de: ["Auf Ihrer Sperrliste", "Sie haben diese Seite selbst gesperrt."],
+    de: ["Auf deiner Sperrliste", "Du hast diese Seite selbst gesperrt."],
   },
   "known-test": {
     en: ["Known malicious test host", "One of the public test addresses for malware warnings."],
@@ -109,11 +109,11 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "imp-embedded": {
     en: ["Fake $1 address", "The real $1 address is only a prefix here. You are actually on $2."],
-    de: ["Gefälschte $1-Adresse", "Die echte $1-Adresse ist hier nur ein Vorsatz. Tatsächlich sind Sie auf $2."],
+    de: ["Gefälschte $1-Adresse", "Die echte $1-Adresse ist hier nur ein Vorsatz. Tatsächlich bist du auf $2."],
   },
   "imp-confusable": {
     en: ["Looks like $1", "$2 swaps letters for lookalikes. The real $1 is at $3."],
-    de: ["Sieht aus wie $1", "$2 tauscht Buchstaben gegen ähnlich aussehende. Das echte $1 finden Sie unter $3."],
+    de: ["Sieht aus wie $1", "$2 tauscht Buchstaben gegen ähnlich aussehende. Das echte $1 findest du unter $3."],
   },
   "imp-other-tld": {
     en: ["Not the official $1 site", "$2 uses the $1 name on an ending $1 does not use. The real site is $3."],
@@ -121,7 +121,7 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "imp-keyword": {
     en: ["Looks like $1", "$2 pairs $1 with words like “login” or “verify”. $1 does not sign you in there; the real site is $3."],
-    de: ["Sieht aus wie $1", "$2 kombiniert $1 mit Wörtern wie „login“ oder „verify“. $1 meldet Sie dort nicht an – die echte Seite ist $3."],
+    de: ["Sieht aus wie $1", "$2 kombiniert $1 mit Wörtern wie „login“ oder „verify“. $1 meldet dich dort nicht an – die echte Seite ist $3."],
   },
   "imp-typo": {
     en: ["Close to $1", "$2 is one letter away from $1. That only matters if the page asks for a password."],
@@ -157,7 +157,7 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "login-http": {
     en: ["Sign-in over HTTP", "This looks like a sign-in page without encryption. Do not enter a password."],
-    de: ["Anmeldung über HTTP", "Das sieht aus wie eine Anmeldeseite ohne Verschlüsselung. Geben Sie kein Passwort ein."],
+    de: ["Anmeldung über HTTP", "Das sieht aus wie eine Anmeldeseite ohne Verschlüsselung. Gib kein Passwort ein."],
   },
   login: {
     en: ["Sign-in address on an unusual host", "Real login pages rarely use this kind of host or address."],
@@ -189,43 +189,43 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "clickfix-url": {
     en: ["Fake verification page", "Looks like a CAPTCHA on an unusual host. These pages tell you to paste a command – never do that."],
-    de: ["Gefälschte Verifizierung", "Sieht aus wie ein CAPTCHA auf einem ungewöhnlichen Host. Solche Seiten fordern Sie auf, einen Befehl einzufügen – tun Sie das nie."],
+    de: ["Gefälschte Verifizierung", "Sieht aus wie ein CAPTCHA auf einem ungewöhnlichen Host. Solche Seiten fordern dich auf, einen Befehl einzufügen – tu das nie."],
   },
   "browser-update-url": {
     en: ["Fake browser update", "Chrome updates itself. It never asks you to download an update from a website."],
-    de: ["Gefälschtes Browser-Update", "Chrome aktualisiert sich selbst und fordert Sie nie auf, ein Update von einer Webseite zu laden."],
+    de: ["Gefälschtes Browser-Update", "Chrome aktualisiert sich selbst und fordert dich nie auf, ein Update von einer Webseite zu laden."],
   },
   "passkey-lookalike": {
     en: ["Passkey on a lookalike", "Do not register a passkey or security key here. Open the real site from a bookmark."],
-    de: ["Passkey auf Imitat-Seite", "Registrieren Sie hier keinen Passkey oder Sicherheitsschlüssel. Öffnen Sie die echte Seite über ein Lesezeichen."],
+    de: ["Passkey auf Imitat-Seite", "Registriere hier keinen Passkey oder Sicherheitsschlüssel. Öffne die echte Seite über ein Lesezeichen."],
   },
   "oauth-proxy": {
     en: ["Sign-in through a third party", "This host wraps a Google, Microsoft, or Apple sign-in. Kits use that to take over accounts without your password."],
-    de: ["Anmeldung über Dritte", "Dieser Host bettet eine Google-, Microsoft- oder Apple-Anmeldung ein. So übernehmen Kits Konten ohne Ihr Passwort."],
+    de: ["Anmeldung über Dritte", "Dieser Host bettet eine Google-, Microsoft- oder Apple-Anmeldung ein. So übernehmen Kits Konten ohne dein Passwort."],
   },
   "crypto-secret-url": {
     en: ["Recovery phrase requested", "No real wallet asks for your recovery phrase on a website. Never enter it here."],
-    de: ["Wiederherstellungsphrase verlangt", "Keine echte Wallet fragt auf einer Webseite nach Ihrer Wiederherstellungsphrase. Geben Sie sie hier nie ein."],
+    de: ["Wiederherstellungsphrase verlangt", "Keine echte Wallet fragt auf einer Webseite nach deiner Wiederherstellungsphrase. Gib sie hier nie ein."],
   },
   "crypto-claim-url": {
     en: ["Crypto claim bait", "Airdrop or mint lure on an unusual host. Treat every wallet approval here as hostile."],
-    de: ["Krypto-Köder", "Airdrop- oder Mint-Köder auf einem ungewöhnlichen Host. Behandeln Sie jede Wallet-Freigabe hier als feindlich."],
+    de: ["Krypto-Köder", "Airdrop- oder Mint-Köder auf einem ungewöhnlichen Host. Behandle jede Wallet-Freigabe hier als feindlich."],
   },
   "ai-credential-url": {
     en: ["AI login on an unofficial site", "This is not the official ChatGPT, Claude, or Gemini site. Do not enter your password or API key."],
-    de: ["KI-Login auf inoffizieller Seite", "Das ist nicht die offizielle Seite von ChatGPT, Claude oder Gemini. Geben Sie weder Passwort noch API-Schlüssel ein."],
+    de: ["KI-Login auf inoffizieller Seite", "Das ist nicht die offizielle Seite von ChatGPT, Claude oder Gemini. Gib weder Passwort noch API-Schlüssel ein."],
   },
   "password-http": {
     en: ["Password field without encryption", "Anything you type here can be read on the network."],
-    de: ["Passwortfeld ohne Verschlüsselung", "Alles, was Sie hier eingeben, kann im Netzwerk mitgelesen werden."],
+    de: ["Passwortfeld ohne Verschlüsselung", "Alles, was du hier eingibst, kann im Netzwerk mitgelesen werden."],
   },
   "insecure-form": {
     en: ["Form sends data unencrypted", "Do not enter passwords or personal data here."],
-    de: ["Formular sendet unverschlüsselt", "Geben Sie hier keine Passwörter oder persönlichen Daten ein."],
+    de: ["Formular sendet unverschlüsselt", "Gib hier keine Passwörter oder persönlichen Daten ein."],
   },
   "overlay-clickjack": {
     en: ["Invisible layer over the page", "An invisible frame covers the page to capture your clicks."],
-    de: ["Unsichtbare Ebene über der Seite", "Ein unsichtbarer Rahmen liegt über der Seite und fängt Ihre Klicks ab."],
+    de: ["Unsichtbare Ebene über der Seite", "Ein unsichtbarer Rahmen liegt über der Seite und fängt deine Klicks ab."],
   },
   "permission-bait": {
     en: ["Full-page dialog", "A large dialog covers the site, often a cookie banner. Be careful with download or permission prompts on it."],
@@ -233,35 +233,35 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "wallet-http": {
     en: ["Wallet on an unencrypted page", "Anyone on the network can change what this page shows your wallet."],
-    de: ["Wallet auf unverschlüsselter Seite", "Jeder im Netzwerk kann verändern, was diese Seite Ihrer Wallet anzeigt."],
+    de: ["Wallet auf unverschlüsselter Seite", "Jeder im Netzwerk kann verändern, was diese Seite deiner Wallet anzeigt."],
   },
   "seed-form": {
     en: ["Recovery phrase field", "Real wallets never ask for your recovery phrase in a website form. Do not paste it."],
-    de: ["Feld für Wiederherstellungsphrase", "Echte Wallets fragen nie in einem Webformular nach Ihrer Wiederherstellungsphrase. Nicht einfügen."],
+    de: ["Feld für Wiederherstellungsphrase", "Echte Wallets fragen nie in einem Webformular nach deiner Wiederherstellungsphrase. Nicht einfügen."],
   },
   "api-key-field": {
     en: ["API key field", "Fake AI sites collect API keys this way. Check the address before pasting."],
-    de: ["Feld für API-Schlüssel", "Gefälschte KI-Seiten sammeln so API-Schlüssel. Prüfen Sie die Adresse vor dem Einfügen."],
+    de: ["Feld für API-Schlüssel", "Gefälschte KI-Seiten sammeln so API-Schlüssel. Prüf die Adresse vor dem Einfügen."],
   },
   "clickfix-clipboard": {
     en: ["Command blocked from your clipboard", "This page tried to copy a PowerShell or terminal command for you to paste. Fundament replaced it. Never paste commands from websites."],
-    de: ["Befehl aus der Zwischenablage blockiert", "Diese Seite wollte einen PowerShell- oder Terminal-Befehl zum Einfügen kopieren. Fundament hat ihn ersetzt. Fügen Sie nie Befehle von Webseiten ein."],
+    de: ["Befehl aus der Zwischenablage blockiert", "Diese Seite wollte einen PowerShell- oder Terminal-Befehl zum Einfügen kopieren. Fundament hat ihn ersetzt. Füge nie Befehle von Webseiten ein."],
   },
   "fullscreen-trap": {
     en: ["Fullscreen over a login", "Fullscreen can fake a browser window. Press Esc and check the real address bar."],
-    de: ["Vollbild über einer Anmeldung", "Im Vollbild lässt sich ein Browserfenster vortäuschen. Drücken Sie Esc und prüfen Sie die echte Adressleiste."],
+    de: ["Vollbild über einer Anmeldung", "Im Vollbild lässt sich ein Browserfenster vortäuschen. Drück Esc und prüf die echte Adressleiste."],
   },
   "cross-origin-login": {
     en: ["Login sent to another site", "The password form submits to a different domain than the one you are on."],
-    de: ["Login geht an eine andere Seite", "Das Passwortformular sendet an eine andere Domain als die, auf der Sie sind."],
+    de: ["Login geht an eine andere Seite", "Das Passwortformular sendet an eine andere Domain als die, auf der du bist."],
   },
   "mixed-content": {
     en: ["Mixed content", "This HTTPS page still loads parts over HTTP. Site hygiene, not a threat to you."],
-    de: ["Gemischte Inhalte", "Diese HTTPS-Seite lädt Teile noch über HTTP. Ein Hygiene-Hinweis, keine Gefahr für Sie."],
+    de: ["Gemischte Inhalte", "Diese HTTPS-Seite lädt Teile noch über HTTP. Ein Hygiene-Hinweis, keine Gefahr für dich."],
   },
   "weak-csp": {
     en: ["Weak script policy", "The page allows inline scripts. Site hygiene, not a threat to you."],
-    de: ["Schwache Skript-Richtlinie", "Die Seite erlaubt eingebettete Skripte. Ein Hygiene-Hinweis, keine Gefahr für Sie."],
+    de: ["Schwache Skript-Richtlinie", "Die Seite erlaubt eingebettete Skripte. Ein Hygiene-Hinweis, keine Gefahr für dich."],
   },
   "cookie-flags": {
     en: ["Session cookie readable by scripts", "A session cookie lacks HttpOnly. Site hygiene; Fundament never reads cookie values."],
@@ -273,19 +273,19 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "prototype-pollution": {
     en: ["Risky script pattern", "An inline script rewrites object prototypes. Site hygiene, not a threat to you."],
-    de: ["Riskantes Skriptmuster", "Ein eingebettetes Skript verändert Objekt-Prototypen. Ein Hygiene-Hinweis, keine Gefahr für Sie."],
+    de: ["Riskantes Skriptmuster", "Ein eingebettetes Skript verändert Objekt-Prototypen. Ein Hygiene-Hinweis, keine Gefahr für dich."],
   },
   "dom-xss": {
     en: ["Risky script pattern", "An inline script writes address data into the page. Site hygiene, not a threat to you."],
-    de: ["Riskantes Skriptmuster", "Ein eingebettetes Skript schreibt Adressdaten in die Seite. Ein Hygiene-Hinweis, keine Gefahr für Sie."],
+    de: ["Riskantes Skriptmuster", "Ein eingebettetes Skript schreibt Adressdaten in die Seite. Ein Hygiene-Hinweis, keine Gefahr für dich."],
   },
   "prompt-injection": {
     en: ["Hidden instructions for AI", "Hidden text tells AI assistants to ignore their instructions. Do not let an AI agent act on this page."],
-    de: ["Versteckte Anweisungen für KI", "Versteckter Text fordert KI-Assistenten auf, ihre Anweisungen zu ignorieren. Lassen Sie hier keinen KI-Agenten handeln."],
+    de: ["Versteckte Anweisungen für KI", "Versteckter Text fordert KI-Assistenten auf, ihre Anweisungen zu ignorieren. Lass hier keinen KI-Agenten handeln."],
   },
   quishing: {
     en: ["QR code generator", "The page builds a QR code on the fly. Scan codes only from sources you trust."],
-    de: ["QR-Code-Generator", "Die Seite erzeugt einen QR-Code. Scannen Sie Codes nur aus vertrauenswürdigen Quellen."],
+    de: ["QR-Code-Generator", "Die Seite erzeugt einen QR-Code. Scanne Codes nur aus vertrauenswürdigen Quellen."],
   },
   "miner-wasm": {
     en: ["Crypto miner", "The page runs code typical of in-browser crypto mining."],
@@ -305,7 +305,7 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "login-form": {
     en: ["Sign-in form", "Fundament checks who the page claims to be before you type."],
-    de: ["Anmeldeformular", "Fundament prüft, wer die Seite vorgibt zu sein, bevor Sie etwas eingeben."],
+    de: ["Anmeldeformular", "Fundament prüft, wer die Seite vorgibt zu sein, bevor du etwas eingibst."],
   },
   "card-form": {
     en: ["Payment form", "Fundament checks the domain and hidden fields around it."],
@@ -317,31 +317,31 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "tech-support-scam": {
     en: ["Tech-support scam", "Your computer is fine. Do not call the number and do not install remote-access software. Close this tab."],
-    de: ["Fake-Support-Betrug", "Ihr Computer ist in Ordnung. Rufen Sie die Nummer nicht an und installieren Sie keine Fernwartungs-Software. Schließen Sie diesen Tab."],
+    de: ["Fake-Support-Betrug", "Dein Computer ist in Ordnung. Ruf die Nummer nicht an und installiere keine Fernwartungs-Software. Schließ diesen Tab."],
   },
   "keyboard-lock": {
     en: ["Keyboard captured", "The page captured Esc and system keys. Hold Esc for two seconds to leave fullscreen."],
-    de: ["Tastatur abgefangen", "Die Seite hat Esc und Systemtasten abgefangen. Halten Sie Esc zwei Sekunden gedrückt, um das Vollbild zu verlassen."],
+    de: ["Tastatur abgefangen", "Die Seite hat Esc und Systemtasten abgefangen. Halte Esc zwei Sekunden gedrückt, um das Vollbild zu verlassen."],
   },
   "hidden-autofill": {
     en: ["Hidden autofill fields", "Invisible fields would receive your card or address data if you use autofill. Type by hand here."],
-    de: ["Versteckte Autofill-Felder", "Unsichtbare Felder würden beim automatischen Ausfüllen Ihre Karten- oder Adressdaten erhalten. Hier von Hand eintippen."],
+    de: ["Versteckte Autofill-Felder", "Unsichtbare Felder würden beim automatischen Ausfüllen deine Karten- oder Adressdaten erhalten. Hier von Hand eintippen."],
   },
   "clipboard-hijack": {
     en: ["Address swap blocked", "The page tried to replace the wallet address you copied. Fundament kept yours. Check addresses before sending."],
-    de: ["Adresstausch blockiert", "Die Seite wollte die kopierte Wallet-Adresse austauschen. Fundament hat Ihre behalten. Prüfen Sie Adressen vor dem Senden."],
+    de: ["Adresstausch blockiert", "Die Seite wollte die kopierte Wallet-Adresse austauschen. Fundament hat deine behalten. Prüf Adressen vor dem Senden."],
   },
   "wallet-drainer": {
     en: ["Risky wallet request", "The page asked for an unlimited approval or a Permit signature. Drainers empty wallets this way. Reject unless you are sure."],
-    de: ["Riskante Wallet-Anfrage", "Die Seite forderte eine unbegrenzte Freigabe oder Permit-Signatur. So leeren Drainer Wallets. Ablehnen, wenn Sie nicht sicher sind."],
+    de: ["Riskante Wallet-Anfrage", "Die Seite forderte eine unbegrenzte Freigabe oder Permit-Signatur. So leeren Drainer Wallets. Ablehnen, wenn du nicht sicher bist."],
   },
   "brand-content": {
     en: ["Page claims to be $1", "It says $1, but you are on $2, which does not belong to $1. Do not sign in or pay."],
-    de: ["Seite gibt sich als $1 aus", "Sie nennt sich $1, Sie sind aber auf $2 – das gehört nicht zu $1. Nicht anmelden, nicht bezahlen."],
+    de: ["Seite gibt sich als $1 aus", "Die Seite nennt sich $1, du bist aber auf $2 – das gehört nicht zu $1. Nicht anmelden, nicht bezahlen."],
   },
   "combo-brand-credential": {
     en: ["Brand lookalike wants your login", "A page posing as a brand asks for a password, card, or key. That is the core of phishing."],
-    de: ["Marken-Imitat will Ihre Zugangsdaten", "Eine Seite, die sich als Marke ausgibt, verlangt Passwort, Karte oder Schlüssel. Das ist der Kern von Phishing."],
+    de: ["Marken-Imitat will deine Zugangsdaten", "Eine Seite, die sich als Marke ausgibt, verlangt Passwort, Karte oder Schlüssel. Das ist der Kern von Phishing."],
   },
   "combo-hosted-credential": {
     en: ["Login form on free hosting", "Real banks, shops, and wallets never collect logins on free site builders."],
@@ -357,7 +357,7 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "blocked-ioc": {
     en: ["On your threat feed", "Listed in the threat feed you set up. Stopped before it loaded."],
-    de: ["In Ihrem Bedrohungs-Feed", "Steht im von Ihnen eingerichteten Bedrohungs-Feed. Gestoppt, bevor sie geladen wurde."],
+    de: ["In deinem Bedrohungs-Feed", "Steht in dem Bedrohungs-Feed, den du eingerichtet hast. Gestoppt, bevor sie geladen wurde."],
   },
   "blocked-threat": {
     en: ["Known malicious host", "On Fundament's list of wallet-drainer and credential-theft hosts."],
@@ -365,7 +365,7 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
   },
   "blocked-user": {
     en: ["On your blocklist", "You blocked this site yourself."],
-    de: ["Auf Ihrer Sperrliste", "Sie haben diese Seite selbst gesperrt."],
+    de: ["Auf deiner Sperrliste", "Du hast diese Seite selbst gesperrt."],
   },
 };
 

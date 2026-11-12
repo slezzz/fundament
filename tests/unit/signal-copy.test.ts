@@ -110,6 +110,19 @@ describe("signal copy catalog", () => {
     expect(kinds.size).toBeGreaterThan(55);
   });
 
+  it("addresses German users informally (du) everywhere", () => {
+    const formal = /\b(Sie|Ihnen|Ihr|Ihre|Ihren|Ihrem|Ihrer|Ihres)\b/;
+    for (const [key, entry] of Object.entries(SIGNAL_COPY)) {
+      expect(`${entry.de[0]} ${entry.de[1]}`, key).not.toMatch(formal);
+    }
+    const messages = JSON.parse(readFileSync(resolve(__dirname, "../../public/_locales/de/messages.json"), "utf8")) as Record<string, { message: string }>;
+    for (const [key, value] of Object.entries(messages)) {
+      expect(value.message, key).not.toMatch(formal);
+    }
+    const bridge = readFileSync(resolve(__dirname, "../../src/content/walletBridge.ts"), "utf8");
+    for (const m of bridge.matchAll(/german\s*\?\s*(["`])([\s\S]*?)\1/g)) expect(m[2], "walletBridge").not.toMatch(formal);
+  });
+
   it("fills placeholders in German", () => {
     expect(signalCopy("brand-content", ["PayPal", "evil.example"], "de").title).toBe("Seite gibt sich als PayPal aus");
   });
