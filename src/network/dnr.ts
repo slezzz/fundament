@@ -4,6 +4,7 @@ import {
   DYNAMIC_RULE_ID_BLOCK_START,
   DYNAMIC_RULE_ID_IOC_PAGE_START,
   DYNAMIC_RULE_ID_IOC_START,
+  DYNAMIC_RULE_ID_LIVE_START,
   DYNAMIC_RULE_ID_PACK_START,
   DYNAMIC_RULE_ID_PAUSE_START,
   HTTPS_UPGRADE_PAGES_RULESET_ID,
@@ -90,8 +91,19 @@ export function buildDynamicRules(
   pausedHosts: string[],
   packHosts: string[] = [],
   iocHosts: string[] = [],
+  liveHosts: string[] = [],
 ): Rule[] {
   const addRules: Rule[] = [];
+
+  // Live phishing feed (signed, newer than the release): same treatment as the shipped feed.
+  for (let i = 0; i < liveHosts.length && i < 100_000; i += 1000) {
+    addRules.push({
+      id: DYNAMIC_RULE_ID_LIVE_START + i / 1000,
+      priority: 5,
+      action: warningRedirect("feed"),
+      condition: { requestDomains: liveHosts.slice(i, i + 1000), resourceTypes: PAGE_TYPES },
+    });
+  }
 
   blocklist.forEach((host, index) => {
     // Your blocklist: pages go to the warning screen, everything else is cut.
@@ -165,11 +177,12 @@ export async function syncDynamicLists(
   pausedHosts: string[],
   packHosts: string[] = [],
   iocHosts: string[] = [],
+  liveHosts: string[] = [],
 ): Promise<void> {
   const existing = await chrome.declarativeNetRequest.getDynamicRules();
   await chrome.declarativeNetRequest.updateDynamicRules({
     removeRuleIds: existing.map((r) => r.id),
-    addRules: buildDynamicRules(allowlist, blocklist, pausedHosts, packHosts, iocHosts),
+    addRules: buildDynamicRules(allowlist, blocklist, pausedHosts, packHosts, iocHosts, liveHosts),
   });
 }
 

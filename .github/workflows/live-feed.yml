@@ -1,0 +1,46 @@
+name: live-feed
+
+# Builds the signed phishing list update (hosts active now but not in the shipped release
+# list) and publishes it to GitHub Pages. The extension fetches it every 6 hours and only
+# accepts it if the Ed25519 signature matches the public key compiled into the build.
+#
+# Setup (once): node scripts/feed-keygen.mjs, add FEED_SIGNING_KEY as a repository secret,
+# enable Pages with "GitHub Actions" as source. See FILTERS.md.
+
+on:
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: live-feed
+  cancel-in-progress: true
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+      - run: npm ci
+      - name: Build and sign
+        env:
+          FEED_SIGNING_KEY: ${{ secrets.FEED_SIGNING_KEY }}
+        run: node scripts/build-live-feed.mjs live-feed
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: live-feed
+      - id: deploy
+        uses: actions/deploy-pages@v4

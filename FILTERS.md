@@ -32,6 +32,32 @@ DNR can only block whole hosts, while feeds list hosts for single bad URLs too. 
 
 Kept: user subdomains on hosting zones (`evil.pages.dev`, `x.weebly.com`, `y.ewp.live`). A popular domain with ≥ 5 listed subdomains is treated as such a zone automatically and written to `hosted-zones.txt`; the engine uses that file so these subdomains never inherit the platform's popularity.
 
+## Live updates between releases (signed)
+
+Phishing hosts live for days. The shipped list ages with every day since the release, so the extension can load a signed update with hosts that became active after the release.
+
+**Trust model**
+
+- The update is a JSON file (`fundament-live-v1`) signed with Ed25519. The public key is compiled into the extension (`VITE_LIVE_FEED_PUBKEY`). Whoever controls the hosting cannot change the list without the private key.
+- Only strictly newer versions are accepted (no rollback). Files older than 14 days are rejected; a stored list older than 30 days is dropped.
+- The extension applies its own safety filter after verifying: popular domains (top 50k), official brand hosts and public suffixes are never blocked, even if a correctly signed list contains them.
+- The download carries no user data (no cookies, no history). GitHub Pages sees the IP address of the request, like any static file download. Users can turn updates off in the dashboard.
+
+**Setup (once)**
+
+```bash
+node scripts/feed-keygen.mjs
+```
+
+1. Put the printed `VITE_LIVE_FEED_PUBKEY=…` into `.env` / the release build environment.
+2. GitHub → Settings → Secrets and variables → Actions → new secret `FEED_SIGNING_KEY` = contents of `.feed-signing-key` (gitignored; keep an offline backup).
+3. GitHub → Settings → Pages → Source: "GitHub Actions".
+4. Set `VITE_LIVE_FEED_URL=https://<user>.github.io/<repo>/live-feed.json` and build the release.
+
+`.github/workflows/live-feed.yml` then runs every 6 hours: it downloads the sources, applies the same filter as `npm run feeds`, keeps only hosts that are not in the shipped `phishing-hosts.txt`, signs the result, verifies its own signature, and publishes it. If the difference grows beyond 100,000 hosts the workflow fails on purpose — ship a release instead.
+
+If the private key leaks, anyone can push a list (still limited by the client-side filter). Generate a new pair, ship a release with the new public key, and replace the secret.
+
 ## Domain reference data
 
 ```bash

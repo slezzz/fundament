@@ -26,6 +26,8 @@ The phishing host list (Phishing.Database, MIT) ships inside the extension and i
 
 ## Automatic requests (no user data)
 
+- **Phishing list updates** (only if the build has a live feed configured and the dashboard toggle is on, which is the default): at most every 6 hours, `GET` of one signed static file from the configured HTTPS address (GitHub Pages). No cookies, no browsing data, no identifiers. The hosting provider sees the request's IP address, as with any download.
+
 - **Chrome version check:** at most every 6 hours, `GET https://versionhistory.googleapis.com/v1/chrome/platforms/<platform>/channels/stable/versions/all/releases?filter=endtime=none` without cookies. It returns the stable releases Google is serving right now and to what share of users, so Fundament can tell "up to date" from "missing fixes" during staged rollouts. Nothing about you or your browsing is in the request.
 
 ## Optional remote (opt-in)

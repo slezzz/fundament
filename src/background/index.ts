@@ -31,6 +31,7 @@ import { attachContextMenus } from "./menus";
 import { listExtensionRisks } from "./audit";
 import { checkExtensions, loadExtensionChanges } from "./extensionWatch";
 import { readPosture } from "./posture";
+import { liveFeedView, loadLiveFeed, refreshLiveFeed } from "./liveFeed";
 import { loadPauses, pauseUntilFor, savePauses, withPause, withoutPause } from "@storage/pauses";
 import { bumpStats, loadStats, EMPTY_STATS } from "@storage/stats";
 import { clearPack, loadPackHosts, loadPackStatus, savePack, savePackError } from "@storage/pack";
@@ -41,7 +42,7 @@ import { iocStatusFrom, refreshPinnedIoc, rollbackIoc, seedShippedIoc } from "./
 import { runIntegrityCheck } from "./integrity";
 import { PAUSE_MS_DEFAULT } from "@shared/constants";
 import { isClientMessage, type ClientMessage, type ServerMessage } from "@shared/messages";
-import type { Entitlements, PopupState, PostureItem, RiskSignal, SecurityEvent, Settings, UrlAnalysis } from "@shared/types";
+import type { Entitlements, FeedStatusView, PopupState, PostureItem, RiskSignal, SecurityEvent, Settings, UrlAnalysis } from "@shared/types";
 import { resolveEntitlements } from "@storage/settings";
 import { verifyLicense } from "@billing/license";
 import { LICENSE_PUBLIC_KEY_SPKI_B64 } from "@billing/publicKey";
@@ -133,12 +134,14 @@ async function applySettings(settings: Settings): Promise<void> {
   const pauses = await loadPauses();
   const packHosts = settings.trackerBlocking && entitlements.filterPack ? await loadPackHosts() : [];
   const iocHosts = settings.iocFeeds && settings.threatProtection ? (await loadIocState()).current?.hosts ?? [] : [];
+  const liveHosts = settings.liveFeed && settings.threatProtection ? (await loadLiveFeed()).hosts : [];
   await syncDynamicLists(
     settings.allowlist,
     settings.threatProtection ? settings.blocklist : [],
     pauses.map((p) => p.host),
     packHosts,
     iocHosts,
+    liveHosts,
   );
   await applyBrowserHardening(settings.hardenBrowser);
   await applyNotificationPromptBlock(settings.blockNotificationPrompts);
@@ -601,6 +604,11 @@ async function onMessage(message: ClientMessage, sender: chrome.runtime.MessageS
       return searchMarks(message.hrefs);
     case "GET_EXTENSION_AUDIT":
       return { type: "EXTENSION_AUDIT", items: await listExtensionRisks(), changes: await loadExtensionChanges() };
+    case "GET_FEED_STATUS":
+      return { type: "FEED_STATUS", status: await feedStatus() };
+    case "REFRESH_LIVE_FEED":
+      await updateLiveFeed();
+      return { type: "FEED_STATUS", status: await feedStatus() };
     case "GET_POSTURE":
       return { type: "POSTURE", items: await readPosture() };
     case "OPEN_SETTINGS_PAGE": {
@@ -734,6 +742,7 @@ const ALARMS: { name: string; periodInMinutes: number }[] = [
   { name: "fundament-ioc", periodInMinutes: 24 * 60 },
   { name: "fundament-extensions", periodInMinutes: 6 * 60 },
   { name: "fundament-posture", periodInMinutes: 12 * 60 },
+  { name: "fundament-live-feed", periodInMinutes: 6 * 60 },
 ];
 
 /**
@@ -767,6 +776,29 @@ async function boot(reason: "install" | "startup"): Promise<void> {
   await enforceLicense();
   await ensureAlarms();
   await onExtensionChange();
+  await updateLiveFeed();
+}
+
+async function feedStatus(): Promise<FeedStatusView> {
+  let shippedHosts = 0;
+  try {
+    const meta = (await (await fetch(chrome.runtime.getURL("data/threats-feed.meta.json"))).json()) as { hostCount?: number };
+    shippedHosts = Number(meta.hostCount) || 0;
+  } catch {
+    /* meta missing in dev builds */
+  }
+  return { shippedHosts, live: liveFeedView(await loadLiveFeed()) };
+}
+
+async function updateLiveFeed(): Promise<void> {
+  const settings = await loadSettings();
+  if (!settings.liveFeed) return;
+  const before = await loadLiveFeed();
+  const after = await refreshLiveFeed(await popularity());
+  if (after.version !== before.version) {
+    await logEvent({ type: "feed_updated", host: `live feed v${after.version}`, at: Date.now() });
+    await applySettings(await loadSettings());
+  }
 }
 
 chrome.runtime.onInstalled.addListener(async (details) => {
@@ -846,6 +878,9 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     }
     case "fundament-extensions":
       await onExtensionChange();
+      break;
+    case "fundament-live-feed":
+      await updateLiveFeed();
       break;
     case "fundament-posture":
       await readPosture().catch(() => []);

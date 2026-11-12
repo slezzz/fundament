@@ -270,5 +270,14 @@
   "posture_versionRolling": { "message": "Chrome update on its way ($1 → $2)" },
   "posture_versionRollingBody": { "message": "Google started shipping this update recently. Chrome installs it on its own within a few days; relaunch Chrome when it asks." },
   "dash_credits": { "message": "Data: Phishing.Database (MIT), Public Suffix List (MPL 2.0), Majestic Million by Majestic-12 Ltd (CC BY 3.0)." },
-  "dash_creditsLink": { "message": "Licenses" }
+  "dash_creditsLink": { "message": "Licenses" },
+  "dash_feed": { "message": "Phishing list" },
+  "dash_feedShipped": { "message": "$1 known phishing hosts ship with this version and are blocked before they load." },
+  "dash_feedLiveOff": { "message": "Daily updates are not set up in this build. The list above is refreshed with every release." },
+  "toggle_liveFeed": { "message": "Daily list updates" },
+  "toggle_liveFeedHint": { "message": "Downloads a signed file with phishing sites found since this release. Nothing about you is sent." },
+  "dash_feedLive": { "message": "Update: $1 new hosts, published $2." },
+  "dash_feedLiveNever": { "message": "No update loaded yet." },
+  "dash_feedLiveError": { "message": "last check: $1" },
+  "dash_feedRefresh": { "message": "Check now" }
 }

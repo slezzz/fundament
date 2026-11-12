@@ -127,6 +127,8 @@ export interface Settings {
   /** Optional HTTPS IOC list (JSON or hosts file). Fetch only with a SHA-256 pin. */
   iocFeedUrl: string;
   iocFeedSha256: string;
+  /** Daily signed update of the phishing list (newer than the release). */
+  liveFeed: boolean;
   /** Mark risky destinations on Google/Bing/DDG result pages. */
   searchMarks: boolean;
   /** Block sites from prompting for notification permission. */
@@ -159,6 +161,19 @@ export interface PostureItem {
   detail: string;
   /** chrome:// settings page that fixes it (opened via chrome.tabs.create). */
   fix?: string;
+}
+
+export interface FeedStatusView {
+  /** Hosts in the phishing ruleset shipped with this release. */
+  shippedHosts: number;
+  live: {
+    configured: boolean;
+    version: number;
+    generated: string | null;
+    hostCount: number;
+    lastCheck: number | null;
+    error: string | null;
+  };
 }
 
 export interface ExtensionChangeView {

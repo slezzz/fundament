@@ -1,4 +1,4 @@
-import type { ExtensionChangeView, ExtensionRiskView, PopupState, PostureItem, SecurityEvent, Settings, UrlAnalysis } from "./types";
+import type { ExtensionChangeView, ExtensionRiskView, FeedStatusView, PopupState, PostureItem, SecurityEvent, Settings, UrlAnalysis } from "./types";
 
 export type ClientMessage =
   | { type: "GET_POPUP_STATE" }
@@ -24,6 +24,8 @@ export type ClientMessage =
   | { type: "REFRESH_IOC_FEED" }
   | { type: "SEARCH_MARK"; hrefs: string[] }
   | { type: "GET_POSTURE"; refresh?: boolean }
+  | { type: "GET_FEED_STATUS" }
+  | { type: "REFRESH_LIVE_FEED" }
   | { type: "OPEN_SETTINGS_PAGE"; url: string };
 
 export type ServerMessage =
@@ -35,7 +37,8 @@ export type ServerMessage =
   | { type: "OK" }
   | { type: "SEARCH_MARKS"; marks: { href: string; label: string }[] }
   | { type: "EXTENSION_AUDIT"; items: ExtensionRiskView[]; changes: ExtensionChangeView[] }
-  | { type: "POSTURE"; items: PostureItem[] };
+  | { type: "POSTURE"; items: PostureItem[] }
+  | { type: "FEED_STATUS"; status: FeedStatusView };
 
 export function isClientMessage(value: unknown): value is ClientMessage {
   if (typeof value !== "object" || value === null || !("type" in value)) {

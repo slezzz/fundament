@@ -26,4 +26,7 @@ declare module "*.mjs" {
     state: ReturnType<typeof emptyBillingState>,
     ids: { sid?: string; sub?: string },
   ): boolean;
+  export function canonical(version: number, generated: string, hosts: string[]): string;
+  export function keepHost(host: string): boolean;
+  export function registrableOf(host: string): string | null;
 }

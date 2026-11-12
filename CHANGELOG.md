@@ -15,6 +15,9 @@
 - `nip.io` / `sslip.io` home pages were flagged as DNS rebinding.
 - Chrome "needs update" during Google's staged rollouts (now measured against the version served to everyone, with a 3-day grace period).
 
+### Live phishing updates
+- Optional signed update of the phishing list every 6 hours (hosts active since the release). Ed25519 signature checked against a key compiled into the build, no rollback, 14-day freshness limit, 30-day expiry, and a client-side filter that never blocks popular or official brand hosts even from a valid list. Published by a scheduled GitHub Action to GitHub Pages; off when not configured. Dashboard shows list size, update state, and a toggle.
+
 ### Language
 - Every warning, reason, and explanation now follows the browser language (German and English). Copy lives in one catalog (`src/engine/i18n/signals.ts`); a test fails if any signal the engine can emit lacks a translation or uses mismatched placeholders.
 - Explanations shortened to what is wrong and what to do; hygiene findings say they are not a threat. Warnings name only the brand's main domain.

@@ -10,13 +10,15 @@ import { t } from "../lib/i18n";
 import { BrandMark } from "../components/BrandMark";
 import { Toggle } from "../components/Toggle";
 import type { ServerMessage } from "@shared/messages";
-import type { ExtensionChangeView, ExtensionRiskView, PopupState, PostureItem, Settings } from "@shared/types";
+import type { ExtensionChangeView, ExtensionRiskView, FeedStatusView, PopupState, PostureItem, Settings } from "@shared/types";
 
 export function OptionsApp() {
   const [state, setState] = useState<PopupState | null>(null);
   const [audit, setAudit] = useState<ExtensionRiskView[]>([]);
   const [changes, setChanges] = useState<ExtensionChangeView[]>([]);
   const [posture, setPosture] = useState<PostureItem[] | null>(null);
+  const [feed, setFeed] = useState<FeedStatusView | null>(null);
+  const [feedBusy, setFeedBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [password, setPassword] = useState("");
   const [pwned, setPwned] = useState<string | null>(null);
@@ -50,6 +52,8 @@ export function OptionsApp() {
     }
     const postureResponse = await send<ServerMessage>({ type: "GET_POSTURE" }).catch(() => null);
     if (postureResponse?.type === "POSTURE") setPosture(postureResponse.items);
+    const feedResponse = await send<ServerMessage>({ type: "GET_FEED_STATUS" }).catch(() => null);
+    if (feedResponse?.type === "FEED_STATUS") setFeed(feedResponse.status);
   }
 
   useEffect(() => {
@@ -264,6 +268,47 @@ export function OptionsApp() {
         <h2>{t("dash_integrity")}</h2>
         <p className="note">{state.integrity.ok ? t("dash_integrityOk") : t("dash_integrityFail")}</p>
         <p className="note">{state.integrity.detail}</p>
+      </section>
+
+      <section>
+        <h2>{t("dash_feed")}</h2>
+        {feed ? (
+          <>
+            <p className="note">{t("dash_feedShipped", [feed.shippedHosts.toLocaleString()])}</p>
+            {!feed.live.configured ? (
+              <p className="note">{t("dash_feedLiveOff")}</p>
+            ) : (
+              <>
+                <Toggle
+                  label={t("toggle_liveFeed")}
+                  hint={t("toggle_liveFeedHint")}
+                  checked={settings.liveFeed}
+                  onChange={(liveFeed) => void patch({ liveFeed })}
+                />
+                <p className="note">
+                  {feed.live.generated
+                    ? t("dash_feedLive", [feed.live.hostCount.toLocaleString(), new Date(feed.live.generated).toLocaleString()])
+                    : t("dash_feedLiveNever")}
+                  {feed.live.error ? ` · ${t("dash_feedLiveError", [feed.live.error])}` : ""}
+                </p>
+                <button
+                  type="button"
+                  disabled={feedBusy || !settings.liveFeed}
+                  onClick={async () => {
+                    setFeedBusy(true);
+                    const response = await send<ServerMessage>({ type: "REFRESH_LIVE_FEED" }).catch(() => null);
+                    if (response?.type === "FEED_STATUS") setFeed(response.status);
+                    setFeedBusy(false);
+                  }}
+                >
+                  {t("dash_feedRefresh")}
+                </button>
+              </>
+            )}
+          </>
+        ) : (
+          <p className="muted">{t("dash_loading")}</p>
+        )}
       </section>
 
       <section>

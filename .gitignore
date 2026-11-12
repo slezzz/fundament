@@ -24,3 +24,7 @@ fundament-store.zip
 # Generated from filters/feeds/phishing-hosts.txt by npm run filters / build
 public/rules/threats-feed.json
 public/data/threats-feed.meta.json
+
+# Live feed signing key and local build output
+.feed-signing-key
+live-feed/

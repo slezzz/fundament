@@ -139,7 +139,8 @@ function deriveHostedZones(rawHosts) {
   for (const [zone, n] of counts) if (n >= HOSTED_ZONE_MIN && !brandDomains.has(zone)) hostedZones.add(zone);
 }
 
-async function main() {
+/** Download every source and apply the safety filter. Shared with scripts/build-live-feed.mjs. */
+export async function collectFeedHosts() {
   const all = new Set();
   const report = [];
   const texts = [];
@@ -165,9 +166,12 @@ async function main() {
     }
     report.push(`${source.id} (${source.license}): kept ${kept}, dropped ${dropped}`);
   }
-  if (all.size < 1000) throw new Error(`Suspiciously small feed (${all.size}); refusing to overwrite.`);
+  if (all.size < 1000) throw new Error(`Suspiciously small feed (${all.size}); refusing to continue.`);
+  return { hosts: [...all].sort(), report, hostedZones: [...hostedZones].sort() };
+}
 
-  const hosts = [...all].sort();
+async function main() {
+  const { hosts, report } = await collectFeedHosts();
   mkdirSync(resolve(root, "filters/feeds"), { recursive: true });
   writeFileSync(resolve(root, "filters/feeds/phishing-hosts.txt"), `${hosts.join("\n")}\n`);
   writeFileSync(
