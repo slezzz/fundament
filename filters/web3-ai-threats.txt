@@ -1,0 +1,23 @@
+! Known-bad / demonstration hosts for AI credential phishing and crypto drainers.
+! Only hosts that should never be visited as a first-party page. Compiled with main_frame block.
+! Not a live threat feed. Heuristics cover lookalike domains that are not listed here.
+||wallet-drainer.test^
+||drain-wallet.test^
+||airdrop-connect.test^
+||claim-airdrop.test^
+||seed-phrase-wallet.test^
+||metamask-connect.test^
+||chatgpt-login.test^
+||openai-auth.test^
+||claude-unlock.test^
+||claude-login.test^
+||gpt-api-key.test^
+||walletconnect-claim.test^
+||free-eth-mint.test^
+||approve-token.test^
+||clickfix-captcha.test^
+||verify-human.test^
+||cloudflare-challenge.test^
+||chrome-update.test^
+||browser-update.test^
+

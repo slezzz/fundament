@@ -1,0 +1,44 @@
+import { test, expect } from "@playwright/test";
+import { existsSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
+
+test("built extension is MV3-complete", () => {
+  const dist = resolve(process.cwd(), "dist");
+  const manifest = JSON.parse(readFileSync(resolve(dist, "manifest.json"), "utf8")) as {
+    manifest_version: number;
+    background: { service_worker: string };
+    permissions: string[];
+    host_permissions?: string[];
+    optional_host_permissions?: string[];
+  };
+  expect(manifest.manifest_version).toBe(3);
+  expect(existsSync(resolve(dist, manifest.background.service_worker))).toBe(true);
+  expect(existsSync(resolve(dist, "popup.html"))).toBe(true);
+  expect(existsSync(resolve(dist, "warning.html"))).toBe(true);
+  expect(existsSync(resolve(dist, "rules/trackers-core.json"))).toBe(true);
+  expect(existsSync(resolve(dist, "rules/threats-core.json"))).toBe(true);
+  expect(existsSync(resolve(dist, "rules/tracking-params.json"))).toBe(true);
+  expect(existsSync(resolve(dist, "rules/privacy-headers.json"))).toBe(true);
+  expect(manifest.permissions).toContain("privacy");
+  expect(manifest.permissions).toContain("contextMenus");
+  expect(manifest.permissions).toContain("declarativeNetRequestWithHostAccess");
+  expect(existsSync(resolve(dist, "rules/ads-extra.json"))).toBe(true);
+  expect(existsSync(resolve(dist, "content.js"))).toBe(true);
+  expect(existsSync(resolve(dist, "content-bridge.js"))).toBe(true);
+  expect(existsSync(resolve(dist, "content-search.js"))).toBe(true);
+  const contentJs = readFileSync(resolve(dist, "content.js"), "utf8");
+  const bridgeJs = readFileSync(resolve(dist, "content-bridge.js"), "utf8");
+  const searchJs = readFileSync(resolve(dist, "content-search.js"), "utf8");
+  expect(contentJs).not.toMatch(/\bimport\b/);
+  expect(contentJs).not.toMatch(/\bexport\b/);
+  expect(bridgeJs).not.toMatch(/\bimport\b/);
+  expect(bridgeJs).not.toMatch(/\bexport\b/);
+  expect(searchJs).not.toMatch(/\bimport\b/);
+  expect(searchJs).not.toMatch(/\bexport\b/);
+  expect(manifest.permissions).toContain("contentSettings");
+  expect(manifest.permissions).toContain("downloads");
+  expect(manifest.host_permissions ?? []).not.toContain("<all_urls>");
+  expect(manifest.permissions).not.toContain("cookies");
+  expect(manifest.host_permissions ?? []).not.toContain("<all_urls>");
+  expect(manifest.optional_host_permissions).toBeUndefined();
+});

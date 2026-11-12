@@ -1,0 +1,113 @@
+body {
+  min-height: 100vh;
+}
+
+.wrap {
+  max-width: 420px;
+  margin: 0 auto;
+  padding: 64px 24px;
+  text-align: center;
+}
+
+.brand {
+  letter-spacing: 0.04em;
+  font-weight: 650;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+}
+
+.brand-mark {
+  width: 28px;
+  height: 28px;
+  border-radius: 5px;
+}
+
+.wrap h1 {
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  font-size: 28px;
+  margin: 8px 0 0;
+}
+
+.wrap .mark {
+  margin-inline: auto;
+}
+
+.lead,
+.reason {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.score {
+  font-variant-numeric: tabular-nums;
+  margin: 20px 0;
+}
+
+.actions {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.primary,
+.ghost {
+  border-radius: 14px;
+  padding: 12px 16px;
+  border: 1px solid transparent;
+}
+
+.primary {
+  background: var(--ink);
+  color: var(--bg);
+}
+
+.ghost {
+  background: transparent;
+  border-color: var(--line);
+}
+
+.continue {
+  color: var(--muted);
+  font-size: 13px;
+}
+
+.why {
+  text-align: left;
+  list-style: none;
+  padding: 0;
+  margin-top: 28px;
+}
+
+.why p {
+  color: var(--muted);
+  margin: 4px 0 16px;
+}
+
+.sig-id {
+  font-family: var(--mono);
+  font-size: 11px;
+  margin: 2px 0 6px !important;
+}
+
+.host {
+  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-size: 15px;
+  word-break: break-all;
+  margin: 12px 0 4px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--muted) 12%, transparent);
+}
+
+.reason {
+  font-weight: 600;
+  color: inherit;
+}
+
+.continue.danger {
+  border-color: #c45c4a;
+  color: #c45c4a;
+}

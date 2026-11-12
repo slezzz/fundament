@@ -1,0 +1,120 @@
+[
+  {
+    "id": 1000,
+    "priority": 2,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "authedmine.com",
+        "cnhv.co",
+        "coin-hive.com",
+        "coinhive.com",
+        "coinhive.org",
+        "coinimp.com",
+        "coinimp.net",
+        "crypto-loot.com",
+        "cryptoloot.pro",
+        "hostingcloud.racing",
+        "jsecoin.com",
+        "minero.cc",
+        "minr.pw",
+        "ppoi.org",
+        "reasedoper.pw",
+        "webmine.cz",
+        "webminepool.com"
+      ],
+      "resourceTypes": [
+        "script",
+        "xmlhttprequest",
+        "image",
+        "sub_frame",
+        "ping",
+        "media",
+        "font",
+        "other",
+        "websocket"
+      ],
+      "domainType": "thirdParty"
+    }
+  },
+  {
+    "id": 1200,
+    "priority": 5,
+    "action": {
+      "type": "redirect",
+      "redirect": {
+        "extensionPath": "/warning.html?blocked=threat"
+      }
+    },
+    "condition": {
+      "requestDomains": [
+        "airdrop-connect.test",
+        "approve-token.test",
+        "browser-update.test",
+        "chatgpt-login.test",
+        "chrome-update.test",
+        "claim-airdrop.test",
+        "claude-login.test",
+        "claude-unlock.test",
+        "clickfix-captcha.test",
+        "cloudflare-challenge.test",
+        "drain-wallet.test",
+        "free-eth-mint.test",
+        "gpt-api-key.test",
+        "metamask-connect.test",
+        "openai-auth.test",
+        "seed-phrase-wallet.test",
+        "verify-human.test",
+        "wallet-drainer.test",
+        "walletconnect-claim.test"
+      ],
+      "resourceTypes": [
+        "main_frame"
+      ]
+    }
+  },
+  {
+    "id": 1201,
+    "priority": 5,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "requestDomains": [
+        "airdrop-connect.test",
+        "approve-token.test",
+        "browser-update.test",
+        "chatgpt-login.test",
+        "chrome-update.test",
+        "claim-airdrop.test",
+        "claude-login.test",
+        "claude-unlock.test",
+        "clickfix-captcha.test",
+        "cloudflare-challenge.test",
+        "drain-wallet.test",
+        "free-eth-mint.test",
+        "gpt-api-key.test",
+        "metamask-connect.test",
+        "openai-auth.test",
+        "seed-phrase-wallet.test",
+        "verify-human.test",
+        "wallet-drainer.test",
+        "walletconnect-claim.test"
+      ],
+      "resourceTypes": [
+        "sub_frame",
+        "script",
+        "xmlhttprequest",
+        "image",
+        "ping",
+        "media",
+        "font",
+        "stylesheet",
+        "websocket",
+        "other"
+      ]
+    }
+  }
+]

@@ -1,0 +1,11 @@
+[
+  {
+    "id": 9002,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "requestProtocols": ["http"],
+      "resourceTypes": ["main_frame"]
+    }
+  }
+]

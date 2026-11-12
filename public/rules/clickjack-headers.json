@@ -1,0 +1,17 @@
+[
+  {
+    "id": 301,
+    "priority": 1,
+    "action": {
+      "type": "modifyHeaders",
+      "responseHeaders": [
+        { "header": "X-Frame-Options", "operation": "set", "value": "SAMEORIGIN" },
+        { "header": "Content-Security-Policy", "operation": "append", "value": "frame-ancestors 'self'" },
+        { "header": "X-Content-Type-Options", "operation": "set", "value": "nosniff" }
+      ]
+    },
+    "condition": {
+      "resourceTypes": ["main_frame"]
+    }
+  }
+]

@@ -1,0 +1,186 @@
+{
+  "manifest_version": 3,
+  "name": "__MSG_extName__",
+  "version": "1.1.0",
+  "default_locale": "en",
+  "description": "__MSG_extDescription__",
+  "incognito": "split",
+  "commands": {
+    "_execute_action": {
+      "suggested_key": {
+        "default": "Alt+Shift+F"
+      },
+      "description": "Open Fundament"
+    }
+  },
+  "minimum_chrome_version": "114",
+  "icons": {
+    "16": "icons/icon-16.png",
+    "32": "icons/icon-32.png",
+    "48": "icons/icon-48.png",
+    "128": "icons/icon-128.png"
+  },
+  "action": {
+    "default_title": "__MSG_extName__",
+    "default_popup": "popup.html",
+    "default_icon": {
+      "16": "icons/icon-16.png",
+      "32": "icons/icon-32.png"
+    }
+  },
+  "options_ui": {
+    "page": "options.html",
+    "open_in_tab": true
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "storage",
+    "tabs",
+    "webNavigation",
+    "declarativeNetRequest",
+    "declarativeNetRequestFeedback",
+    "declarativeNetRequestWithHostAccess",
+    "alarms",
+    "downloads",
+    "privacy",
+    "contextMenus",
+    "notifications",
+    "contentSettings",
+    "management",
+    "scripting"
+  ],
+  "host_permissions": [
+    "http://*/*",
+    "https://*/*"
+  ],
+  "declarative_net_request": {
+    "rule_resources": [
+      {
+        "id": "trackers-core",
+        "enabled": true,
+        "path": "rules/trackers-core.json"
+      },
+      {
+        "id": "ads-extra",
+        "enabled": true,
+        "path": "rules/ads-extra.json"
+      },
+      {
+        "id": "trackers-extended",
+        "enabled": false,
+        "path": "rules/trackers-extended.json"
+      },
+      {
+        "id": "trackers-plus",
+        "enabled": false,
+        "path": "rules/trackers-plus.json"
+      },
+      {
+        "id": "https-upgrade",
+        "enabled": true,
+        "path": "rules/https-upgrade.json"
+      },
+      {
+        "id": "https-upgrade-pages",
+        "enabled": false,
+        "path": "rules/https-upgrade-pages.json"
+      },
+      {
+        "id": "threats-core",
+        "enabled": true,
+        "path": "rules/threats-core.json"
+      },
+      {
+        "id": "threats-feed",
+        "enabled": true,
+        "path": "rules/threats-feed.json"
+      },
+      {
+        "id": "tracking-params",
+        "enabled": true,
+        "path": "rules/tracking-params.json"
+      },
+      {
+        "id": "privacy-headers",
+        "enabled": true,
+        "path": "rules/privacy-headers.json"
+      },
+      {
+        "id": "clickjack-headers",
+        "enabled": false,
+        "path": "rules/clickjack-headers.json"
+      }
+    ]
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content-bridge.js"
+      ],
+      "run_at": "document_start",
+      "world": "MAIN",
+      "all_frames": true,
+      "match_origin_as_fallback": true
+    },
+    {
+      "matches": [
+        "http://*/*",
+        "https://*/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_start",
+      "all_frames": true,
+      "match_origin_as_fallback": true
+    },
+    {
+      "matches": [
+        "*://www.google.com/*",
+        "*://www.google.de/*",
+        "*://www.google.at/*",
+        "*://www.google.ch/*",
+        "*://www.google.co.uk/*",
+        "*://www.google.fr/*",
+        "*://www.google.nl/*",
+        "*://www.google.es/*",
+        "*://www.google.it/*",
+        "*://www.google.pl/*",
+        "*://www.bing.com/*",
+        "*://www.duckduckgo.com/*",
+        "*://duckduckgo.com/*",
+        "*://search.yahoo.com/*"
+      ],
+      "js": [
+        "content-search.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'; frame-ancestors 'none';"
+  },
+  "externally_connectable": {
+    "matches": [
+      "http://127.0.0.1:8787/*",
+      "http://localhost:8787/*"
+    ]
+  },
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "warning.html"
+      ],
+      "matches": [
+        "<all_urls>"
+      ]
+    }
+  ]
+}

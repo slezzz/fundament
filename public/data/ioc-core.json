@@ -1,0 +1,21 @@
+{
+  "format": "fundament-ioc-v1",
+  "version": 1,
+  "source": "shipped-ioc-core",
+  "hosts": [
+    "authedmine.com",
+    "cnhv.co",
+    "coin-hive.com",
+    "coinhive.com",
+    "coinhive.org",
+    "coinimp.com",
+    "crypto-loot.com",
+    "cryptoloot.pro",
+    "jsecoin.com",
+    "minero.cc",
+    "webmine.cz",
+    "webminepool.com",
+    "malware-download.test",
+    "testsafebrowsing.appspot.com"
+  ]
+}

@@ -1,0 +1,63 @@
+/** Cheap TLDs and zones frequently abused in phishing kits. Not a reputation feed. */
+export const ELEVATED_RISK_TLDS = new Set([
+  "zip",
+  "mov",
+  "xyz",
+  "top",
+  "gq",
+  "cf",
+  "tk",
+  "ml",
+  "ga",
+  "work",
+  "click",
+  "link",
+  "info",
+  "rest",
+  "country",
+  "kim",
+  "men",
+  "loan",
+  "download",
+  "racing",
+  "party",
+  "science",
+  "accountants",
+  "cfd",
+  "sbs",
+  "cyou",
+  "qpon",
+  "shop",
+  "icu",
+  "lol",
+  "bid",
+  "win",
+  "vip",
+  "online",
+  "site",
+  "space",
+  "fun",
+  "cam",
+]);
+
+export const LOGIN_PATH_RE =
+  /\/(login|signin|sign-in|log-in|authenticate|verification|verify|account|webscr|session|oauth|sso|passwd|password|reset)(\/|$)/i;
+
+export const LOGIN_QUERY_RE = /(login|signin|redirect|next|returnurl|continue|dest)=/i;
+
+export const SUSPICIOUS_QUERY_KEYS = new Set([
+  "password",
+  "passwd",
+  "pwd",
+  "token",
+  "access_token",
+  "id_token",
+  "session",
+  "otp",
+  "api_key",
+  "apikey",
+  "secret_key",
+  "private_key",
+  "seed",
+  "mnemonic",
+]);

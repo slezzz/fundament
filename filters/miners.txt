@@ -1,0 +1,18 @@
+! Drive-by cryptominer / coin-hive style hosts. Third-party scripts only.
+||coinhive.com^
+||coin-hive.com^
+||coinhive.org^
+||cnhv.co^
+||crypto-loot.com^
+||cryptoloot.pro^
+||jsecoin.com^
+||minero.cc^
+||webminepool.com^
+||webmine.cz^
+||authedmine.com^
+||coinimp.com^
+||coinimp.net^
+||minr.pw^
+||ppoi.org^
+||reasedoper.pw^
+||hostingcloud.racing^

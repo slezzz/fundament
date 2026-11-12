@@ -1,0 +1,26 @@
+node_modules/
+dist/
+dist-e2e/
+playwright-report/
+test-results/
+coverage/
+.DS_Store
+Thumbs.db
+*.log
+.env
+.env.*
+!.env.example
+*.local
+.vite/
+.cache/
+.idea/
+.vscode/*
+!.vscode/extensions.json
+server/.license-private
+server/.billing-state.json
+.store-pack/
+fundament-store.zip
+
+# Generated from filters/feeds/phishing-hosts.txt by npm run filters / build
+public/rules/threats-feed.json
+public/data/threats-feed.meta.json

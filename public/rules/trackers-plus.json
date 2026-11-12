@@ -1,0 +1,86 @@
+[
+  {
+    "id": 3,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "resourceTypes": [
+        "script",
+        "xmlhttprequest",
+        "image",
+        "sub_frame",
+        "ping",
+        "media",
+        "font",
+        "other"
+      ],
+      "requestDomains": [
+        "fingerprint.com",
+        "fingerprintjs.com",
+        "perimeterx.net",
+        "px-cdn.net"
+      ]
+    }
+  },
+  {
+    "id": 4,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "resourceTypes": [
+        "script",
+        "xmlhttprequest",
+        "image",
+        "sub_frame",
+        "ping",
+        "media",
+        "font",
+        "other"
+      ],
+      "requestDomains": [
+        "facebook.net",
+        "connect.facebook.net",
+        "analytics.tiktok.com",
+        "ads.linkedin.com",
+        "snap.licdn.com",
+        "platform.twitter.com",
+        "syndication.twitter.com",
+        "ads-twitter.com",
+        "tr.snapchat.com",
+        "sc-static.net"
+      ]
+    }
+  },
+  {
+    "id": 5,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "resourceTypes": [
+        "script",
+        "xmlhttprequest",
+        "image",
+        "sub_frame",
+        "ping",
+        "media",
+        "font",
+        "other"
+      ],
+      "requestDomains": [
+        "newrelic.com",
+        "nr-data.net",
+        "sentry.io",
+        "bugsnag.com"
+      ]
+    }
+  }
+]

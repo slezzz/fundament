@@ -1,0 +1,93 @@
+[
+  {
+    "id": 1,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "resourceTypes": [
+        "script",
+        "xmlhttprequest",
+        "image",
+        "sub_frame",
+        "ping",
+        "media",
+        "font",
+        "other"
+      ],
+      "requestDomains": [
+        "doubleclick.net",
+        "googlesyndication.com",
+        "googleadservices.com",
+        "adservice.google.com",
+        "pagead2.googlesyndication.com",
+        "adnxs.com",
+        "adsrvr.org",
+        "advertising.com",
+        "taboola.com",
+        "outbrain.com",
+        "criteo.com",
+        "criteo.net",
+        "amazon-adsystem.com",
+        "adsafeprotected.com",
+        "moatads.com",
+        "casalemedia.com",
+        "openx.net",
+        "pubmatic.com",
+        "rubiconproject.com",
+        "3lift.com",
+        "bidswitch.net",
+        "smartadserver.com",
+        "bat.bing.com",
+        "adform.net",
+        "mathtag.com",
+        "bluekai.com",
+        "rlcdn.com",
+        "everesttech.net",
+        "demdex.net"
+      ]
+    }
+  },
+  {
+    "id": 2,
+    "priority": 1,
+    "action": {
+      "type": "block"
+    },
+    "condition": {
+      "domainType": "thirdParty",
+      "resourceTypes": [
+        "script",
+        "xmlhttprequest",
+        "image",
+        "sub_frame",
+        "ping",
+        "media",
+        "font",
+        "other"
+      ],
+      "requestDomains": [
+        "google-analytics.com",
+        "googletagmanager.com",
+        "googletagservices.com",
+        "analytics.google.com",
+        "hotjar.com",
+        "mixpanel.com",
+        "segment.io",
+        "segment.com",
+        "amplitude.com",
+        "fullstory.com",
+        "mouseflow.com",
+        "clarity.ms",
+        "scorecardresearch.com",
+        "quantserve.com",
+        "omtrdc.net",
+        "2o7.net",
+        "chartbeat.com",
+        "parsely.com"
+      ]
+    }
+  }
+]

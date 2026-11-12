@@ -1,0 +1,11 @@
+[
+  {
+    "id": 9001,
+    "priority": 1,
+    "action": { "type": "upgradeScheme" },
+    "condition": {
+      "requestProtocols": ["http"],
+      "resourceTypes": ["script", "stylesheet", "image", "font", "xmlhttprequest", "media", "sub_frame", "ping", "other"]
+    }
+  }
+]
