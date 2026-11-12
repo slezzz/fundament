@@ -15,6 +15,10 @@
 - `nip.io` / `sslip.io` home pages were flagged as DNS rebinding.
 - Chrome "needs update" during Google's staged rollouts (now measured against the version served to everyone, with a 3-day grace period).
 
+### Language
+- Every warning, reason, and explanation now follows the browser language (German and English). Copy lives in one catalog (`src/engine/i18n/signals.ts`); a test fails if any signal the engine can emit lacks a translation or uses mismatched placeholders.
+- Explanations shortened to what is wrong and what to do; hygiene findings say they are not a threat. Warnings name only the brand's main domain.
+
 ### Added
 - Third-party notices (Phishing.Database MIT, Public Suffix List MPL-2.0, Majestic Million CC BY 3.0) in the package and the dashboard.
 - Git repository, LF line endings.

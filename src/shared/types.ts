@@ -7,8 +7,12 @@ export interface RiskSignal {
   /** Points added toward 0–100. Zero for informational / unavailable. */
   weightApplied: number;
   severity: SignalSeverity;
+  /** English copy (logs, reports). The UI renders `key` + `args` in the browser language. */
   title: string;
   explanation: string;
+  /** Catalog key in src/engine/i18n/signals.ts; defaults to `id`. */
+  key?: string;
+  args?: string[];
 }
 
 export interface ParsedUrl {

@@ -8,6 +8,7 @@ import { send } from "../lib/messaging";
 import { normalizePopupState } from "../lib/popupState";
 import { statusFrom, visibleStatus } from "../lib/status";
 import { partitionSignals } from "../lib/signals";
+import { sigText } from "../lib/signalText";
 import { StatusMark, poseFromStatus } from "../components/StatusMark";
 import { Counts } from "../components/Counts";
 import { Toggle } from "../components/Toggle";
@@ -384,13 +385,12 @@ function Details({ state, onBack }: { state: PopupState; onBack: () => void }) {
               {signal.severity === "ok" ? "✓" : signal.severity === "fail" ? "✕" : signal.severity === "unavailable" ? "–" : "⚠"}
             </span>
             <div>
-              <strong>{signal.title}</strong>
+              <strong>{sigText(signal).title}</strong>
               <p className="sig-meta">
                 <code>{signal.id}</code>
                 {signal.weightApplied > 0 ? `  +${signal.weightApplied}` : "  +0"}
-                {`  ${signal.severity}`}
               </p>
-              <p>{signal.explanation}</p>
+              <p>{sigText(signal).explanation}</p>
             </div>
           </li>
         ))}

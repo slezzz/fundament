@@ -1,6 +1,7 @@
 import type { ParsedDomain, ParsedUrl, RiskSignal } from "@shared/types";
 import { isOfficialAnyBrand } from "../impersonation/detect";
 import { ELEVATED_RISK_TLDS } from "./patterns";
+import { textSignal } from "../i18n/signal";
 import { WEIGHTS } from "../risk/weights";
 
 /**
@@ -15,14 +16,6 @@ const IDP_IN_NESTED =
   /accounts\.google\.com|login\.microsoftonline\.com|login\.live\.com|appleid\.apple\.com|okta\.com/i;
 const OAUTH_KEYS = new Set(["client_id", "response_type", "scope", "consent", "redirect_uri"]);
 
-function signal(
-  id: string,
-  weight: number,
-  title: string,
-  explanation: string,
-): RiskSignal {
-  return { id, weightApplied: weight, severity: "warn", title, explanation };
-}
 
 export function extraKitSignals(
   parsed: ParsedUrl,
@@ -41,34 +34,19 @@ export function extraKitSignals(
 
   if (CLICKFIX_PATH_RE.test(blob) && shady) {
     out.push(
-      signal(
-        "clickfix-url",
-        WEIGHTS.clickFixUrl + (impersonation ? WEIGHTS.cryptoBaitBoost : 0),
-        "Fake verification / ClickFix lure",
-        "This address looks like a CAPTCHA or “verify you are human” page on a host that is not a catalogued official product. Current kits copy a PowerShell command and tell you to paste it. Do not run anything from this page.",
-      ),
+      textSignal("clickfix-url", "clickfix-url", WEIGHTS.clickFixUrl + (impersonation ? WEIGHTS.cryptoBaitBoost : 0), "warn"),
     );
   }
 
   if (UPDATE_PATH_RE.test(blob) && shady) {
     out.push(
-      signal(
-        "browser-update-url",
-        WEIGHTS.browserUpdateUrl,
-        "Fake browser update",
-        "This URL pretends to be a Chrome or Flash update. Real Chrome updates come from Google, not from a random download page.",
-      ),
+      textSignal("browser-update-url", "browser-update-url", WEIGHTS.browserUpdateUrl, "warn"),
     );
   }
 
   if (PASSKEY_PATH_RE.test(blob) && impersonation) {
     out.push(
-      signal(
-        "passkey-lookalike",
-        WEIGHTS.passkeyLookalike,
-        "Passkey on a lookalike",
-        "This lookalike asks for a passkey or security key. Registering a key here can lock the attacker in after you authenticate. Use the official domain from a bookmark.",
-      ),
+      textSignal("passkey-lookalike", "passkey-lookalike", WEIGHTS.passkeyLookalike, "warn"),
     );
   }
 
@@ -79,12 +57,7 @@ export function extraKitSignals(
   }
   if (nestedUrl && IDP_IN_NESTED.test(nestedUrl) && (oauthish || impersonation) && shady) {
     out.push(
-      signal(
-        "oauth-proxy",
-        WEIGHTS.oauthProxy,
-        "OAuth consent proxy",
-        "This unofficial host wraps a Google, Microsoft, or Apple sign-in. Consent-phishing kits steal the grant without your password. Open the identity provider yourself instead of following this link.",
-      ),
+      textSignal("oauth-proxy", "oauth-proxy", WEIGHTS.oauthProxy, "warn"),
     );
   }
 

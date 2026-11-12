@@ -1,5 +1,6 @@
 import type { RiskSignal } from "@shared/types";
 import { WEIGHTS } from "./weights";
+import { textSignal } from "../i18n/signal";
 
 /**
  * Single signals are deliberately weak so ordinary sites stay green.
@@ -41,35 +42,15 @@ export function applyCombos(input: RiskSignal[]): RiskSignal[] {
   const pageCredential = has(signals, PAGE_CREDENTIAL);
 
   if (brand && credential) {
-    signals.push({
-      id: "combo-brand-credential",
-      weightApplied: WEIGHTS.comboBrandCredential,
-      severity: "warn",
-      title: "Brand lookalike asks for credentials",
-      explanation:
-        "This page uses a brand it does not belong to and asks for a password, card, key, or recovery phrase. That combination is the core of credential phishing.",
-    });
+    signals.push(textSignal("combo-brand-credential", "combo-brand-credential", WEIGHTS.comboBrandCredential, "warn"));
   }
   if (hosted && pageCredential) {
-    signals.push({
-      id: "combo-hosted-credential",
-      weightApplied: WEIGHTS.comboHostedCredential,
-      severity: "warn",
-      title: "Sign-in form on free hosting",
-      explanation:
-        "This page is published on a free hosting or form service and asks for credentials. Real banks, shops, and wallets never collect logins there.",
-    });
+    signals.push(textSignal("combo-hosted-credential", "combo-hosted-credential", WEIGHTS.comboHostedCredential, "warn"));
   }
   const impersonation = signals.find((s) => s.id === "impersonation" && s.weightApplied > 0);
   const content = signals.find((s) => s.id === "brand-content");
   if (impersonation && content) {
-    signals.push({
-      id: "combo-brand-twice",
-      weightApplied: WEIGHTS.comboBrandTwice,
-      severity: "warn",
-      title: "Domain and page both imitate a brand",
-      explanation: "Both the address and the page content claim to be a brand that this domain does not belong to.",
-    });
+    signals.push(textSignal("combo-brand-twice", "combo-brand-twice", WEIGHTS.comboBrandTwice, "warn"));
   }
   return signals;
 }

@@ -49,6 +49,8 @@ import { licenseActivationAllowed } from "@billing/launch";
 import { fetchLicenseRevoked } from "@billing/status";
 import { FREE_ENTITLEMENTS } from "@billing/entitlements";
 import { WEIGHTS } from "@engine/risk/weights";
+import { textSignal } from "@engine/i18n/signal";
+import { langFromLocale } from "@engine/i18n/signals";
 import { parsePopularList, popularityCheck } from "@engine/reputation/popular";
 
 const httpIntelligence = new HttpThreatIntelligence({ baseUrl: reputationBaseUrl() });
@@ -365,23 +367,8 @@ async function updateBadge(tabId: number, analysis: UrlAnalysis): Promise<void> 
 /* ---------------------------------------------------------- DNR-blocked pages */
 
 function blockedSignal(reason: string): RiskSignal {
-  const copy: Record<string, [string, string]> = {
-    feed: [
-      "Known phishing site",
-      "This address is on Fundament's phishing list (Phishing.Database, refreshed with every release). It was stopped before it loaded.",
-    ],
-    ioc: ["Listed in your threat feed", "This host is on the threat-intelligence feed Fundament applies. It was stopped before it loaded."],
-    threat: ["Known malicious host", "This host is on Fundament's shipped list of drainer and credential-theft hosts."],
-    user: ["On your blocklist", "You added this site to your Fundament blocklist."],
-  };
-  const [title, explanation] = copy[reason] ?? copy.feed ?? ["Blocked", "Blocked"];
-  return {
-    id: "known-malicious",
-    weightApplied: reason === "user" ? WEIGHTS.userBlocklist + 30 : WEIGHTS.knownMaliciousHost,
-    severity: "fail",
-    title,
-    explanation,
-  };
+  const key = /^(feed|ioc|threat|user)$/.test(reason) ? `blocked-${reason}` : "blocked-feed";
+  return textSignal("known-malicious", key, reason === "user" ? WEIGHTS.userBlocklist + 30 : WEIGHTS.knownMaliciousHost, "fail");
 }
 
 async function blockedAnalysis(tabId: number, reason: string): Promise<UrlAnalysis | null> {
@@ -726,7 +713,7 @@ async function searchMarks(rawHrefs: unknown): Promise<ServerMessage> {
         securityLevel: settings.securityLevel,
         isPopular: await popularity(),
       });
-      label = analysis.allowlisted ? null : searchHitLabel(analysis.signals, analysis.score);
+      label = analysis.allowlisted ? null : searchHitLabel(analysis.signals, analysis.score, langFromLocale(chrome.i18n?.getUILanguage?.()));
       serpCache.set(dest, { label, at: now });
       if (serpCache.size > 400) {
         for (const key of [...serpCache.keys()].slice(0, 80)) serpCache.delete(key);

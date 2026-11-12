@@ -2,7 +2,7 @@ import type { AnalysisInput, ParsedDomain, ParsedUrl, RiskSignal, UrlAnalysis } 
 import { ENGINE_VERSION } from "./version";
 import { parseHttpUrl, UrlParseError, looksDoubleEncoded, countPercentEncodings } from "./url/parse";
 import { parseDomain } from "./domain/parse";
-import { looksLikeHomograph, hasMixedScripts } from "./homograph/detect";
+import { looksLikeHomograph } from "./homograph/detect";
 import { applyCombos } from "./risk/combos";
 import { brandInHostedContent, cloudAppSuffix, freeHostingSuffix } from "./url/hosting";
 import { isShortener } from "./url/shorteners";
@@ -16,22 +16,13 @@ import { looksLikeDnsRebindHost, isPrivateOrLocalHost, isLocalNetworkName } from
 import { sessionIdInUrl } from "./page/heuristics";
 import { WEIGHTS, WEIGHTS_VERSION } from "./risk/weights";
 import { applyLevel, bandForScore, clampScore } from "./risk/score";
-import { hostMatchesList, isKnownTestMalicious, okSignal, unavailableSignal } from "./reputation/local";
+import { hostMatchesList, isKnownTestMalicious } from "./reputation/local";
+import { textSignal } from "./i18n/signal";
 import type { ThreatIntelligenceProvider } from "@shared/types";
 import { NullThreatIntelligence } from "./reputation/null-provider";
 
 export interface AnalyzeOptions {
   intelligence?: ThreatIntelligenceProvider;
-}
-
-function signal(
-  id: string,
-  weight: number,
-  severity: RiskSignal["severity"],
-  title: string,
-  explanation: string,
-): RiskSignal {
-  return { id, weightApplied: weight, severity, title, explanation };
 }
 
 function emptyAnalysis(url: string, parseError: string): UrlAnalysis {
@@ -40,9 +31,7 @@ function emptyAnalysis(url: string, parseError: string): UrlAnalysis {
     parsed: null,
     domain: null,
     parseError,
-    signals: [
-      signal("parse", 0, "fail", "Address could not be analyzed", parseError),
-    ],
+    signals: [textSignal("parse", "parse", 0, "fail", [parseError])],
     score: 0,
     band: "safe",
     engineVersion: ENGINE_VERSION,
@@ -55,10 +44,7 @@ function emptyAnalysis(url: string, parseError: string): UrlAnalysis {
   };
 }
 
-export async function analyzeUrl(
-  input: AnalysisInput,
-  options: AnalyzeOptions = {},
-): Promise<UrlAnalysis> {
+export async function analyzeUrl(input: AnalysisInput, options: AnalyzeOptions = {}): Promise<UrlAnalysis> {
   const intelligence = options.intelligence ?? new NullThreatIntelligence();
 
   let parsed: ParsedUrl;
@@ -71,61 +57,34 @@ export async function analyzeUrl(
 
   const domain = parseDomain(parsed);
   const hostKey = domain?.registrableDomain ?? parsed.hostname;
-  const allowlisted = hostMatchesList(parsed.hostname, input.allowlist) ||
-    hostMatchesList(hostKey, input.allowlist);
-  const blocklisted = hostMatchesList(parsed.hostname, input.blocklist) ||
-    hostMatchesList(hostKey, input.blocklist);
+  const allowlisted = hostMatchesList(parsed.hostname, input.allowlist) || hostMatchesList(hostKey, input.allowlist);
+  const blocklisted = hostMatchesList(parsed.hostname, input.blocklist) || hostMatchesList(hostKey, input.blocklist);
 
   const signals: RiskSignal[] = [];
   const localNetwork = isLocalNetworkName(parsed.hostname);
 
   if (parsed.protocol === "https:") {
-    signals.push(okSignal("https", "HTTPS", "This connection uses HTTPS."));
+    signals.push(textSignal("https", "https-ok", 0, "ok"));
   } else {
     signals.push(
-      signal(
+      textSignal(
         "https",
+        localNetwork ? "https-local" : "https-plain",
         input.phishingProtection && !localNetwork ? WEIGHTS.httpPlain : 0,
         "warn",
-        "Not encrypted",
-        localNetwork
-          ? "This local device (router, NAS, printer) is reached without encryption. That is normal at home; avoid it on public Wi-Fi."
-          : "This connection is not encrypted. Anyone on the same network can read or change the page, including passwords.",
       ),
     );
   }
 
   if (parsed.hasUserInfo && input.phishingProtection) {
-    signals.push(
-      signal(
-        "userinfo",
-        WEIGHTS.userInfoInUrl,
-        "warn",
-        "Credentials in the address",
-        "The URL contains a username or password field (user:pass@host). That pattern is often used to disguise the real destination.",
-      ),
-    );
+    signals.push(textSignal("userinfo", "userinfo", WEIGHTS.userInfoInUrl, "warn"));
   }
 
   if (parsed.isIpLiteral && input.threatProtection) {
-    const privateIp = isPrivateOrLocalHost(parsed.hostname);
     signals.push(
-      privateIp
-        ? {
-            id: "ip-host",
-            weightApplied: 0,
-            severity: "info",
-            title: "Local network device",
-            explanation:
-              "This address is inside your own network (router, NAS, printer, dev server). Fundament does not score it like a public website.",
-          }
-        : signal(
-            "ip-host",
-            WEIGHTS.ipLiteralHost,
-            "warn",
-            "IP address as website name",
-            "The site is reached by a raw IP address instead of a normal domain name. That is uncommon for legitimate login pages.",
-          ),
+      isPrivateOrLocalHost(parsed.hostname)
+        ? textSignal("ip-host", "ip-local", 0, "info")
+        : textSignal("ip-host", "ip-public", WEIGHTS.ipLiteralHost, "warn"),
     );
   }
 
@@ -139,15 +98,7 @@ export async function analyzeUrl(
     domain.hostname !== `www.${domain.registrableDomain}` &&
     looksLikeDnsRebindHost(domain.hostname, domain.registrableDomain)
   ) {
-    signals.push(
-      signal(
-        "dns-rebind",
-        WEIGHTS.dnsRebind,
-        "warn",
-        "DNS-rebind helper domain",
-        "This host is a rebind-helper zone (nip.io, sslip.io, localtest.me, …) or otherwise points at private space. Attackers use that to reach routers and local apps from a public page.",
-      ),
-    );
+    signals.push(textSignal("dns-rebind", "dns-rebind", WEIGHTS.dnsRebind, "warn"));
   }
 
   // Established sites (top of a public popularity list) are not judged by their *name*:
@@ -156,15 +107,7 @@ export async function analyzeUrl(
   // User sites on hosting platforms (x.weebly.com, x.s3.amazonaws.com) never inherit the platform's popularity.
   const userHosted = Boolean(freeHostingSuffix(parsed.hostname, parsed.pathname) || cloudAppSuffix(parsed.hostname));
   const popular = Boolean(domain && !userHosted && input.isPopular?.(domain.registrableDomain, domain.hostname));
-  if (popular) {
-    signals.push(
-      okSignal(
-        "popular",
-        "Established site",
-        "This domain is among the 50,000 most-linked websites (Majestic Million). Fundament does not treat its name as a brand lookalike.",
-      ),
-    );
-  }
+  if (popular) signals.push(textSignal("popular", "popular", 0, "ok"));
 
   if (domain && input.phishingProtection && !localNetwork) {
     collectDomainSignals(domain, signals, popular);
@@ -175,24 +118,11 @@ export async function analyzeUrl(
     const cloud = builder ? null : cloudAppSuffix(parsed.hostname);
     const hosting = builder ?? cloud;
     if (hosting) {
-      signals.push({
-        id: builder ? "free-hosting" : "cloud-hosting",
-        weightApplied: 0,
-        severity: "info",
-        title: builder ? "Free hosting" : "Cloud app hosting",
-        explanation: builder
-          ? `This page is published on ${hosting}, where anyone can host content. Fine for projects and blogs; never a place for bank, shop, or wallet sign-ins.`
-          : `This page runs on ${hosting}, a cloud platform that hosts company apps and phishing kits alike.`,
-      });
+      const id = builder ? "free-hosting" : "cloud-hosting";
+      signals.push(textSignal(id, id, 0, "info", [hosting]));
       const hostedBrand = brandInHostedContent(parsed, domain);
       if (hostedBrand) {
-        signals.push({
-          id: "brand-hosted",
-          weightApplied: WEIGHTS.brandHosted,
-          severity: "info",
-          title: `${hostedBrand} named on hosted page`,
-          explanation: `The address of this user-hosted page names ${hostedBrand}. Real ${hostedBrand} pages are not served from ${hosting}.`,
-        });
+        signals.push(textSignal("brand-hosted", "brand-hosted", WEIGHTS.brandHosted, "info", [hostedBrand, hosting]));
       }
     }
   }
@@ -203,29 +133,12 @@ export async function analyzeUrl(
   }
 
   if (blocklisted && input.threatProtection) {
-    signals.push(
-      signal(
-        "blocklist",
-        WEIGHTS.userBlocklist,
-        "fail",
-        "On your blocklist",
-        "This host is on the blocklist you configured in Fundament.",
-      ),
-    );
+    signals.push(textSignal("blocklist", "blocklist", WEIGHTS.userBlocklist, "fail"));
   }
 
-  const maliciousTest =
-    domain !== null && isKnownTestMalicious(parsed.hostname, domain.registrableDomain);
+  const maliciousTest = domain !== null && isKnownTestMalicious(parsed.hostname, domain.registrableDomain);
   if (maliciousTest && input.threatProtection) {
-    signals.push(
-      signal(
-        "known-malicious",
-        WEIGHTS.knownMaliciousHost,
-        "fail",
-        "Known malicious infrastructure",
-        "This host is on Fundament’s shipped test list of known-bad demonstration hosts (not a live threat feed).",
-      ),
-    );
+    signals.push(textSignal("known-malicious", "known-test", WEIGHTS.knownMaliciousHost, "fail"));
   }
 
   let reputationAvailable = false;
@@ -234,66 +147,21 @@ export async function analyzeUrl(
       const remote = await intelligence.checkDomain(domain.registrableDomain);
       reputationAvailable = remote.available;
       if (remote.available && remote.listed) {
-        signals.push(
-          signal(
-            "remote-reputation",
-            WEIGHTS.knownMaliciousHost,
-            "fail",
-            "Listed by threat intelligence",
-            `The reputation provider “${remote.source}” lists this domain.`,
-          ),
-        );
+        signals.push(textSignal("remote-reputation", "rep-listed", WEIGHTS.knownMaliciousHost, "fail", [remote.source]));
       } else if (remote.available) {
-        signals.push(
-          okSignal(
-            "remote-reputation",
-            "Domain reputation",
-            `The reputation provider “${remote.source}” does not currently list this domain.`,
-          ),
-        );
+        signals.push(textSignal("remote-reputation", "rep-ok", 0, "ok", [remote.source]));
       } else {
-        signals.push(
-          unavailableSignal(
-            "remote-reputation",
-            "Domain reputation",
-            "Online reputation is unavailable. Local protection is still active.",
-          ),
-        );
+        signals.push(textSignal("remote-reputation", "rep-unavailable", 0, "unavailable"));
       }
     } catch {
-      signals.push(
-        unavailableSignal(
-          "remote-reputation",
-          "Domain reputation",
-          "Online reputation is unavailable. Local protection is still active.",
-        ),
-      );
+      signals.push(textSignal("remote-reputation", "rep-unavailable", 0, "unavailable"));
     }
   } else {
-    signals.push(
-      unavailableSignal(
-        "remote-reputation",
-        "Domain reputation",
-        "Online reputation is not configured. Local protection is active.",
-      ),
-    );
+    signals.push(textSignal("remote-reputation", "rep-off", 0, "unavailable"));
   }
 
-  signals.push(
-    unavailableSignal(
-      "certificate",
-      "Certificate",
-      "Chrome does not expose certificate details to this extension. Your browser still enforces TLS for HTTPS sites.",
-    ),
-  );
-
-  signals.push(
-    unavailableSignal(
-      "domain-age",
-      "Domain age",
-      "Domain age is not available without a remote registry lookup, which this build does not perform.",
-    ),
-  );
+  signals.push(textSignal("certificate", "certificate", 0, "unavailable"));
+  signals.push(textSignal("domain-age", "domain-age", 0, "unavailable"));
 
   const combined = applyCombos(signals);
   const raw = combined.reduce((sum, s) => sum + s.weightApplied, 0);
@@ -319,26 +187,9 @@ export async function analyzeUrl(
 
 function collectDomainSignals(domain: ParsedDomain, signals: RiskSignal[], popular: boolean): void {
   if (looksLikeHomograph(domain.labelsUnicode, domain.containsPunycode)) {
-    const mixed = hasMixedScripts(domain.labelsUnicode);
-    signals.push(
-      signal(
-        "homograph",
-        mixed ? WEIGHTS.mixedScript : WEIGHTS.punycodeHomograph,
-        "warn",
-        mixed ? "Mixed-script domain" : "Lookalike letters in the domain",
-        mixed
-          ? "This domain mixes writing systems in one name (for example Latin and Cyrillic). That is how attackers imitate familiar brand names."
-          : "Every letter of this domain is a foreign character that looks like a Latin letter. It reads like a familiar name but is a different address.",
-      ),
-    );
+    signals.push(textSignal("homograph", "homograph-mixed", WEIGHTS.mixedScript, "warn"));
   } else if (domain.containsPunycode) {
-    signals.push({
-      id: "homograph",
-      weightApplied: 0,
-      severity: "info",
-      title: "Internationalized domain",
-      explanation: `This domain uses non-ASCII letters (${domain.hostnameUnicode}). Nothing in it imitates Latin letters.`,
-    });
+    signals.push(textSignal("homograph", "homograph-idn", 0, "info", [domain.hostnameUnicode]));
   }
 
   const impersonation = popular ? null : detectImpersonation(domain);
@@ -349,101 +200,38 @@ function collectDomainSignals(domain: ParsedDomain, signals: RiskSignal[], popul
   const depth = domain.subdomain ? domain.subdomain.split(".").length : 0;
   const hyphenCount = (domain.registrableDomain.split(".")[0] ?? "").split("-").length - 1;
   if (ELEVATED_RISK_TLDS.has(domain.tld) && (strongImpersonation(impersonation) || hyphenCount >= 2)) {
-    signals.push(
-      signal(
-        "tld",
-        WEIGHTS.elevatedTld,
-        "warn",
-        "Uncommon domain ending",
-        impersonation
-          ? `The domain ending “.${domain.tld}” is often used in throwaway phishing domains, together with a brand lookalike.`
-          : `The domain ending “.${domain.tld}” is often used for throwaway phishing sites.`,
-      ),
-    );
+    signals.push(textSignal("tld", "tld", WEIGHTS.elevatedTld, "warn", [domain.tld]));
   }
 
   if (depth >= 3 && !popular) {
-    signals.push(
-      signal(
-        "subdomains",
-        WEIGHTS.manySubdomains,
-        "warn",
-        "Many subdomains",
-        "Unusually nested subdomains can hide the real registered domain on the right.",
-      ),
-    );
+    signals.push(textSignal("subdomains", "subdomains", WEIGHTS.manySubdomains, "warn"));
   }
 
   if (isShortener(domain.registrableDomain)) {
-    signals.push(
-      signal(
-        "shortener",
-        WEIGHTS.shortener,
-        "info",
-        "URL shortener",
-        "Short links hide the final destination until they redirect. Fundament will analyze the next page separately.",
-      ),
-    );
+    signals.push(textSignal("shortener", "shortener", WEIGHTS.shortener, "info"));
   }
 
   if (!impersonation && !popular) {
-    signals.push(
-      okSignal(
-        "impersonation",
-        "Brand similarity",
-        "This registered domain does not closely imitate a catalogued consumer brand.",
-      ),
-    );
+    signals.push(textSignal("impersonation", "impersonation-ok", 0, "ok"));
   }
 }
 
-function collectUrlShapeSignals(
-  parsed: ParsedUrl,
-  domain: ParsedDomain | null,
-  signals: RiskSignal[],
-  popular: boolean,
-): void {
-  const href = parsed.href;
-  if (href.length > 180) {
-    signals.push(
-      signal(
-        "length",
-        WEIGHTS.longUrl,
-        "info",
-        "Very long address",
-        "Unusually long URLs are sometimes used to bury the real host or to smuggle extra parameters.",
-      ),
-    );
+function collectUrlShapeSignals(parsed: ParsedUrl, domain: ParsedDomain | null, signals: RiskSignal[], popular: boolean): void {
+  if (parsed.href.length > 180) {
+    signals.push(textSignal("length", "length", WEIGHTS.longUrl, "info"));
   }
 
   const encoded = countPercentEncodings(parsed.pathname + parsed.search);
   if (looksDoubleEncoded(parsed.href) || encoded >= 8) {
-    signals.push(
-      signal(
-        "encoding",
-        WEIGHTS.encodingAnomaly,
-        "warn",
-        "Odd URL encoding",
-        "This address uses heavy or nested percent-encoding, which can hide the real destination.",
-      ),
-    );
+    signals.push(textSignal("encoding", "encoding", WEIGHTS.encodingAnomaly, "warn"));
   }
 
   const redirect = analyzeRedirectShape(parsed);
   if (redirect.nestedUrl || redirect.chainedParams) {
-    signals.push(
-      signal(
-        "redirect",
-        WEIGHTS.suspiciousRedirect,
-        "warn",
-        "Suspicious redirect",
-        "The address embeds another URL or chains multiple redirect parameters. That is a common open-redirect phishing pattern.",
-      ),
-    );
+    signals.push(textSignal("redirect", "redirect", WEIGHTS.suspiciousRedirect, "warn"));
   }
 
-  const loginShaped =
-    LOGIN_PATH_RE.test(parsed.pathname) || LOGIN_QUERY_RE.test(parsed.search);
+  const loginShaped = LOGIN_PATH_RE.test(parsed.pathname) || LOGIN_QUERY_RE.test(parsed.search);
   const params = new URLSearchParams(parsed.search);
   let sensitiveQuery = false;
   for (const key of params.keys()) {
@@ -460,37 +248,15 @@ function collectUrlShapeSignals(
   );
 
   if (loginShaped && parsed.protocol === "http:") {
-    signals.push(
-      signal(
-        "login-http",
-        WEIGHTS.loginOverHttp,
-        "warn",
-        "Sign-in over HTTP",
-        "This looks like a sign-in page on an unencrypted connection. Do not enter a password here.",
-      ),
-    );
+    signals.push(textSignal("login-http", "login-http", WEIGHTS.loginOverHttp, "warn"));
   } else if (loginShaped && (suspiciousHost || redirect.nestedUrl || sensitiveQuery)) {
     // Informational on its own (plenty of real sites run /login on .shop or .info);
     // it counts toward the brand + credential combination.
-    signals.push({
-      id: "login",
-      weightApplied: WEIGHTS.loginOnSuspiciousHost,
-      severity: "info",
-      title: "Sign-in address on an unusual host",
-      explanation: "This address looks like a sign-in page on a host or URL shape that real login flows rarely use.",
-    });
+    signals.push(textSignal("login", "login", WEIGHTS.loginOnSuspiciousHost, "info"));
   }
 
   if (sessionIdInUrl(parsed.href)) {
-    signals.push(
-      signal(
-        "session-url",
-        WEIGHTS.sessionInUrl,
-        "warn",
-        "Session id in the address",
-        "The URL carries a session identifier (JSESSIONID, PHPSESSID, …). That is session fixation / hijacking material: the id leaks into logs, Referer, and history.",
-      ),
-    );
+    signals.push(textSignal("session-url", "session-url", WEIGHTS.sessionInUrl, "warn"));
   }
 
   signals.push(...extraUrlSignals(parsed));
@@ -507,55 +273,20 @@ export function strongImpersonation(hit: ImpersonationHit | null): boolean {
 
 function impersonationSignal(hit: ImpersonationHit, domain: ParsedDomain): RiskSignal {
   const brand = hit.brand.name;
-  const official = hit.brand.domains.slice(0, 3).join(", ");
+  // The main domain only: "paypal.com", not the CDN and short-link domains behind it.
+  const official = hit.brand.domains[0] ?? brand;
   switch (hit.reason) {
     case "embedded-domain":
-      return signal(
-        "impersonation",
-        WEIGHTS.impersonationEmbedded,
-        "warn",
-        `Fake ${brand} address`,
-        `The real ${brand} domain is only a prefix here. The site you are on is “${domain.registrableDomain}”, not ${official}.`,
-      );
+      return textSignal("impersonation", "imp-embedded", WEIGHTS.impersonationEmbedded, "warn", [brand, domain.registrableDomain, official]);
     case "confusable":
-      return signal(
-        "impersonation",
-        WEIGHTS.impersonationConfusable,
-        "warn",
-        `Looks like ${brand}`,
-        `“${domain.registrableDomain}” swaps letters for lookalikes (1 for l, rn for m, Cyrillic for Latin). The real ${brand} uses ${official}.`,
-      );
+      return textSignal("impersonation", "imp-confusable", WEIGHTS.impersonationConfusable, "warn", [brand, domain.registrableDomain, official]);
     case "other-tld":
-      return signal(
-        "impersonation",
-        WEIGHTS.impersonationOtherTld,
-        "warn",
-        `Not the official ${brand} site`,
-        `“${domain.registrableDomain}” uses the ${brand} name on an ending ${brand} does not use. The real site is ${official}.`,
-      );
+      return textSignal("impersonation", "imp-other-tld", WEIGHTS.impersonationOtherTld, "warn", [brand, domain.registrableDomain, official]);
     case "keyword-combo":
-      return signal(
-        "impersonation",
-        WEIGHTS.impersonationKeyword,
-        "warn",
-        `Looks like ${brand}`,
-        `“${domain.hostname}” pairs ${brand} with words like login, verify, or support. ${brand} does not run its sign-in there; the real site is ${official}.`,
-      );
+      return textSignal("impersonation", "imp-keyword", WEIGHTS.impersonationKeyword, "warn", [brand, domain.hostname, official]);
     case "typo":
-      return {
-        id: "impersonation",
-        weightApplied: WEIGHTS.impersonationTypo,
-        severity: "info",
-        title: `Close to ${brand}`,
-        explanation: `“${domain.registrableDomain}” is one letter away from ${brand}. Many real names are, so this only matters together with a sign-in form.`,
-      };
+      return textSignal("impersonation", "imp-typo", WEIGHTS.impersonationTypo, "info", [brand, domain.registrableDomain, official]);
     default:
-      return {
-        id: "impersonation",
-        weightApplied: WEIGHTS.impersonationWeak,
-        severity: "info",
-        title: `Mentions ${brand}`,
-        explanation: `This address contains the name ${brand} but is not ${official}. Fan sites and partners do that too; Fundament escalates only if the page asks for credentials.`,
-      };
+      return textSignal("impersonation", "imp-weak", WEIGHTS.impersonationWeak, "info", [brand, domain.registrableDomain, official]);
   }
 }

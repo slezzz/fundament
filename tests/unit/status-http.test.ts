@@ -11,6 +11,24 @@ const base: AnalysisInput = {
   securityLevel: "standard",
 };
 
+beforeEach(() => {
+  vi.stubGlobal("navigator", { language: "en-US" });
+});
+
+afterEach(() => {
+  vi.unstubAllGlobals();
+});
+
+describe("status in the browser language", () => {
+  it("renders the issue in German for a German browser", async () => {
+    vi.stubGlobal("navigator", { language: "de-DE" });
+    const analysis = await analyzeUrl({ ...base, url: "http://example.com/login" });
+    const status = statusFrom(analysis, true);
+    expect(status.label).toBe("Anmeldung über HTTP");
+    expect(status.hint).toContain("Passwort");
+  });
+});
+
 describe("honest status", () => {
   it("never labels a plain HTTP site as protected or safe", async () => {
     const analysis = await analyzeUrl({ ...base, url: "http://example.com/" });

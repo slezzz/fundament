@@ -1,3 +1,4 @@
+import { localizeSignal, type SignalLang } from "../i18n/signals";
 /**
  * Unwrap search redirectors so we analyze the destination, not google.com/url.
  * Detection only — no click rewriting.
@@ -49,14 +50,36 @@ export function unwrapSearchDestination(href: string): string | null {
   }
 }
 
-export function searchHitLabel(signals: { id: string; title: string; severity: string }[], score: number): string | null {
+const HIT_LABELS: Record<SignalLang, Record<string, string>> = {
+  en: {
+    malicious: "Listed as malicious",
+    homograph: "Lookalike domain",
+    rebind: "Points into your local network",
+    clickfix: "Fake verification page",
+    high: "High-risk link",
+  },
+  de: {
+    malicious: "Als schädlich gelistet",
+    homograph: "Nachgemachte Domain",
+    rebind: "Zeigt ins lokale Netz",
+    clickfix: "Gefälschte Verifizierung",
+    high: "Riskanter Link",
+  },
+};
+
+export function searchHitLabel(
+  signals: { id: string; key?: string; args?: string[]; title: string; explanation: string; severity: string }[],
+  score: number,
+  lang: SignalLang = "en",
+): string | null {
+  const labels = HIT_LABELS[lang];
   const actionable = signals.filter((s) => s.severity === "warn" || s.severity === "fail");
   const impersonation = actionable.find((s) => s.id === "impersonation");
-  if (impersonation) return impersonation.title;
-  if (actionable.some((s) => s.id === "known-malicious")) return "Listed as malicious";
-  if (actionable.some((s) => s.id === "homograph")) return "Lookalike domain";
-  if (actionable.some((s) => s.id === "dns-rebind")) return "Local or rebind host";
-  if (actionable.some((s) => s.id === "clickfix-url")) return "ClickFix lure";
-  if (score >= 60) return "High-risk link";
+  if (impersonation) return localizeSignal(impersonation, lang).title;
+  if (actionable.some((s) => s.id === "known-malicious")) return labels.malicious ?? null;
+  if (actionable.some((s) => s.id === "homograph")) return labels.homograph ?? null;
+  if (actionable.some((s) => s.id === "dns-rebind")) return labels.rebind ?? null;
+  if (actionable.some((s) => s.id === "clickfix-url")) return labels.clickfix ?? null;
+  if (score >= 60) return labels.high ?? null;
   return null;
 }

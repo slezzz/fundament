@@ -6,6 +6,7 @@ import { StatusMark, poseFromStatus } from "../components/StatusMark";
 import type { ServerMessage } from "@shared/messages";
 import { t } from "../lib/i18n";
 import { BrandMark } from "../components/BrandMark";
+import { sigText } from "../lib/signalText";
 import "../styles/global.css";
 import "./warning.css";
 
@@ -88,7 +89,8 @@ export function WarningApp() {
   const top =
     analysis.signals.find((s) => s.severity === "fail") ??
     [...analysis.signals].filter((s) => s.severity === "warn").sort((a, b) => b.weightApplied - a.weightApplied)[0];
-  const reason = top?.title ?? t("warn_multi");
+  const topText = top ? sigText(top) : null;
+  const reason = topText?.title ?? t("warn_multi");
   const host = analysis.domain?.hostnameUnicode ?? analysis.parsed?.hostnameUnicode ?? "";
 
   return (
@@ -101,7 +103,7 @@ export function WarningApp() {
       <h1>{critical ? t("warn_stopped") : t("warn_suspicious")}</h1>
       {host && <p className="host">{host}</p>}
       <p className="reason">{t("warn_reason", [reason])}</p>
-      <p className="lead">{top?.explanation ?? explanation(analysis) ?? (critical ? t("warn_cut") : t("warn_fallback"))}</p>
+      <p className="lead">{topText?.explanation ?? explanation(analysis) ?? (critical ? t("warn_cut") : t("warn_fallback"))}</p>
       <p className="score">{t("warn_score", [String(analysis.score)])}</p>
       <div className="actions">
         <button className="primary" onClick={() => void send({ type: "GO_BACK", tabId })}>
@@ -126,11 +128,11 @@ export function WarningApp() {
             .filter((s) => s.severity === "fail" || s.severity === "warn")
             .map((s) => (
               <li key={s.id}>
-                <strong>{s.title}</strong>
+                <strong>{sigText(s).title}</strong>
                 <p className="sig-id">
-                  {s.id} · +{s.weightApplied} · {s.severity}
+                  {s.id} · +{s.weightApplied}
                 </p>
-                <p>{s.explanation}</p>
+                <p>{sigText(s).explanation}</p>
               </li>
             ))}
         </ul>
