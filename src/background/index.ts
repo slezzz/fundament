@@ -510,7 +510,11 @@ async function onMessage(message: ClientMessage, sender: chrome.runtime.MessageS
   switch (message.type) {
     case "GET_POPUP_STATE": {
       try {
-        const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+        // popup.html?tab=<id> (opened as a page, e.g. for screenshots or keyboard users) shows that tab.
+        const tab =
+          typeof message.tabId === "number" && Number.isInteger(message.tabId)
+            ? await chrome.tabs.get(message.tabId).catch(() => undefined)
+            : (await chrome.tabs.query({ active: true, currentWindow: true }))[0];
         return { type: "POPUP_STATE", state: await popupState(tab) };
       } catch (error) {
         return { type: "ERROR", message: error instanceof Error ? error.message : "Could not read tab state" };

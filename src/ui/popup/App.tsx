@@ -26,7 +26,11 @@ export function App() {
   const [events, setEvents] = useState<SecurityEvent[]>([]);
 
   async function refresh() {
-    const response = await send<ServerMessage>({ type: "GET_POPUP_STATE" }).catch(() => null);
+    const tabParam = Number.parseInt(new URLSearchParams(window.location.search).get("tab") ?? "", 10);
+    const response = await send<ServerMessage>({
+      type: "GET_POPUP_STATE",
+      ...(Number.isInteger(tabParam) ? { tabId: tabParam } : {}),
+    }).catch(() => null);
     if (!response) {
       setError(t("popup_loadError"));
       return;

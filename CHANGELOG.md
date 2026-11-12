@@ -13,6 +13,7 @@
 - AI-login heuristic matched inside words (`capgemini`, `ngrok`, `copilotkit`).
 - "Login on suspicious host" alone no longer turns a site yellow; it only feeds the brand + credential combination.
 - `nip.io` / `sslip.io` home pages were flagged as DNS rebinding.
+- Safe Browsing posture is only checked in Google Chrome; Edge (SmartScreen), Brave and others reported "Chrome Safe Browsing is off" without meaning.
 - Chrome "needs update" during Google's staged rollouts (now measured against the version served to everyone, with a 3-day grace period).
 
 ### Live phishing updates
@@ -25,6 +26,7 @@
 - Onboarding describes the current protections (feed, ClickFix, wallet drainers, browser health, extension watch).
 
 ### Added
+- `scripts/store-screenshots.mjs`: Chrome Web Store screenshots (1280×800, DE + EN) from the real build. `popup.html?tab=<id>` shows a given tab (extension pages only).
 - Third-party notices (Phishing.Database MIT, Public Suffix List MPL-2.0, Majestic Million CC BY 3.0) in the package and the dashboard.
 - Git repository, LF line endings.
 

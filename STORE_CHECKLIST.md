@@ -29,7 +29,7 @@ Use this with `PRIVACY.md`, `PERMISSIONS.md`, and `STORE_LISTING.md`.
 
 - [ ] 128×128 icon (exists in `public/icons/`)
 - [ ] Small / marquee promo if required by the store at submit time
-- [ ] Screenshots: popup Protected vs HTTP warning vs Inspect verdict vs dashboard
+- [ ] Screenshots: `node scripts/store-screenshots.mjs` (after `npm run pack`) writes 1280×800 PNGs in German and English to `store-assets/screenshots/`
 
 ## Package
 

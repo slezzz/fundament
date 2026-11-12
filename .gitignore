@@ -28,3 +28,6 @@ public/data/threats-feed.meta.json
 # Live feed signing key and local build output
 .feed-signing-key
 live-feed/
+
+# Generated store screenshots
+store-assets/

@@ -158,7 +158,9 @@ export async function readPosture(): Promise<PostureItem[]> {
   const services = chrome.privacy?.services as
     | (typeof chrome.privacy.services & { safeBrowsingEnabled?: chrome.types.ChromeSetting })
     | undefined;
-  const safeBrowsing = await getPref(services?.safeBrowsingEnabled);
+  // Only Google Chrome uses Google Safe Browsing. Edge (SmartScreen), Brave, Opera … report this
+  // preference without it meaning anything about their own protection, so say nothing there.
+  const safeBrowsing = installed?.brand === "Google Chrome" ? await getPref(services?.safeBrowsingEnabled) : null;
   if (safeBrowsing === false) {
     items.push({
       id: "safe-browsing",

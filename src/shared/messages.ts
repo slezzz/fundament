@@ -1,7 +1,7 @@
 import type { ExtensionChangeView, ExtensionRiskView, FeedStatusView, PopupState, PostureItem, SecurityEvent, Settings, UrlAnalysis } from "./types";
 
 export type ClientMessage =
-  | { type: "GET_POPUP_STATE" }
+  | { type: "GET_POPUP_STATE"; tabId?: number }
   | { type: "GET_TAB_ANALYSIS"; tabId: number; blocked?: string }
   | { type: "UPDATE_SETTINGS"; patch: Partial<Settings> }
   | { type: "GET_HISTORY" }
