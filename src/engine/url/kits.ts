@@ -29,8 +29,9 @@ export function extraKitSignals(
   domain: ParsedDomain | null,
   impersonation: boolean,
   nestedUrl: string | null,
+  popular = false,
 ): RiskSignal[] {
-  if (domain && isOfficialAnyBrand(domain)) return [];
+  if (popular || (domain && isOfficialAnyBrand(domain))) return [];
 
   const blob = `${parsed.pathname}${parsed.search}${parsed.hostname}`;
   const cheap = Boolean(domain && ELEVATED_RISK_TLDS.has(domain.tld));

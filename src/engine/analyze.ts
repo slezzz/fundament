@@ -129,7 +129,16 @@ export async function analyzeUrl(
     );
   }
 
-  if (input.threatProtection && domain && !parsed.isIpLiteral && !isPrivateOrLocalHost(domain.hostname) && looksLikeDnsRebindHost(domain.hostname, domain.registrableDomain)) {
+  // A rebind zone's own homepage (nip.io) is harmless; only names that encode an IP are the pattern.
+  if (
+    input.threatProtection &&
+    domain &&
+    !parsed.isIpLiteral &&
+    !isPrivateOrLocalHost(domain.hostname) &&
+    domain.hostname !== domain.registrableDomain &&
+    domain.hostname !== `www.${domain.registrableDomain}` &&
+    looksLikeDnsRebindHost(domain.hostname, domain.registrableDomain)
+  ) {
     signals.push(
       signal(
         "dns-rebind",
@@ -141,8 +150,24 @@ export async function analyzeUrl(
     );
   }
 
+  // Established sites (top of a public popularity list) are not judged by their *name*:
+  // brands own dozens of domains (netflix.net, google.org, amazon.jobs). Everything else
+  // still applies — feeds, page checks, ClickFix, wallet guard, downloads.
+  // User sites on hosting platforms (x.weebly.com, x.s3.amazonaws.com) never inherit the platform's popularity.
+  const userHosted = Boolean(freeHostingSuffix(parsed.hostname, parsed.pathname) || cloudAppSuffix(parsed.hostname));
+  const popular = Boolean(domain && !userHosted && input.isPopular?.(domain.registrableDomain, domain.hostname));
+  if (popular) {
+    signals.push(
+      okSignal(
+        "popular",
+        "Established site",
+        "This domain is among the 50,000 most-linked websites (Majestic Million). Fundament does not treat its name as a brand lookalike.",
+      ),
+    );
+  }
+
   if (domain && input.phishingProtection && !localNetwork) {
-    collectDomainSignals(domain, signals);
+    collectDomainSignals(domain, signals, popular);
   }
 
   if (input.phishingProtection && !localNetwork) {
@@ -174,7 +199,7 @@ export async function analyzeUrl(
 
   // Router UIs and dev servers (localhost:3000/login) are not phishing-shaped URLs.
   if (input.phishingProtection && !localNetwork) {
-    collectUrlShapeSignals(parsed, domain, signals);
+    collectUrlShapeSignals(parsed, domain, signals, popular);
   }
 
   if (blocklisted && input.threatProtection) {
@@ -292,7 +317,7 @@ export async function analyzeUrl(
   };
 }
 
-function collectDomainSignals(domain: ParsedDomain, signals: RiskSignal[]): void {
+function collectDomainSignals(domain: ParsedDomain, signals: RiskSignal[], popular: boolean): void {
   if (looksLikeHomograph(domain.labelsUnicode, domain.containsPunycode)) {
     const mixed = hasMixedScripts(domain.labelsUnicode);
     signals.push(
@@ -316,7 +341,7 @@ function collectDomainSignals(domain: ParsedDomain, signals: RiskSignal[]): void
     });
   }
 
-  const impersonation = detectImpersonation(domain);
+  const impersonation = popular ? null : detectImpersonation(domain);
   if (impersonation) {
     signals.push(impersonationSignal(impersonation, domain));
   }
@@ -337,7 +362,7 @@ function collectDomainSignals(domain: ParsedDomain, signals: RiskSignal[]): void
     );
   }
 
-  if (depth >= 3) {
+  if (depth >= 3 && !popular) {
     signals.push(
       signal(
         "subdomains",
@@ -361,7 +386,7 @@ function collectDomainSignals(domain: ParsedDomain, signals: RiskSignal[]): void
     );
   }
 
-  if (!impersonation) {
+  if (!impersonation && !popular) {
     signals.push(
       okSignal(
         "impersonation",
@@ -376,6 +401,7 @@ function collectUrlShapeSignals(
   parsed: ParsedUrl,
   domain: ParsedDomain | null,
   signals: RiskSignal[],
+  popular: boolean,
 ): void {
   const href = parsed.href;
   if (href.length > 180) {
@@ -426,6 +452,7 @@ function collectUrlShapeSignals(
 
   const suspiciousHost = Boolean(
     domain &&
+      !popular &&
       (ELEVATED_RISK_TLDS.has(domain.tld) ||
         looksLikeHomograph(domain.labelsUnicode) ||
         strongImpersonation(detectImpersonation(domain)) ||
@@ -443,15 +470,15 @@ function collectUrlShapeSignals(
       ),
     );
   } else if (loginShaped && (suspiciousHost || redirect.nestedUrl || sensitiveQuery)) {
-    signals.push(
-      signal(
-        "login",
-        WEIGHTS.loginOnSuspiciousHost,
-        "warn",
-        "Login page on a suspicious host",
-        "This looks like a sign-in page, but the host or the URL structure is not typical of a legitimate login flow.",
-      ),
-    );
+    // Informational on its own (plenty of real sites run /login on .shop or .info);
+    // it counts toward the brand + credential combination.
+    signals.push({
+      id: "login",
+      weightApplied: WEIGHTS.loginOnSuspiciousHost,
+      severity: "info",
+      title: "Sign-in address on an unusual host",
+      explanation: "This address looks like a sign-in page on a host or URL shape that real login flows rarely use.",
+    });
   }
 
   if (sessionIdInUrl(parsed.href)) {
@@ -467,9 +494,9 @@ function collectUrlShapeSignals(
   }
 
   signals.push(...extraUrlSignals(parsed));
-  const impersonating = strongImpersonation(domain ? detectImpersonation(domain) : null);
-  signals.push(...extraWeb3AiSignals(parsed, domain, impersonating));
-  signals.push(...extraKitSignals(parsed, domain, impersonating, redirect.nestedUrl));
+  const impersonating = !popular && strongImpersonation(domain ? detectImpersonation(domain) : null);
+  signals.push(...extraWeb3AiSignals(parsed, domain, impersonating, popular));
+  signals.push(...extraKitSignals(parsed, domain, impersonating, redirect.nestedUrl, popular));
 }
 
 const STRONG_REASONS = new Set(["embedded-domain", "confusable", "other-tld", "keyword-combo"]);

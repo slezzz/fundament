@@ -14,6 +14,7 @@ import { baselineFromReleases, compareVersions, versionVerdict, type ServingRele
 import { buildDynamicRules } from "@network/dnr";
 import { contextVerdict, quickVerdict } from "../../src/background/downloads";
 import { DEFAULT_SETTINGS } from "@storage/settings";
+import { popularityCheck } from "@engine/reputation/popular";
 import type { AnalysisInput, ParsedDomain, UrlAnalysis } from "@shared/types";
 
 const base: Omit<AnalysisInput, "url"> = {
@@ -291,6 +292,45 @@ describe("extension supply-chain watch", () => {
   it("treats a plain version bump as informational", () => {
     const after: ExtensionSnapshot = { a: { ...before.a!, version: "1.2" } };
     expect(diffExtensions(before, after)[0]?.severity).toBe("info");
+  });
+});
+
+describe("public suffix list", () => {
+  it("knows country second-level endings and private hosting suffixes", () => {
+    expect(domain("https://www.google.com.ua/").registrableDomain).toBe("google.com.ua");
+    expect(domain("https://news.bbc.co.uk/").registrableDomain).toBe("bbc.co.uk");
+    expect(domain("https://evil.pages.dev/").registrableDomain).toBe("evil.pages.dev");
+    expect(domain("https://someone.github.io/x").registrableDomain).toBe("someone.github.io");
+  });
+
+  it("treats every Google country site as official", () => {
+    for (const host of ["google.com.ua", "google.com.vn", "google.com.ng", "google.co.jp"]) {
+      expect(detectImpersonation(domain(`https://www.${host}/`)), host).toBeNull();
+    }
+  });
+});
+
+describe("popularity", () => {
+  const check = popularityCheck(new Set(["netflix.net", "weebly.com"]), new Set(["weebly.com"]));
+
+  it("lets established brand domains through and keeps user subdomains on platforms out", () => {
+    expect(check("netflix.net", "www.netflix.net")).toBe(true);
+    expect(check("weebly.com", "www.weebly.com")).toBe(true);
+    expect(check("weebly.com", "paypal-login.weebly.com")).toBe(false);
+    expect(check("example.org", "example.org")).toBe(false);
+  });
+
+  it("removes name-based impersonation only, not page findings", async () => {
+    const analysis = await analyzeUrl({ ...base, url: "https://netflix.net/", isPopular: check });
+    expect(analysis.signals.some((s) => s.id === "impersonation" && s.weightApplied > 0)).toBe(false);
+    const withClickFix = mergeSignals(analysis, signalsForPageChecks(["clickfix-clipboard"]), "standard");
+    expect(presentAnalysis(withClickFix, true).tone).not.toBe("safe");
+  });
+
+  it("does not let a kit on a popular platform borrow its reputation", async () => {
+    const analysis = await analyzeUrl({ ...base, url: "https://paypal-login.weebly.com/", isPopular: check });
+    expect(analysis.signals.some((s) => s.id === "popular")).toBe(false);
+    expect(analysis.signals.some((s) => s.id === "impersonation" && s.weightApplied > 0)).toBe(true);
   });
 });
 

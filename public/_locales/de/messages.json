@@ -268,5 +268,7 @@
   "posture_3pcOff": { "message": "Drittanbieter-Cookies sind blockiert" },
   "posture_3pcOffBody": { "message": "Seitenübergreifendes Cookie-Tracking ist aus." },
   "posture_versionRolling": { "message": "Chrome-Update ist unterwegs ($1 → $2)" },
-  "posture_versionRollingBody": { "message": "Google verteilt dieses Update seit Kurzem. Chrome installiert es in den nächsten Tagen selbst – starten Sie Chrome neu, wenn es danach fragt." }
+  "posture_versionRollingBody": { "message": "Google verteilt dieses Update seit Kurzem. Chrome installiert es in den nächsten Tagen selbst – starten Sie Chrome neu, wenn es danach fragt." },
+  "dash_credits": { "message": "Daten: Phishing.Database (MIT), Public Suffix List (MPL 2.0), Majestic Million von Majestic-12 Ltd (CC BY 3.0)." },
+  "dash_creditsLink": { "message": "Lizenzen" }
 }

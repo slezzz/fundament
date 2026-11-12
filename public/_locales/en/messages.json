@@ -268,5 +268,7 @@
   "posture_3pcOff": { "message": "Third-party cookies are blocked" },
   "posture_3pcOffBody": { "message": "Cross-site cookie tracking is off." },
   "posture_versionRolling": { "message": "Chrome update on its way ($1 → $2)" },
-  "posture_versionRollingBody": { "message": "Google started shipping this update recently. Chrome installs it on its own within a few days; relaunch Chrome when it asks." }
+  "posture_versionRollingBody": { "message": "Google started shipping this update recently. Chrome installs it on its own within a few days; relaunch Chrome when it asks." },
+  "dash_credits": { "message": "Data: Phishing.Database (MIT), Public Suffix List (MPL 2.0), Majestic Million by Majestic-12 Ltd (CC BY 3.0)." },
+  "dash_creditsLink": { "message": "Licenses" }
 }

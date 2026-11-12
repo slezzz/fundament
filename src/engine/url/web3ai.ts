@@ -13,7 +13,16 @@ const CRYPTO_CLAIM_RE =
   /airdrop|free.?mint|claim.?nft|claim.?token|connect-wallet|walletconnect|approve.?token|permit2|drain/i;
 const AI_CRED_RE =
   /\/(login|signin|sign-in|auth|oauth|session|api.?key|apikey)(\/|$)/i;
-const AI_BRAND_RE = /chatgpt|openai|claude|anthropic|gemini|copilot|grok|perplexity/i;
+const AI_BRAND_RE = /(^|[^a-z0-9])(chatgpt|openai|claude|anthropic|gemini|copilot|grok|perplexity)([^a-z0-9]|$)/i;
+const AI_BRANDS = new Set(["chatgpt", "openai", "claude", "anthropic", "gemini", "copilot", "grok", "perplexity"]);
+
+/** Whole hostname parts only: capgemini, ngrok, and copilotkit are not AI brand logins. */
+function hostNamesAiBrand(hostname: string): boolean {
+  return hostname
+    .toLowerCase()
+    .split(/[.-]/)
+    .some((part) => AI_BRANDS.has(part));
+}
 
 function signal(
   id: string,
@@ -28,8 +37,10 @@ export function extraWeb3AiSignals(
   parsed: ParsedUrl,
   domain: ParsedDomain | null,
   impersonation: boolean,
+  popular = false,
 ): RiskSignal[] {
-  if (domain && isOfficialAnyBrand(domain)) return [];
+  // Established sites publish articles like /what-is-a-seed-phrase; URL shape is no signal there.
+  if (popular || (domain && isOfficialAnyBrand(domain))) return [];
 
   const blob = `${parsed.pathname}${parsed.search}`;
   const out: RiskSignal[] = [];
@@ -59,7 +70,7 @@ export function extraWeb3AiSignals(
     );
   }
 
-  if (AI_BRAND_RE.test(parsed.hostname) && AI_CRED_RE.test(blob)) {
+  if (hostNamesAiBrand(parsed.hostname) && AI_CRED_RE.test(blob)) {
     out.push(
       signal(
         "ai-credential-url",

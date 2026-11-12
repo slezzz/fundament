@@ -49,6 +49,7 @@ import { licenseActivationAllowed } from "@billing/launch";
 import { fetchLicenseRevoked } from "@billing/status";
 import { FREE_ENTITLEMENTS } from "@billing/entitlements";
 import { WEIGHTS } from "@engine/risk/weights";
+import { parsePopularList, popularityCheck } from "@engine/reputation/popular";
 
 const httpIntelligence = new HttpThreatIntelligence({ baseUrl: reputationBaseUrl() });
 const telemetry = new GatedTelemetryClient(() => telemetryEnabled);
@@ -60,6 +61,26 @@ const ANALYSIS_TTL_MS = 30 * 1000;
 const serpCache = new Map<string, { label: string | null; at: number }>();
 const analysisCache = new Map<string, { analysis: UrlAnalysis; at: number }>();
 const lastSafeLog = new Map<string, number>();
+
+/* ------------------------------------------------------------ popularity list */
+
+type PopularityFn = (registrable: string, hostname?: string) => boolean;
+let popularLoad: Promise<PopularityFn> | null = null;
+
+async function packagedText(path: string): Promise<string> {
+  const response = await fetch(chrome.runtime.getURL(path));
+  return response.ok ? response.text() : "";
+}
+
+/** Loaded once per worker life from the packaged lists; never fetched from the network. */
+function popularity(): Promise<PopularityFn> {
+  if (!popularLoad) {
+    popularLoad = Promise.all([packagedText("data/popular-domains.txt"), packagedText("data/hosted-zones.txt")])
+      .then(([popularText, zonesText]) => popularityCheck(parsePopularList(popularText), parsePopularList(zonesText)))
+      .catch(() => () => false);
+  }
+  return popularLoad;
+}
 
 /* ------------------------------------------------------------------ settings */
 
@@ -194,6 +215,7 @@ async function analyze(url: string, settings: Settings): Promise<UrlAnalysis> {
     phishingProtection: settings.phishingProtection,
     threatProtection: settings.threatProtection,
     securityLevel: settings.securityLevel,
+    isPopular: await popularity(),
   });
   analysisCache.set(url, { analysis, at: Date.now() });
   if (analysisCache.size > 300) {
@@ -702,6 +724,7 @@ async function searchMarks(rawHrefs: unknown): Promise<ServerMessage> {
         phishingProtection: true,
         threatProtection: settings.threatProtection,
         securityLevel: settings.securityLevel,
+        isPopular: await popularity(),
       });
       label = analysis.allowlisted ? null : searchHitLabel(analysis.signals, analysis.score);
       serpCache.set(dest, { label, at: now });
@@ -893,7 +916,7 @@ async function analysisForPage(url: string): Promise<UrlAnalysis | null> {
   return null;
 }
 
-attachDownloadProtection(currentSettings, analysisForPage, async (host, reason) => {
+attachDownloadProtection(currentSettings, analysisForPage, popularity, async (host, reason) => {
   await bumpStats({ downloads: 1 });
   await logEvent({ type: "download_blocked", host, at: Date.now() });
   notifyDownloadBlocked(host, reason);

@@ -22,7 +22,7 @@ Fundament is **local-first**. Telemetry is **off** by default.
 
 Analysis never leaves the device unless the user enables **Online reputation**.
 
-The phishing host list (Phishing.Database, MIT) ships inside the extension and is matched by Chrome's network rules. Visited addresses are not sent anywhere to check them.
+The phishing host list (Phishing.Database, MIT) ships inside the extension and is matched by Chrome's network rules. Visited addresses are not sent anywhere to check them. The same is true for the popularity list (Majestic Million top 50,000) and the Public Suffix List: both are packaged files, looked up on the device.
 
 ## Automatic requests (no user data)
 

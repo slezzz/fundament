@@ -1,9 +1,28 @@
 # Changelog
 
+## Unreleased
+
+### Measured, not guessed
+- False-positive corpora from Majestic Million: ranks 1–10,000 and 100,001–110,000, each checked as home page and as `/login` with a password form. Enforced in `tests/security/corpus.test.ts`: at most 0.1 % / 0.2 % warnings, zero red. Current result: 0 of 20,000.
+- Detection floor on a deterministic sample of real phishing hosts analyzed as if unlisted (URL only ≥ 4 %, with login form ≥ 28 %).
+
+### Fixed
+- Full Public Suffix List instead of ~45 hand-picked endings. `google.com.ua`, `google.com.vn` and dozens of other country sites were shown as "Fake Google address".
+- The shipped feed blocked whole platforms because of single bad URLs on them: `bit.ly`, `pastebin.com`, `telegra.ph`, `blog.naver.com`, `mercadolibre.com.ar`, `name.com` and others. Platforms, shorteners and the top 50k domains are now filtered; kits on user subdomains stay blocked.
+- Brands own many domains (`netflix.net`, `google.org`, `amazon.jobs`, `github.blog`): established sites are no longer judged by their name. User subdomains on platforms never inherit that (closes `paypal-login.weebly.com`).
+- AI-login heuristic matched inside words (`capgemini`, `ngrok`, `copilotkit`).
+- "Login on suspicious host" alone no longer turns a site yellow; it only feeds the brand + credential combination.
+- `nip.io` / `sslip.io` home pages were flagged as DNS rebinding.
+- Chrome "needs update" during Google's staged rollouts (now measured against the version served to everyone, with a 3-day grace period).
+
+### Added
+- Third-party notices (Phishing.Database MIT, Public Suffix List MPL-2.0, Majestic Million CC BY 3.0) in the package and the dashboard.
+- Git repository, LF line endings.
+
 ## 1.1.0 — engine 2.0.0, weights 2.0.0
 
 ### New protection
-- Shipped phishing feed: ~386,000 active hosts (Phishing.Database, MIT) as a static DNR ruleset; pages are redirected to the warning screen before they load. `npm run feeds` refreshes it with a platform/brand safety filter.
+- Shipped phishing feed: ~385,000 active hosts (Phishing.Database, MIT) as a static DNR ruleset; pages are redirected to the warning screen before they load. `npm run feeds` refreshes it with a platform/brand safety filter.
 - Brand impersonation rewritten: 150+ brands, embedded official domains, lookalike letters (digits, `rn`→`m`, Cyrillic/Greek/Armenian), brand + phishing keyword (EN/DE), brand on foreign endings, regional-bank exceptions.
 - Page claims to be a brand (title / site name / logo) on a foreign domain while asking for credentials.
 - Combination scoring: brand + credential form, credential form on free site-builder hosting.

@@ -23,7 +23,7 @@ What they often imply that we will not: live global intel in the extension, anti
 - Never shows a green “Protected” state when something is actually wrong (including plain HTTP)
 - Blocks advertising and analytics hosts with a bundled catalog (not live EasyList). Extra tracker lists are planned for a later paid build.
 - Blocks ClickFix: when a fake CAPTCHA tries to put a PowerShell/Terminal command on your clipboard, Fundament replaces it with a warning. What you copy yourself is never touched
-- Ships a list of ~386,000 active phishing hosts (Phishing.Database) that is matched inside Chrome — nothing you visit is sent anywhere
+- Ships a list of ~385,000 active phishing hosts (Phishing.Database) that is matched inside Chrome — nothing you visit is sent anywhere
 - Recognizes pages that claim to be your bank, PayPal, Microsoft, or a wallet on a domain that is not theirs
 - Stops fake browser login pop-ups (browser-in-the-browser) and tech-support scam screens
 - Asks before a site gets an unlimited token approval or a Permit signature from your wallet, and keeps your wallet address if a page swaps it on the clipboard

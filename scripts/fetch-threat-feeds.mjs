@@ -11,7 +11,7 @@
  * User subdomains on hosting zones (evil.pages.dev, x.s3.amazonaws.com) are kept: that is
  * exactly where kits live, and DNR `requestDomains` only matches that subtree.
  */
-import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
@@ -50,6 +50,45 @@ const neverBlock = new Set([
   "com.br", "com.au", "co.uk", "co.in", "com.mx", "co.za", "co.jp", "com.tr", "com.ar", "com.cn",
 ]);
 
+/** URL shorteners: a host-wide block would break every short link, not just the bad one. */
+const shorteners = new Set(stringsIn("src/engine/url/shorteners.ts", /"([a-z0-9-]+(?:\.[a-z0-9-]+)+)"/g));
+
+/**
+ * Popular domains (Majestic top 50k, built by npm run domain-data). A feed entry for one
+ * of these is almost always a single bad *URL* on a big platform (bit.ly/x, pastebin.com/x,
+ * blog.naver.com/x). DNR can only block whole hosts, so blocking would break the platform.
+ */
+const popularFile = resolve(root, "public/data/popular-domains.txt");
+const popular = existsSync(popularFile)
+  ? new Set(readFileSync(popularFile, "utf8").split(/\r?\n/).filter((l) => l && !l.startsWith("#")))
+  : new Set();
+
+/** Full Public Suffix List, shared with the engine (src/engine/domain/psl-data.ts). */
+const pslText = readFileSync(resolve(root, "src/engine/domain/psl-data.ts"), "utf8");
+const pslRules = JSON.parse(/PSL_RULES = ("(?:[^"\\]|\\.)*")/.exec(pslText)?.[1] ?? '""').split("\n");
+const PSL_EXACT = new Set(pslRules.filter((r) => r && !r.startsWith("!") && !r.startsWith("*.")));
+const PSL_WILD = new Set(pslRules.filter((r) => r.startsWith("*.")).map((r) => r.slice(2)));
+const PSL_EXCEPT = new Set(pslRules.filter((r) => r.startsWith("!")).map((r) => r.slice(1)));
+
+export function registrableOf(host) {
+  const labels = host.split(".");
+  let suffixLen = 1;
+  for (let i = 0; i < labels.length; i++) {
+    const candidate = labels.slice(i).join(".");
+    const parent = labels.slice(i + 1).join(".");
+    if (PSL_EXCEPT.has(candidate)) {
+      suffixLen = labels.length - i - 1;
+      break;
+    }
+    if (PSL_EXACT.has(candidate) || (parent && PSL_WILD.has(parent))) {
+      suffixLen = labels.length - i;
+      break;
+    }
+  }
+  if (labels.length <= suffixLen) return null;
+  return labels.slice(labels.length - suffixLen - 1).join(".");
+}
+
 function underZone(host, zone) {
   return host.endsWith(`.${zone}`) && host.length > zone.length + 1;
 }
@@ -57,30 +96,65 @@ function underZone(host, zone) {
 export function keepHost(host) {
   if (!/^[a-z0-9][a-z0-9.-]*[a-z0-9]$/.test(host) || !host.includes(".") || host.length > 253) return false;
   if (/^\d+\.\d+\.\d+\.\d+$/.test(host)) return false;
-  if (neverBlock.has(host)) return false;
+  if (neverBlock.has(host) || shorteners.has(host)) return false;
   if (brandDomains.has(host)) return false;
+  const reg = registrableOf(host);
+  // A public suffix itself (pages.dev, com.br) can never be a phishing host.
+  if (!reg) return false;
+  if (shorteners.has(reg)) return false;
+  const userContent = [...USER_CONTENT_ZONES, ...hostingSuffixes, ...hostedZones].some((zone) => underZone(host, zone));
+  if (popular.has(reg) && !userContent) return false;
   const labels = host.split(".");
   for (let i = 1; i < labels.length - 1; i++) {
     const parent = labels.slice(i).join(".");
     if (brandDomains.has(parent)) {
       // accounts.google.com must never be blocked; evil.github.io may be.
-      return USER_CONTENT_ZONES.some((zone) => underZone(host, zone));
+      return userContent;
     }
   }
   return true;
 }
 
+/**
+ * Popular domains that demonstrably host user content: the feed lists at least
+ * HOSTED_ZONE_MIN distinct subdomains under them (x.weebly.com, y.ewp.live, …).
+ * Filled from the raw feed before filtering; also written for the engine so such
+ * subdomains never inherit the platform's popularity.
+ */
+const HOSTED_ZONE_MIN = 5;
+const hostedZones = new Set();
+
+function deriveHostedZones(rawHosts) {
+  const counts = new Map();
+  for (const host of rawHosts) {
+    const labels = host.split(".");
+    for (let i = 1; i < labels.length - 1; i++) {
+      const parent = labels.slice(i).join(".");
+      if (popular.has(parent)) {
+        counts.set(parent, (counts.get(parent) ?? 0) + 1);
+        break;
+      }
+    }
+  }
+  for (const [zone, n] of counts) if (n >= HOSTED_ZONE_MIN && !brandDomains.has(zone)) hostedZones.add(zone);
+}
+
 async function main() {
   const all = new Set();
   const report = [];
+  const texts = [];
   for (const source of SOURCES) {
     const response = await fetch(source.url, { headers: { "User-Agent": "fundament-feed-builder" } });
     if (!response.ok) throw new Error(`${source.id}: HTTP ${response.status}`);
-    const text = await response.text();
+    texts.push({ source, text: await response.text() });
+  }
+  const raw = texts.flatMap(({ text }) => text.split(/\r?\n/).map((l) => l.trim().toLowerCase().replace(/\.$/, "")).filter((l) => l && !l.startsWith("#")));
+  deriveHostedZones(new Set(raw));
+  for (const { source, text } of texts) {
     let kept = 0;
     let dropped = 0;
-    for (const raw of text.split(/\r?\n/)) {
-      const host = raw.trim().toLowerCase().replace(/\.$/, "");
+    for (const rawLine of text.split(/\r?\n/)) {
+      const host = rawLine.trim().toLowerCase().replace(/\.$/, "");
       if (!host || host.startsWith("#")) continue;
       if (keepHost(host)) {
         all.add(host);
@@ -96,6 +170,11 @@ async function main() {
   const hosts = [...all].sort();
   mkdirSync(resolve(root, "filters/feeds"), { recursive: true });
   writeFileSync(resolve(root, "filters/feeds/phishing-hosts.txt"), `${hosts.join("\n")}\n`);
+  writeFileSync(
+    resolve(root, "public/data/hosted-zones.txt"),
+    `# Popular domains serving user content on subdomains (>= ${HOSTED_ZONE_MIN} distinct phishing subdomains in the feed). Generated by npm run feeds.\n${[...hostedZones].sort().join("\n")}\n`,
+  );
+  report.push(`hosted zones: ${hostedZones.size}`);
   writeFileSync(
     resolve(root, "filters/feeds/SOURCES.md"),
     [

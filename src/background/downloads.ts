@@ -87,6 +87,7 @@ export async function contextVerdict(
   referrer: string,
   settings: Settings,
   tabAnalysis: UrlAnalysis | null,
+  isPopular?: (registrable: string, hostname?: string) => boolean,
 ): Promise<DownloadVerdict> {
   const name = basename(filename || url).toLowerCase();
   const executable = EXECUTABLE_EXT.test(name);
@@ -97,6 +98,7 @@ export async function contextVerdict(
     phishingProtection: settings.phishingProtection,
     threatProtection: settings.threatProtection,
     securityLevel: settings.securityLevel,
+    isPopular,
   };
   if (url.startsWith("http://") || url.startsWith("https://")) {
     const own = await analyzeUrl({ ...input, url });
@@ -116,6 +118,7 @@ export async function contextVerdict(
 export function attachDownloadProtection(
   settingsOf: () => Promise<Settings>,
   tabAnalysisOf: (url: string) => Promise<UrlAnalysis | null>,
+  popularityOf: () => Promise<(registrable: string, hostname?: string) => boolean>,
   onBlocked: (host: string, reason: string) => Promise<void>,
 ): void {
   // onDeterminingFilename holds the download until we call suggest(): the file is not
@@ -168,7 +171,7 @@ export function attachDownloadProtection(
           return;
         }
         const tabAnalysis = item.referrer ? await tabAnalysisOf(item.referrer) : null;
-        const context = await contextVerdict(url, item.filename ?? "", item.referrer ?? "", settings, tabAnalysis);
+        const context = await contextVerdict(url, item.filename ?? "", item.referrer ?? "", settings, tabAnalysis, await popularityOf());
         if (context.block) {
           await block(context.reason);
           return;

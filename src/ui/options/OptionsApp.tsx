@@ -115,6 +115,12 @@ export function OptionsApp() {
             <p className="muted">
               v{APP_VERSION} · engine {ENGINE_VERSION} · {state.plan}
             </p>
+            <p className="muted credits">
+              {t("dash_credits")}{" "}
+              <a href={chrome.runtime.getURL("THIRD_PARTY_NOTICES.txt")} target="_blank" rel="noopener">
+                {t("dash_creditsLink")}
+              </a>
+            </p>
           </div>
         </div>
       </header>

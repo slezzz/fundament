@@ -19,7 +19,26 @@ Build: `npm run filters` (also runs before `npm run build`).
 npm run feeds
 ```
 
-Downloads Phishing.Database `phishing-domains-ACTIVE.txt` (MIT), drops entries that would block a whole platform or an official brand host (for example `sites.google.com`, `accounts.google.com`, `github.io` itself) while keeping user subdomains on hosting zones (`evil.pages.dev`), and writes `filters/feeds/phishing-hosts.txt` plus `SOURCES.md`. Commit both. Refresh before every release; phishing hosts live for days, not months.
+Downloads Phishing.Database `phishing-domains-ACTIVE.txt` (MIT) and writes `filters/feeds/phishing-hosts.txt`, `SOURCES.md`, and `public/data/hosted-zones.txt`. Commit all three. Refresh before every release; phishing hosts live for days, not months.
+
+DNR can only block whole hosts, while feeds list hosts for single bad URLs too. Before shipping, an entry is dropped when blocking it would break a service:
+
+| Dropped | Why | Examples seen in the raw feed |
+|---------|-----|-------------------------------|
+| Public suffixes and platform roots | Would block every site on the platform | `sites.google.com`, `pages.dev` |
+| Official brand hosts and their non-user subdomains | Never block the real service | `accounts.google.com`, `appengine.google.com` |
+| URL shorteners | Would break every short link | `bit.ly`, `bit.do`, `cutt.us` |
+| Registrable domains in the Majestic top 50k | A listing there is one bad URL on a big site | `pastebin.com`, `telegra.ph`, `blog.naver.com`, `mercadolibre.com.ar` |
+
+Kept: user subdomains on hosting zones (`evil.pages.dev`, `x.weebly.com`, `y.ewp.live`). A popular domain with ≥ 5 listed subdomains is treated as such a zone automatically and written to `hosted-zones.txt`; the engine uses that file so these subdomains never inherit the platform's popularity.
+
+## Domain reference data
+
+```bash
+npm run domain-data
+```
+
+Rebuilds `src/engine/domain/psl-data.ts` (Public Suffix List, MPL-2.0), `public/data/popular-domains.txt` (Majestic Million top 50k, CC BY 3.0), and the false-positive corpora in `tests/fixtures/`. Run it before `npm run feeds` (the feed filter reads the popularity list). The corpora are enforced by `tests/security/corpus.test.ts`.
 
 The allowlist overrides the feed (priority 100 vs 5), so a false positive can always be fixed by the user. "Continue anyway" adds a session-only, tab-only allow rule.
 

@@ -1,0 +1,29 @@
+Fundament — third-party data and software
+==========================================
+
+Fundament itself is released under the MIT License (see LICENSE in the source repository).
+It ships the following third-party data. None of it is fetched at runtime.
+
+1. Phishing.Database — rules/threats-feed.json
+   https://github.com/mitchellkrogza/Phishing.Database
+   License: MIT
+   Copyright (c) Mitchell Krog and contributors.
+   Fundament filters the list before shipping (platform, shortener, and popular hosts are
+   removed so that a single bad URL cannot block a whole service).
+
+2. Public Suffix List — compiled into background.js and the UI bundles
+   https://publicsuffix.org/
+   License: Mozilla Public License, v. 2.0 (https://mozilla.org/MPL/2.0/)
+   The list is included unmodified apart from punycode conversion of IDN rules.
+
+3. Majestic Million — data/popular-domains.txt, data/hosted-zones.txt (derived)
+   https://majestic.com/reports/majestic-million
+   License: Creative Commons Attribution 3.0 Unported (https://creativecommons.org/licenses/by/3.0/)
+   Attribution: "Majestic Million" by Majestic-12 Ltd, used under CC BY 3.0.
+   Changes: reduced to the top 50,000 registrable domains; hosted-zones.txt is derived by
+   intersecting it with the phishing list.
+
+Software bundled in the extension
+---------------------------------
+- React and React DOM — MIT License, Copyright (c) Meta Platforms, Inc. and affiliates.
+- punycode.js — MIT License, Copyright Mathias Bynens.
