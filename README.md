@@ -8,7 +8,18 @@ Simple on the outside. Serious security underneath. If something is wrong, the p
 
 ## What the MVP actually does
 
-These features are **real**, local, and tested (unit tests plus live-browser E2E):
+These features are **real**, local, and tested (unit tests, live-browser E2E, and real-world corpora).
+
+**Measured, enforced on every test run** (`tests/security/corpus.test.ts`):
+
+| Corpus | Home page warned | `/login` + password form warned | Red (warning page) |
+|---|---|---|---|
+| Majestic ranks 1–10,000 | 0 | 0 | 0 |
+| Majestic ranks 100,001–110,000 (outside the shipped popularity list) | 0 | 0 | 0 |
+
+Real phishing hosts from the feed, analyzed *as if they were not listed*: about 6 % are flagged from the URL alone and about 34 % once the page shows a password form; brand claims in the page title/logo add more. Listed hosts (~385,000) are blocked before they load.
+
+Features:
 
 - **Shipped phishing feed:** ~385,000 active phishing hosts (Phishing.Database, MIT) compiled into a static DNR ruleset. A visit is redirected to the warning page *before the request leaves*; the user can still continue (per tab, per session). Platforms, URL shorteners, and the 50,000 most-linked domains are filtered out, so a single bad URL on bit.ly or pastebin can never take down the whole service; kits on user subdomains (evil.pages.dev, x.weebly.com) stay blocked.
 - **Early interstitial:** the URL engine runs at `onBeforeNavigate`, again on commit and on single-page-app route changes. Tab state lives in `chrome.storage.session`, so it survives the service worker being stopped.
@@ -93,6 +104,7 @@ Not implemented:
 - Stopping a command you type or paste yourself into Windows Run or a terminal. Fundament stops the **page** from putting it on the clipboard.
 - Live feed updates between releases without a server you run (the shipped phishing list is refreshed per release with `npm run feeds`; a signed, pinned IOC feed URL can be configured)
 - Anything below the browser: infostealer malware, OS exploits, stolen session cookies on an infected PC
+- Card skimmers (Magecart) injected into a shop's own scripts. Behavioral detection is possible but looks like ordinary checkout code; without a measured false-positive rate on real checkouts it is not shipped. Hidden autofill fields on payment forms are detected.
 
 When online reputation is unavailable, the UI says so. It never claims “everything is safe” on that basis.
 
