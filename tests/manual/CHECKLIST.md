@@ -35,6 +35,16 @@ Load unpacked `dist/` after `npm.cmd run build`. Reload the extension after ever
 
 - [ ] `http://example.com/setup.exe` is cancelled when download protection is on
 
+## Warning page
+
+- [ ] A lookalike login shows the warning page before the site is used
+- [ ] "Report a false alarm" / "Fehlalarm melden" shows "This report is publicly visible." / "Diese Meldung ist öffentlich sichtbar." before any GitHub tab opens
+- [ ] The preview shows the hostname and signal ids, not the path or query
+- [ ] A router or `192.168.x.x` page, if it ever warns, has no report link
+- [ ] Settings → "Report phishing we missed" opens a GitHub form with no hostname filled in
+
+E2E already covers the lookalike warning and the public-report preview: `tests/e2e/live.spec.ts` ("a false-alarm report shows the host and not the address, then opens a public issue"). The router case is unit-tested (`tests/unit/false-positive-report.test.ts`), not in this manual list's browser pass.
+
 ## Regression
 
 - [ ] chrome://extensions shows no content.js / content-search.js import error

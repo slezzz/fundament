@@ -26,6 +26,7 @@
 - Onboarding describes the current protections (feed, ClickFix, wallet drainers, browser health, extension watch).
 
 ### Added
+- `RELEASE_AUDIT.md`: baseline inventory of protections, permissions, network requests, and stored data, with test names and the 2026-11-15 measurements. Not a release verdict.
 - False-alarm report on the warning page. After a second confirmation it opens a **public** GitHub issue with the hostname, signal ids, and engine / weights / extension versions. The full address is never included. Home-network names, private addresses, DNS-rebind names, and hosts outside the Public Suffix List have no report link. Settings links to an empty public form for phishing that was not caught.
 - `scripts/store-screenshots.mjs`: Chrome Web Store screenshots (1280×800, DE + EN) from the real build. `popup.html?tab=<id>` shows a given tab (extension pages only).
 - Third-party notices (Phishing.Database MIT, Public Suffix List MPL-2.0, Majestic Million CC BY 3.0) in the package and the dashboard.
