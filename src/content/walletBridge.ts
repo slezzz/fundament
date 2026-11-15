@@ -41,6 +41,44 @@
     }
   }
 
+  /**
+   * The page shares this world and can assign over a normal function.
+   * A getter/setter on the same property re-wraps whatever the page installs,
+   * so the original check stays on the way through.
+   */
+  function seal(
+    owner: object,
+    key: string,
+    wrap: (fn: (...args: never[]) => unknown) => (...args: never[]) => unknown,
+  ): void {
+    let host: object | null = owner;
+    let desc: PropertyDescriptor | undefined;
+    while (host) {
+      desc = Object.getOwnPropertyDescriptor(host, key);
+      if (desc) break;
+      host = Object.getPrototypeOf(host);
+    }
+    if (!host || !desc || typeof desc.value !== "function") return;
+    const original = desc.value as (...args: never[]) => unknown;
+    let current = wrap(original);
+    try {
+      Object.defineProperty(host, key, {
+        configurable: false,
+        enumerable: desc.enumerable === true,
+        get: () => current,
+        set: (next: unknown) => {
+          if (typeof next === "function") current = wrap(next as (...args: never[]) => unknown);
+        },
+      });
+    } catch {
+      try {
+        (host as Record<string, unknown>)[key] = current;
+      } catch {
+        /* frozen */
+      }
+    }
+  }
+
   /* ----------------------------------------------------------- ClickFix */
 
   /**
@@ -191,14 +229,12 @@
   );
 
   try {
-    const dtProto = DataTransfer.prototype;
-    const originalSetData = dtProto.setData;
-    dtProto.setData = function (this: DataTransfer, format: string, data: string) {
-      if (/^text(\/plain)?$/i.test(String(format))) {
-        return originalSetData.call(this, format, vet(data));
-      }
-      return originalSetData.call(this, format, data);
-    };
+    seal(DataTransfer.prototype, "setData", (original) => {
+      return function (this: DataTransfer, format: string, data: string) {
+        const text = /^text(\/plain)?$/i.test(String(format));
+        return (original as (this: unknown, format: string, data: string) => unknown).call(this, format, text ? vet(data) : data);
+      };
+    });
   } catch {
     /* ignore */
   }
@@ -206,33 +242,35 @@
   const clipboard = navigator.clipboard;
   if (clipboard) {
     try {
-      const originalWriteText = clipboard.writeText?.bind(clipboard);
-      if (originalWriteText) {
-        clipboard.writeText = function (data: string) {
-          return originalWriteText(vet(data));
-        };
+      if (typeof clipboard.writeText === "function") {
+        seal(clipboard, "writeText", (original) => {
+          return function (this: unknown, data: string) {
+            return (original as (this: unknown, data: string) => unknown).call(this, vet(data));
+          };
+        });
       }
-      const originalWrite = clipboard.write?.bind(clipboard);
-      if (originalWrite && typeof ClipboardItem === "function") {
-        clipboard.write = async function (items: ClipboardItems) {
-          const vetted: ClipboardItem[] = [];
-          for (const item of Array.from(items)) {
-            if (item.types.includes("text/plain")) {
-              try {
-                const text = await (await item.getType("text/plain")).text();
-                const safe = vet(text);
-                if (safe !== text) {
-                  vetted.push(new ClipboardItem({ "text/plain": new Blob([safe], { type: "text/plain" }) }));
-                  continue;
+      if (typeof clipboard.write === "function" && typeof ClipboardItem === "function") {
+        seal(clipboard, "write", (original) => {
+          return async function (this: unknown, items: ClipboardItems) {
+            const vetted: ClipboardItem[] = [];
+            for (const item of Array.from(items)) {
+              if (item.types.includes("text/plain")) {
+                try {
+                  const text = await (await item.getType("text/plain")).text();
+                  const safe = vet(text);
+                  if (safe !== text) {
+                    vetted.push(new ClipboardItem({ "text/plain": new Blob([safe], { type: "text/plain" }) }));
+                    continue;
+                  }
+                } catch {
+                  /* fall through to the original item */
                 }
-              } catch {
-                /* fall through to the original item */
               }
+              vetted.push(item);
             }
-            vetted.push(item);
-          }
-          return originalWrite(vetted);
-        };
+            return (original as (this: unknown, items: ClipboardItems) => unknown).call(this, vetted);
+          };
+        });
       }
     } catch {
       /* frozen clipboard object */
@@ -316,23 +354,23 @@
   function wrapProvider(provider: unknown): void {
     const p = provider as { request?: (args: unknown) => Promise<unknown> } | null;
     if (!p || typeof p !== "object" || typeof p.request !== "function" || wrapped.has(p)) return;
-    const original = p.request;
     try {
-      const guarded = function (this: unknown, args: unknown): Promise<unknown> {
-        const danger = dangerOf(args);
-        if (danger) {
-          ping("wallet-drainer");
-          const host = location.hostname;
-          const text = german
-            ? `Fundament: ${host} fordert ${danger.what} an.\n\nWallet-Drainer leeren Konten mit genau dieser Anfrage. Nur fortfahren, wenn du diese Seite kennst und die Aktion selbst gestartet hast.\n\nAn die Wallet weitergeben?`
-            : `Fundament: ${host} is requesting ${danger.what}.\n\nWallet drainers empty accounts with exactly this request. Only continue if you know this site and started this action yourself.\n\nPass it to your wallet?`;
-          if (!nativeConfirm(text)) {
-            return Promise.reject(Object.assign(new Error("User rejected the request (Fundament)."), { code: 4001 }));
+      seal(p, "request", (original) => {
+        return function (this: unknown, args: unknown): Promise<unknown> {
+          const danger = dangerOf(args);
+          if (danger) {
+            ping("wallet-drainer");
+            const host = location.hostname;
+            const text = german
+              ? `Fundament: ${host} fordert ${danger.what} an.\n\nWallet-Drainer leeren Konten mit genau dieser Anfrage. Nur fortfahren, wenn du diese Seite kennst und die Aktion selbst gestartet hast.\n\nAn die Wallet weitergeben?`
+              : `Fundament: ${host} is requesting ${danger.what}.\n\nWallet drainers empty accounts with exactly this request. Only continue if you know this site and started this action yourself.\n\nPass it to your wallet?`;
+            if (!nativeConfirm(text)) {
+              return Promise.reject(Object.assign(new Error("User rejected the request (Fundament)."), { code: 4001 }));
+            }
           }
-        }
-        return original.call(this ?? p, args);
-      };
-      Object.defineProperty(p, "request", { value: guarded, configurable: true, writable: true });
+          return (original as (this: unknown, args: unknown) => Promise<unknown>).call(this ?? p, args);
+        };
+      });
       wrapped.add(p);
     } catch {
       /* provider is frozen: detection-only via page checks */
@@ -345,6 +383,7 @@
     if (Array.isArray(multi)) multi.forEach(wrapProvider);
   }
 
+  scanProviders();
   window.addEventListener("eip6963:announceProvider", (event) => {
     const detail = (event as CustomEvent<{ provider?: unknown }>).detail;
     wrapProvider(detail?.provider);

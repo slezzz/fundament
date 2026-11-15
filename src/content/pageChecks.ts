@@ -239,7 +239,8 @@ function collectBrowserInBrowser(kinds: string[]): void {
   if (!TOP) return;
   const candidates = Array.from(document.querySelectorAll("div, span, p, input[readonly], input[disabled]")).slice(0, 600);
   for (const el of candidates) {
-    const text = (el.tagName === "INPUT" ? (el as HTMLInputElement).value : el.childElementCount === 0 ? el.textContent ?? "" : "").trim();
+    // The HTML value attribute, not the live field. Typed text never lives in the attribute.
+    const text = (el.tagName === "INPUT" ? el.getAttribute("value") ?? "" : el.childElementCount === 0 ? el.textContent ?? "" : "").trim();
     if (!text || text.length > 120) continue;
     const match = BITB_HOST_RE.exec(text);
     const fakeHost = match?.[1]?.toLowerCase();
@@ -447,9 +448,10 @@ void chrome.storage.local.get("settings").then((stored) => {
 
   window.addEventListener("message", (event) => {
     if (event.source !== window) return;
-    const data = event.data as { __fundament?: string } | null;
-    const kind = data?.__fundament;
-    if (typeof kind !== "string" || !pageChecks) return;
+    const data = event.data;
+    if (typeof data !== "object" || data === null || Array.isArray(data) || !Object.hasOwn(data, "__fundament")) return;
+    const kind = (data as { __fundament?: unknown }).__fundament;
+    if (typeof kind !== "string" || kind.length > 40 || !pageChecks) return;
     if (kind === "wallet-http" && location.protocol !== "http:") return;
     if (kind === "keyboard-lock") {
       keyboardLocked = true;
