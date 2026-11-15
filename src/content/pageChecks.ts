@@ -343,7 +343,11 @@ const COSMETIC = [
 
 function hostAllowed(allowlist: string[], hostname: string): boolean {
   const host = hostname.toLowerCase();
-  return allowlist.some((item) => host === item || host.endsWith(`.${item}`));
+  return allowlist.some((item) => {
+    if (typeof item !== "string" || !item.includes(".") || item.includes("*")) return false;
+    const entry = item.trim().toLowerCase();
+    return host === entry || host.endsWith(`.${entry}`);
+  });
 }
 
 function injectCosmetic(): void {

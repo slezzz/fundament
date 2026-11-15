@@ -5,7 +5,7 @@ import { NullThreatIntelligence } from "@engine/reputation/null-provider";
 import { GatedTelemetryClient } from "@privacy/telemetry";
 import { hostOnly } from "@privacy/sanitize";
 import { reputationBaseUrl } from "@privacy/remoteConfig";
-import { loadSettings, patchSettings } from "@storage/settings";
+import { healStoredSettings, loadSettings, patchSettings } from "@storage/settings";
 import { appendEvent, clearEvents, loadEvents } from "@storage/events";
 import { deleteTab, emptyTab, getTab, saveTab, type TabRecord } from "@storage/tabs";
 import {
@@ -796,6 +796,10 @@ async function onExtensionChange(): Promise<void> {
 }
 
 async function boot(reason: "install" | "startup"): Promise<void> {
+  await healStoredSettings({
+    get: () => chrome.storage.local.get(null),
+    set: (settings) => chrome.storage.local.set({ settings }),
+  });
   const integrity = await runIntegrityCheck(reason);
   if (!integrity.ok) await logEvent({ type: "integrity_alert", host: "extension", at: Date.now() });
   await seedShippedIoc();

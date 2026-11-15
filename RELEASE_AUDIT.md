@@ -8,7 +8,7 @@ A row is done only when a test name or a command output from this date is cited.
 
 | Pri | Item | Why it blocks a release |
 |-----|------|-------------------------|
-| P1 | Storage migration from 1.0.x, permission review | Message schema is in `tests/unit/message-gate.test.ts`. Content-script reads and the MAIN-world hook bypass are in `tests/unit/content-isolation.test.ts`. ReDoS bounds are in `tests/security/redos.test.ts` (see below). Still open: a 1.0.x storage blob that must leave protection on, and whether any required permission can move to `optional_permissions`. |
+| P1 | Permission review | Message schema, content-script isolation, ReDoS bounds, and storage migration are tested (see below). Still open: whether any required permission can move to `optional_permissions`. That change needs a yes before it is applied. |
 | P1 | `THREAT_MODEL.md` is behind the code | It says there is no `externally_connectable` and that DNR never redirects. `src/manifest.json` allows `http://127.0.0.1:8787/*` and `http://localhost:8787/*`. The store pack refuses a zip that still has those matches (`scripts/pack-store.mjs`). Static feed rules redirect to `warning.html`. Doc drift, not a measured code bug. |
 | P2 | Shipped phishing list: file vs browser | Compiled file: **49 rules, 385,353 hosts**, priority 5, action `redirect` (counted 2026-11-15 from `public/rules/threats-feed.json`, 8,000 hosts per rule in `scripts/compile-filters.mjs`). Chrome’s limit is on **rules**, not on host entries: guaranteed minimum 30,000 static rules, 50 enabled rulesets since Chrome 120 ([DNR reference](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest), fetched 2026-11-15). 49 rules is inside that budget. The reference lists no numeric cap on `requestDomains` length. Browser enforcement is measured for **one** host in `tests/e2e/live.spec.ts` (“a host from the shipped phishing feed is redirected, and Continue works”), not for a host in the last chunk. |
 | P2 | Current attack variants | AiTM, device-code and OAuth-consent phishing, passkey downgrade, FileFix and later ClickFix variants, current wallet delegation types, prompt injection against browser agents. Some older shapes have tests (`tests/unit/clickfix.test.ts`, `tests/unit/depth-layers.test.ts` “AI prompt injection and quishing”). No fresh corpus and no false-positive measurement for the variants named in the release plan. |
@@ -82,6 +82,24 @@ V8’s extra non-backtracking RegExp engine does not run for patterns with the `
 Caps applied before matching: URL 4096 (`parseHttpUrl` / `sessionIdInUrl`), feed host 253, quishing resource and content-script `src` 2048, page-script and DOM-XSS sources keep their existing 50 000 / 80 000 ceilings, prompt text 8000, cookie header 8192 and 40 names, cookie name 128, CSP 4000, field-name blob 240, filename suffix 180–512, worker URL 300, ClickFix command 12 000. `tests/security/redos.test.ts` (“regex time budget on attacker-sized input”) asserts each of those paths finishes in under 100 ms and that a real ClickFix command, a `qrserver` URL with a long query, a session id in a normal URL, and `report.pdf.html` at the end of a long filename still match.
 
 Commands after that change: typecheck pass, lint pass, `npm test` 34 files / **276 tests** pass (corpus ceilings unchanged), Edge E2E **11** pass. The ReDoS file itself finished in 35 ms.
+
+## Storage migration, 2026-11-15
+
+Chrome fires `runtime.onInstalled` with `reason: "update"` when the extension package is replaced ([runtime.onInstalled](https://developer.chrome.com/docs/extensions/reference/api/runtime#event-onInstalled), fetched 2026-11-15). `chrome.storage.local` survives that update. The service worker then runs `boot`, which now calls `healStoredSettings` before network rules are built.
+
+There is no 1.0 settings file in this repository (`git log` for `src/storage/settings.ts` starts at the 1.1.0 baseline). The 1.0 blob in the test is the shape the audit asked for: a top-level `enabled: false` plus an `allow` list. Those flags are not the current switches, so they do not turn protection off.
+
+`tests/unit/storage-migration.test.ts`:
+
+| Blob | Result |
+|------|--------|
+| 1.0 `{ enabled: false, phishing: false, allow: ["com", "bank.example", "*"] }` through `healStoredSettings` | threat, phishing, page checks, downloads, live feed on. Allowlist is `bank.example` only. The healed object is what gets written. |
+| Broken `null`, `"nope"`, `[]`, `{ threatProtection: "false" }` | protection on |
+| Manipulated settings object whose `threatProtection: false` is only on the prototype, plus allowlist `com`, `github.io`, `co.uk`, `*.com`, `paypal.com`, and an own `phishingProtection: false` | inherited off switches ignored, suffix entries dropped, `paypal.com` kept, explicit phishing boolean kept |
+
+A boolean `false` stored under the current key is a user choice and is not forced back on. `chrome.storage` is extension-specific ([storage](https://developer.chrome.com/docs/extensions/reference/api/storage), fetched 2026-11-15): this extension's service worker and content scripts can read it, and a page cannot. A content script of this extension could still write a boolean `false`. The page-check script also ignores an allowlist entry with no dot or with `*`, so a `com` entry does not skip page checks even before the rewrite finishes.
+
+Commands after that change: typecheck pass, lint pass, `npm test` 35 files / **279 tests** pass (corpus ceilings unchanged), Edge E2E **11** pass.
 
 ## Permissions
 
