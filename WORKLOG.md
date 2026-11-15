@@ -2,6 +2,25 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-15 — Paste-lure class
+
+- Hypothesis: A page can copy `finger` at a host, `start finger.exe` / `ct.exe`, or a `.search-ms` / `.lnk` / `.hta` name, or can call a normal `curl | sh` a browser-crash fix, and the old patterns miss it. Install docs that say “Terminal” must stay unblocked.
+- Result: Those shapes are `strong`. Crash / “out of date” / “abgestürzt” text makes a weak install command count as a lure. “Open Terminal” and “PowerShell” do not. The page’s claim is not compared with the installed Chrome version; `posture.ts` still owns that.
+- Evidence: `tests/unit/clickfix.test.ts` (the two new cases). Homebrew, winget, rustup, nvm, Docker, npm, pip lines stay off. Edge crash page copies `curl | sh` with no captcha and no Win+R. 282 tests, corpus ceilings held, E2E 14.
+- Open doubt: a page that only says “open Windows Terminal” and copies a malicious command shaped like rustup is not blocked. Blocking that phrase would also block the Docker and rustup copy buttons. Measured as the counterexample, left open on purpose.
+
+### Self-check
+
+- Real user, real attack: Yes for the class Microsoft described on 5 Feb 2026 and 28 Aug 2026: a copied LOLBin or a fake crash that asks for a shell command. Not a transcription of their figure.
+- Five-minute bypass: Drop the `@host`, the `.exe`, and the crash sentence, and copy `curl | sh` from a page that only says Terminal. Tested: that stays unblocked. Adding the crash sentence is tested the other way.
+- False alarm: The seven install lines under “Open Terminal” do not block. Measured, not assumed. `ubuntu-24.04.iso` is not a file lure.
+- Simpler or more complicated: Three patterns and one shared phrase list, duplicated into the bridge. The sync test covers both.
+- AGENTS.md: Not stretched. No new permission, no network, no reading of the user’s own clipboard. Page text used for the lure check stays in the page.
+- Would I defend it: Yes, as “these shapes are blocked, and install docs are not.” Not as “every paste lure.”
+- Harmless on weird input: A ten-character `.hta` name is still strong (the length floor does not apply to that pattern). A long page with the crash sentence at the end still matches. A host over 253 characters is unchanged.
+
+## 2026-11-15 — Over-length clipboard command
+
 ## 2026-11-15 — Over-length clipboard command
 
 - Hypothesis: `clickFixTier` returns null above 12 000 characters, so a real command plus padding is copied and still runs.

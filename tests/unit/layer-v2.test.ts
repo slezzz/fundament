@@ -230,6 +230,11 @@ describe("ClickFix tiers", () => {
     expect(markers("src/content/walletBridge.ts", "commandTier")).toBe(engineMarkers);
     expect(readFileSync(resolve(__dirname, "../../src/engine/page/clickfix.ts"), "utf8")).not.toContain("length > 12_000");
     expect(readFileSync(resolve(__dirname, "../../src/content/walletBridge.ts"), "utf8")).not.toContain("length > 12000) return null");
+    const lure = (file: string): string | undefined => {
+      const text = readFileSync(resolve(__dirname, "../..", file), "utf8");
+      return text.match(/\/(?:windows\\s\*\(\?:key\|taste\)[\s\S]*?outdated)\)\/i/)?.[0];
+    };
+    expect(lure("src/engine/page/clickfix.ts")).toBe(lure("src/content/walletBridge.ts"));
   });
 });
 

