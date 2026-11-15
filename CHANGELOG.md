@@ -31,6 +31,7 @@
 - Onboarding describes the current protections (feed, ClickFix, wallet drainers, browser health, extension watch).
 
 ### Unchanged
+- CrashFix and TerminalFix clipboard commands stay unimplemented. The Microsoft posts show them as figures, so the exact command is not confirmed. The existing `finger user@host |` check was not widened.
 - `THREAT_MODEL.md` now matches the manifest. Unpacked builds can take a license from the local pay page. A store build does not keep that localhost exception. Feed rules redirect to this extension's warning page.
 - Permissions stay as declared. The review is in `RELEASE_AUDIT.md`. `privacy` and `management` stay required because browser hardening and the extension watch run without an extra click. No manifest edit.
 

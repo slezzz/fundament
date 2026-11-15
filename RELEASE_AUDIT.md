@@ -237,6 +237,12 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Paste-lure advisories read 2026-11-15
+
+[CrashFix](https://www.microsoft.com/en-us/security/blog/2026/02/05/clickfix-variant-crashfix-deploying-python-rat-trojan/) (5 Feb 2026) and [TerminalFix](https://www.microsoft.com/en-us/security/blog/2026/08/28/terminalfix-campaign-deploys-reverse-tunnel-through-multistage-intrusion/) (28 Aug 2026). The clipboard command is in a figure in both posts. The CrashFix hunting query requires `cmd.exe`, `start`, `finger.exe`, and `ct.exe` together. No pattern was added. The extension id in that post was not added to any list.
+
+Commands after that note: typecheck pass, lint pass, `npm test` 35 files / **279 tests** pass (corpus ceilings unchanged), Edge E2E **13** pass.
+
 ## Sources read 2026-11-15
 
 - [declarativeNetRequest](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest): static ruleset caps, guaranteed 30,000 static rules, regex cap 1,000, dynamic safe-rule cap 30,000 from Chrome 121, unsafe dynamic cap 5,000.

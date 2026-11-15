@@ -2,6 +2,22 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-15 — CrashFix and TerminalFix command text
+
+- Hypothesis: The February 2026 CrashFix advisory contains a clipboard command that `clickFixTier` does not treat as strong, so a user who pastes it is unprotected.
+- Result: No code. Both advisories show the command as a figure. The CrashFix hunting query is `cmd.exe` + `start` + `finger.exe` + `ct.exe`. The current strong pattern is `finger user@host |`. Those are not the same string. Inventing the missing characters would flag or miss the wrong thing.
+- Evidence: Microsoft Security Blog, fetched 2026-11-15, URLs in `BACKLOG.md`. `src/engine/page/clickfix.ts` line for `finger`.
+- Open doubt: the exact command. Also whether the page says Win+R or only “the browser crashed”. Not read from the image.
+
+### Self-check
+
+- Real user, real attack: Not this pass. Shipping a guessed `finger.exe` rule could false-alarm on a docs page that mentions the tool, or miss the real command.
+- Five-minute bypass: Not applicable. No new check.
+- False alarm: None added.
+- Simpler or more complicated: No code. Correct.
+- AGENTS.md: Not stretched. Unconfirmed command was not built on.
+- Would I defend it: Yes, as “we did not invent the command.” Not as coverage of CrashFix.
+
 ## 2026-11-15 — Threat model matches the manifest
 
 - Hypothesis: `THREAT_MODEL.md` still told a reviewer that websites cannot connect and that DNR never redirects. Both were already false in code, so the doc was the bug.

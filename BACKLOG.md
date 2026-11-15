@@ -4,7 +4,7 @@ Highest user benefit first. A row is done only after a test or a cited measureme
 
 ## Next
 
-1. **Paste-lure class beyond the current ClickFix patterns.** CrashFix, TerminalFix, FileFix, and ConsentFix are named in the release plan. ConsentFix (a localhost redirect that steals an OAuth code) needs a written concept and a yes before code. The others can be checked against `src/engine/page/clickfix.ts` first: if a real lure is already missed by the current patterns, that is the next code change. Source must be a vendor advisory read that day, not the research-link list alone.
+1. **Paste-lure command text is not in the advisory prose.** Microsoft’s CrashFix post (5 Feb 2026, https://www.microsoft.com/en-us/security/blog/2026/02/05/clickfix-variant-crashfix-deploying-python-rat-trojan/) and TerminalFix post (28 Aug 2026, https://www.microsoft.com/en-us/security/blog/2026/08/28/terminalfix-campaign-deploys-reverse-tunnel-through-multistage-intrusion/) put the clipboard command in a figure. The CrashFix hunting query names `cmd.exe`, `start`, `finger.exe`, and `ct.exe`. Fundament already treats `finger user@host |` as a strong command. Whether the published command matches that shape is **nicht bestätigt**. Do not add a regex until the command text is read. ConsentFix still needs a written concept and a yes before code. The malicious extension id in that CrashFix post is not added: an extension-id list needs a license first.
 2. **Store listing versus behavior.** Single-purpose and privacy-form text against the dashboard. Policies fetched 2026-11-15. A wrong listing is a store rejection, not a missed phish.
 
 ## Wartet auf Freigabe
