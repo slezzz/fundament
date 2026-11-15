@@ -8,7 +8,7 @@ A row is done only when a test name or a command output from this date is cited.
 
 | Pri | Item | Why it blocks a release |
 |-----|------|-------------------------|
-| P1 | Permission review | Message schema, content-script isolation, ReDoS bounds, and storage migration are tested (see below). Still open: whether any required permission can move to `optional_permissions`. That change needs a yes before it is applied. |
+| P1 | Permission review | Written 2026-11-15. No permission moves. Applying the optional-permission candidates still needs a yes. See “Permission proposal”. |
 | P1 | `THREAT_MODEL.md` is behind the code | It says there is no `externally_connectable` and that DNR never redirects. `src/manifest.json` allows `http://127.0.0.1:8787/*` and `http://localhost:8787/*`. The store pack refuses a zip that still has those matches (`scripts/pack-store.mjs`). Static feed rules redirect to `warning.html`. Doc drift, not a measured code bug. |
 | P2 | Shipped phishing list: file vs browser | Compiled file: **49 rules, 385,353 hosts**, priority 5, action `redirect` (counted 2026-11-15 from `public/rules/threats-feed.json`, 8,000 hosts per rule in `scripts/compile-filters.mjs`). Chrome’s limit is on **rules**, not on host entries: guaranteed minimum 30,000 static rules, 50 enabled rulesets since Chrome 120 ([DNR reference](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest), fetched 2026-11-15). 49 rules is inside that budget. The reference lists no numeric cap on `requestDomains` length. Browser enforcement is measured for **one** host in `tests/e2e/live.spec.ts` (“a host from the shipped phishing feed is redirected, and Continue works”), not for a host in the last chunk. |
 | P2 | Current attack variants | AiTM, device-code and OAuth-consent phishing, passkey downgrade, FileFix and later ClickFix variants, current wallet delegation types, prompt injection against browser agents. Some older shapes have tests (`tests/unit/clickfix.test.ts`, `tests/unit/depth-layers.test.ts` “AI prompt injection and quishing”). No fresh corpus and no false-positive measurement for the variants named in the release plan. |
@@ -123,7 +123,37 @@ Source: `src/manifest.json`. Justification text: `PRIVACY.md`, `STORE_LISTING.md
 | `scripting` | Fingerprint shield only while that toggle is on | used |
 | Host `http://*/*`, `https://*/*` | Page checks, DNR redirects, optional reputation POST | used |
 
-`optional_permissions` is empty. Whether any required permission can move there is an open P1 question, not a change.
+`optional_permissions` is empty. The proposal below does not change the manifest.
+
+## Permission proposal, 2026-11-15
+
+Not applied. Moving a permission needs an explicit yes. Sources fetched the same day: [Declare permissions](https://developer.chrome.com/docs/extensions/develop/concepts/declare-permissions), [permissions API](https://developer.chrome.com/docs/extensions/reference/api/permissions), [permission list](https://developer.chrome.com/docs/extensions/reference/permissions-list).
+
+`permissions.request()` runs from a user gesture. These names cannot be optional: `debugger`, `declarativeNetRequest`, `devtools`, `geolocation`, `mdns`, `proxy`, `tts`, `ttsEngine`. `contentSettings`, `privacy`, `scripting`, and `management` are not on that list, so Chrome allows them as `optional_permissions`.
+
+Install warnings from that list, for the permissions this extension declares:
+
+| Permission | Warning on the list | Keep required because |
+|------------|---------------------|------------------------|
+| `contentSettings` | “Change your settings that control websites' access to features such as cookies, JavaScript, plugins, geolocation, microphone, camera etc.” | Only `blockNotificationPrompts`, default **false** (`src/storage/settings.ts`). Candidate to move, not moved. |
+| `privacy` | “Change your privacy-related settings.” | `hardenBrowser` defaults **true** and `applyBrowserHardening` runs on every boot. Optional would skip WebRTC, prefetch, and hyperlink auditing until a click. That is a protection drop for the default install. |
+| `scripting` | No warning text on the list. | `fingerprintShield` defaults false and the script is registered only while the toggle is on. Moving it removes no install warning and adds a runtime prompt. |
+| `management` | “Manage your apps, extensions, and themes.” | `checkExtensions` runs from `boot` on every start (`src/background/index.ts`), not behind a toggle. Optional would stop that watch until a grant. |
+| `declarativeNetRequest` | “Block content on any page.” | On the cannot-be-optional list. |
+| `declarativeNetRequestFeedback` | “Read your browsing history.” The same page says this permission is for unpacked extensions and is ignored for Chrome Web Store installs. | `getMatchedRules` in `src/network/dnr.ts` uses it. Whether store installs still return matched rules is **nicht bestätigt**. Do not remove it on that guess. |
+| `downloads` | “Manage your downloads.” | Holds a download until the verdict. E2E cancels an HTTP program. |
+| `notifications` | “Display notifications.” | Download block and extension-permission change. |
+| `tabs` | “Read your browsing history.” The warnings page says the `tabs` warning does not show when the extension also has broad host access. | Active-tab URL and the warning page. |
+| `webNavigation` | “Read your browsing history.” | Main-frame analysis before commit. |
+| `alarms`, `contextMenus`, `storage` | No warning text on the list. | Core: feed timer, site menu, settings. |
+| `declarativeNetRequestWithHostAccess` | No separate warning line on the list. | Header and tracking-parameter rules. |
+| Host `http://*/*`, `https://*/*` | The fetched list page did not include a host-permission warning sentence in the returned text. Not quoted. | Content scripts and DNR redirects. Optional host access would leave page checks off until each origin is granted. |
+
+Recommendation, still not applied: leave every current permission required. The only names that are both optional-capable and unused at boot are `contentSettings` and `scripting`. `contentSettings` is the only one of those that removes an install warning. `scripting` does not. `privacy` and `management` stay required because the features they back are on without an extra click.
+
+If a later yes moves `contentSettings`: request it from the options toggle’s click, leave the toggle off when `permissions.request` returns false, and do not treat a missing API as “prompts blocked”. Whether an update that removes a required permission and re-adds the same name as optional keeps the old grant is **nicht bestätigt**.
+
+Commands after that review: typecheck pass, lint pass, `npm test` 35 files / **279 tests** pass (corpus ceilings unchanged), Edge E2E **11** pass. Manifest permissions unchanged.
 
 `externally_connectable` matches only the local pay server in source. The store pack exits if those matches are still present.
 

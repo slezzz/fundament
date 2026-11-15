@@ -29,6 +29,9 @@
 - German copy uses informal "du" throughout (matching the original voice); a test rejects formal "Sie".
 - Onboarding describes the current protections (feed, ClickFix, wallet drainers, browser health, extension watch).
 
+### Unchanged
+- Permissions stay as declared. The review is in `RELEASE_AUDIT.md`. `privacy` and `management` stay required because browser hardening and the extension watch run without an extra click. No manifest edit.
+
 ### Added
 - `RELEASE_AUDIT.md`: baseline inventory of protections, permissions, network requests, and stored data, with test names and the 2026-11-15 measurements. Not a release verdict.
 - False-alarm report on the warning page. After a second confirmation it opens a **public** GitHub issue with the hostname, signal ids, and engine / weights / extension versions. The full address is never included. Home-network names, private addresses, DNS-rebind names, and hosts outside the Public Suffix List have no report link. Settings links to an empty public form for phishing that was not caught.
