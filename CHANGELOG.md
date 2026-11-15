@@ -7,6 +7,7 @@
 - Detection floor on a deterministic sample of real phishing hosts analyzed as if unlisted (URL only ≥ 4 %, with login form ≥ 28 %).
 
 ### Fixed
+- Runtime messages are rebuilt from a fixed field list before the worker acts on them. A web page can only report page checks and search marks. Settings patches cannot set the license token. The checkout page can only activate a license, and only from an origin listed in the manifest. A sender with no extension id and no page is refused.
 - Full Public Suffix List instead of ~45 hand-picked endings. `google.com.ua`, `google.com.vn` and dozens of other country sites were shown as "Fake Google address".
 - The shipped feed blocked whole platforms because of single bad URLs on them: `bit.ly`, `pastebin.com`, `telegra.ph`, `blog.naver.com`, `mercadolibre.com.ar`, `name.com` and others. Platforms, shorteners and the top 50k domains are now filtered; kits on user subdomains stay blocked.
 - Brands own many domains (`netflix.net`, `google.org`, `amazon.jobs`, `github.blog`): established sites are no longer judged by their name. User subdomains on platforms never inherit that (closes `paypal-login.weebly.com`).

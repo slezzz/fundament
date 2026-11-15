@@ -41,7 +41,8 @@ import { loadIntegrityStatus } from "@storage/integrity";
 import { iocStatusFrom, refreshPinnedIoc, rollbackIoc, seedShippedIoc } from "./feeds";
 import { runIntegrityCheck } from "./integrity";
 import { PAUSE_MS_DEFAULT } from "@shared/constants";
-import { isClientMessage, type ClientMessage, type ServerMessage } from "@shared/messages";
+import { parseClientMessage, parseExternalActivation, senderMaySend } from "@shared/messageGate";
+import type { ClientMessage, ServerMessage } from "@shared/messages";
 import type { Entitlements, FeedStatusView, PopupState, PostureItem, RiskSignal, SecurityEvent, Settings, UrlAnalysis } from "@shared/types";
 import { resolveEntitlements } from "@storage/settings";
 import { verifyLicense } from "@billing/license";
@@ -501,9 +502,10 @@ async function onMessage(message: ClientMessage, sender: chrome.runtime.MessageS
   }
 
   const fromExtensionPage = isOwnPage(sender.url);
+  const fromWebPage = Boolean(sender.url?.startsWith("http://") || sender.url?.startsWith("https://"));
   if (message.type === "PAGE_CHECK" || message.type === "SEARCH_MARK") {
-    if (!sender.tab) return { type: "ERROR", message: "untrusted sender" };
-  } else if (sender.tab && !fromExtensionPage) {
+    if (!sender.tab || !fromWebPage) return { type: "ERROR", message: "untrusted sender" };
+  } else if (!fromExtensionPage) {
     return { type: "ERROR", message: "untrusted sender" };
   }
 
@@ -650,22 +652,8 @@ async function onMessage(message: ClientMessage, sender: chrome.runtime.MessageS
       await patchSettings({ onboardingComplete: true });
       settingsCache = null;
       return { type: "OK" };
-    case "ACTIVATE_LICENSE": {
-      if (!licenseActivationAllowed(LICENSE_PUBLIC_KEY_SPKI_B64)) {
-        return { type: "ERROR", message: "Paid licenses are not enabled in this build." };
-      }
-      const claims = await verifyLicense(message.token);
-      if (!claims) return { type: "ERROR", message: "That license is not valid." };
-      if (claims.ext && claims.ext !== chrome.runtime.id) {
-        return { type: "ERROR", message: "That license is bound to another Fundament install." };
-      }
-      if (await fetchLicenseRevoked(claims.sid, claims.sub)) {
-        return { type: "ERROR", message: "That license was refunded or cancelled." };
-      }
-      const settings = await patchSettings({ licenseToken: message.token.trim() });
-      await applySettings(settings);
-      return { type: "SETTINGS", settings };
-    }
+    case "ACTIVATE_LICENSE":
+      return activateLicense(message.token);
     case "DEACTIVATE_LICENSE": {
       const settings = await patchSettings({ licenseToken: "", onlineReputation: false, securityLevel: "standard" });
       await applySettings(settings);
@@ -674,6 +662,41 @@ async function onMessage(message: ClientMessage, sender: chrome.runtime.MessageS
     default:
       return { type: "ERROR", message: "Unknown message" };
   }
+}
+
+async function activateLicense(token: string): Promise<ServerMessage> {
+  if (!licenseActivationAllowed(LICENSE_PUBLIC_KEY_SPKI_B64)) {
+    return { type: "ERROR", message: "Paid licenses are not enabled in this build." };
+  }
+  const claims = await verifyLicense(token);
+  if (!claims) return { type: "ERROR", message: "That license is not valid." };
+  if (claims.ext && claims.ext !== chrome.runtime.id) {
+    return { type: "ERROR", message: "That license is bound to another Fundament install." };
+  }
+  if (await fetchLicenseRevoked(claims.sid, claims.sub)) {
+    return { type: "ERROR", message: "That license was refunded or cancelled." };
+  }
+  const settings = await patchSettings({ licenseToken: token });
+  await applySettings(settings);
+  return { type: "SETTINGS", settings };
+}
+
+function ownOriginPrefixes(): string[] {
+  return [extensionOrigin(), chrome.runtime.getURL("")];
+}
+
+function externalOrigins(): string[] {
+  const matches = chrome.runtime.getManifest().externally_connectable?.matches ?? [];
+  const origins: string[] = [];
+  for (const match of matches) {
+    if (!match.includes("://") || (match.includes("*") && !match.endsWith("/*"))) continue;
+    try {
+      origins.push(new URL(match.replace(/\/\*$/, "/")).origin);
+    } catch {
+      /* ignore a match that is not an origin */
+    }
+  }
+  return origins;
 }
 
 async function addToList(list: "allowlist" | "blocklist", raw: unknown): Promise<ServerMessage | null> {
@@ -973,11 +996,13 @@ if (chrome.management?.onInstalled) {
 }
 
 chrome.runtime.onMessage.addListener((message: unknown, sender, sendResponse) => {
-  if (!isClientMessage(message)) {
+  const parsed = parseClientMessage(message);
+  const senderView = { id: sender.id, url: sender.url, hasTab: Boolean(sender.tab) };
+  if (!parsed || !senderMaySend(parsed, senderView, ownOriginPrefixes())) {
     sendResponse({ type: "ERROR", message: "Invalid message" } satisfies ServerMessage);
     return false;
   }
-  void onMessage(message, sender)
+  void onMessage(parsed, sender)
     .then(sendResponse)
     .catch((error: unknown) => {
       sendResponse({ type: "ERROR", message: error instanceof Error ? error.message : "Worker failed" } satisfies ServerMessage);
@@ -990,16 +1015,12 @@ chrome.runtime.onConnectExternal.addListener((port) => {
 });
 
 chrome.runtime.onMessageExternal.addListener((message: unknown, sender, sendResponse) => {
-  if (!isClientMessage(message) || message.type !== "ACTIVATE_LICENSE") {
+  const activation = parseExternalActivation(message, sender.url, externalOrigins());
+  if (!activation) {
     sendResponse({ type: "ERROR", message: "unsupported" } satisfies ServerMessage);
     return false;
   }
-  const trusted: chrome.runtime.MessageSender = {
-    ...sender,
-    id: chrome.runtime.id,
-    url: `${extensionOrigin()}popup.html`,
-  };
-  void onMessage(message, trusted)
+  void activateLicense(activation.token)
     .then(sendResponse)
     .catch((error: unknown) => {
       sendResponse({ type: "ERROR", message: error instanceof Error ? error.message : "Worker failed" } satisfies ServerMessage);

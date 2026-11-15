@@ -39,11 +39,3 @@ export type ServerMessage =
   | { type: "EXTENSION_AUDIT"; items: ExtensionRiskView[]; changes: ExtensionChangeView[] }
   | { type: "POSTURE"; items: PostureItem[] }
   | { type: "FEED_STATUS"; status: FeedStatusView };
-
-export function isClientMessage(value: unknown): value is ClientMessage {
-  if (typeof value !== "object" || value === null || !("type" in value)) {
-    return false;
-  }
-  const type = (value as { type: unknown }).type;
-  return typeof type === "string";
-}
