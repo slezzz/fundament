@@ -111,3 +111,30 @@ body {
   border-color: #c45c4a;
   color: #c45c4a;
 }
+
+.report {
+  margin-top: 18px;
+  background: none;
+  border: none;
+  color: var(--muted);
+  font-size: 13px;
+  text-decoration: underline;
+  cursor: pointer;
+}
+
+.report-preview {
+  text-align: left;
+  margin-top: 18px;
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 12px;
+}
+
+.report-preview .public {
+  font-weight: 650;
+  margin-top: 0;
+}
+
+.report-preview .actions {
+  margin-top: 12px;
+}

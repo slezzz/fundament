@@ -1,6 +1,6 @@
 import { toUnicode } from "punycode";
 import type { ParsedDomain, ParsedUrl } from "@shared/types";
-import { publicSuffixOf, registrableDomainOf, splitHostname } from "./psl";
+import { hasPublicSuffixRule, publicSuffixOf, registrableDomainOf, splitHostname } from "./psl";
 
 export function parseDomain(parsed: ParsedUrl): ParsedDomain | null {
   if (parsed.isIpLiteral) {
@@ -38,6 +38,7 @@ export function parseDomain(parsed: ParsedUrl): ParsedDomain | null {
     labelsUnicode,
     registrableDomain,
     publicSuffix,
+    inPublicSuffixList: hasPublicSuffixRule(parsed.hostname),
     subdomain,
     tld,
     containsPunycode: labels.some((l) => l.startsWith("xn--")),

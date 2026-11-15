@@ -21,15 +21,29 @@ export function splitHostname(hostname: string): string[] {
   return host.split(".").filter(Boolean);
 }
 
-/** Number of labels that form the public suffix of these (lowercase, punycode) labels. */
-function suffixLength(labels: string[]): number {
+/**
+ * Label count of a real Public Suffix List match.
+ * Null when nothing matched: the caller falls back to the last label, which is not a public suffix.
+ */
+function matchedSuffixLength(labels: string[]): number | null {
   for (let i = 0; i < labels.length; i++) {
     const candidate = labels.slice(i).join(".");
     if (EXCEPTION.has(candidate)) return labels.length - i - 1;
     const parent = labels.slice(i + 1).join(".");
     if (EXACT.has(candidate) || (parent && WILDCARD.has(parent))) return labels.length - i;
   }
-  return Math.min(1, labels.length);
+  return null;
+}
+
+/** Number of labels that form the public suffix of these (lowercase, punycode) labels. */
+function suffixLength(labels: string[]): number {
+  return matchedSuffixLength(labels) ?? Math.min(1, labels.length);
+}
+
+/** True only when the Public Suffix List has a rule. The last-label fallback does not count. */
+export function hasPublicSuffixRule(hostname: string): boolean {
+  const labels = splitHostname(hostname.toLowerCase());
+  return labels.length > 0 && matchedSuffixLength(labels) !== null;
 }
 
 export function publicSuffixOf(labels: string[]): string {

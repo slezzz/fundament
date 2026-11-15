@@ -1,0 +1,40 @@
+name: False alarm
+description: A site was warned or blocked and should not have been.
+title: "False alarm: "
+labels: ["false-positive"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is public. Send only the domain and the signal ids Fundament filled in.
+        Do not paste the full address, a query string, tokens, or page text.
+  - type: input
+    id: host
+    attributes:
+      label: Domain
+      description: Hostname only.
+    validations:
+      required: true
+  - type: input
+    id: host_ascii
+    attributes:
+      label: ASCII hostname
+      description: Only when it differs from the domain above (punycode).
+  - type: textarea
+    id: signals
+    attributes:
+      label: Signal ids
+    validations:
+      required: true
+  - type: input
+    id: engine
+    attributes:
+      label: Engine version
+  - type: input
+    id: weights
+    attributes:
+      label: Weights version
+  - type: input
+    id: extension
+    attributes:
+      label: Extension version

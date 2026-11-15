@@ -49,7 +49,7 @@ What they often imply that we will not: live global intel in the extension, anti
 
 **Privacy**
 
-Analysis runs on your device. Optional telemetry is off unless you turn it on. See the privacy policy for permissions and data handling.
+Analysis runs on your device. Optional telemetry is off unless you turn it on. If you confirm a false-alarm report, Fundament opens a public GitHub issue with the hostname and signal ids only. See the privacy policy for permissions and data handling.
 
 ## Feature list
 
@@ -64,12 +64,12 @@ Analysis runs on your device. Optional telemetry is off unless you turn it on. S
 
 ## Privacy explanation (store form)
 
-Fundament processes the URL of pages you visit locally to detect phishing patterns and count blocked trackers. A content script looks only at whether a password field exists and where forms submit — never at typed values. It stores settings and a short host-only event log on the device. Optional telemetry is off by default and has no endpoint in the current build. Optional online reputation (off by default) sends only the site origin to a user-configured reputation host; it does not send paths or query strings.
+Fundament processes the URL of pages you visit locally to detect phishing patterns and count blocked trackers. A content script looks only at whether a password field exists and where forms submit — never at typed values. It stores settings and a short host-only event log on the device. Optional telemetry is off by default and has no endpoint in the current build. Optional online reputation (off by default) sends only the site origin to a user-configured reputation host; it does not send paths or query strings. A confirmed false-alarm report opens a public GitHub issue containing the hostname and signal ids, not the path or query.
 
 ## Permission justification (store form)
 
 - **storage:** Save settings, allow/block lists, and a short local event log.
-- **tabs:** Show protection status for the current site and open a warning page when needed.
+- **tabs:** Show protection status for the current site, open a warning page when needed, and, after you confirm, open a public GitHub issue.
 - **webNavigation:** Analyze main-frame navigations and redirect chains.
 - **declarativeNetRequest:** Block tracker and user-blocklisted requests without reading their content.
 - **declarativeNetRequestFeedback:** Count blocked tracker requests for the popup summary.

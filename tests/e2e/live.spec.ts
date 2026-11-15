@@ -4,6 +4,7 @@
  * request ever reaches a real phishing host.
  */
 import { test, expect, chromium, type BrowserContext, type Worker } from "@playwright/test";
+import { REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -89,6 +90,40 @@ test("a brand-lookalike sign-in URL is stopped before the page is used", async (
   await page.goto(`http://paypal-login.secure-check.xyz:${port}/signin`).catch(() => undefined);
   await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
   await expect(page.locator(".host")).toContainText("paypal-login.secure-check.xyz");
+  await page.close();
+});
+
+test("a false-alarm report shows the host and not the address, then opens a public issue", async () => {
+  const page = await freshPage();
+  const token = "super-secret-token";
+  await page.goto(`http://paypal-login.secure-check.xyz:${port}/signin?token=${token}`).catch(() => undefined);
+  await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+  await expect(page.getByRole("button", { name: /fehlalarm|false alarm/i })).toBeVisible();
+  await page.getByRole("button", { name: /fehlalarm|false alarm/i }).click();
+  const preview = page.locator(".report-preview");
+  await expect(preview).toContainText("paypal-login.secure-check.xyz");
+  await expect(preview).toContainText(/öffentlich sichtbar|publicly visible/i);
+  await expect(preview).toContainText("imp-keyword");
+  await expect(preview).not.toContainText(token);
+  await expect(preview).not.toContainText("signin");
+  const hits: string[] = [];
+  const onRequest = (request: { url: () => string }) => {
+    const target = request.url();
+    if (target.startsWith("https://github.com/")) hits.push(target);
+  };
+  context.on("request", onRequest);
+  const opened = context.waitForEvent("page");
+  await page.getByRole("button", { name: /github/i }).click();
+  const reportPage = await opened;
+  await expect
+    .poll(() => hits.some((target) => target.startsWith(`https://github.com/${REPORT_GITHUB_REPO}/issues/new`)))
+    .toBe(true);
+  const hit = hits.find((target) => target.startsWith(`https://github.com/${REPORT_GITHUB_REPO}/issues/new`)) ?? "";
+  expect(decodeURIComponent(hit)).not.toContain(token);
+  expect(decodeURIComponent(hit)).not.toContain("signin");
+  expect(new URL(hit).pathname).toBe(`/${REPORT_GITHUB_REPO}/issues/new`);
+  await reportPage.close();
+  context.off("request", onRequest);
   await page.close();
 });
 

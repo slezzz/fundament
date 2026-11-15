@@ -1,0 +1,32 @@
+name: Missed phishing
+description: A phishing site was not warned about.
+labels: ["missed-phish"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        This issue is public. Write the domain only, never the full address, a query string, or a screenshot of the address bar.
+  - type: input
+    id: domain
+    attributes:
+      label: Domain
+      description: Hostname only, for example login.evil.example.
+    validations:
+      required: true
+  - type: input
+    id: brand
+    attributes:
+      label: Brand it imitated
+      description: For example PayPal, Sparkasse, MetaMask.
+  - type: dropdown
+    id: asked
+    attributes:
+      label: What the page asked for
+      options:
+        - Password or email
+        - Wallet or seed phrase
+        - Card or bank details
+        - A command or download
+        - Something else
+    validations:
+      required: true

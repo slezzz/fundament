@@ -20,7 +20,7 @@ Fundament is **local-first**. Telemetry is **off** by default.
 | Security events (time, type, **host only**) | History view | 7 days, max 200 entries |
 | Download-blocked notice (host + short reason) | Explain a cancelled save | OS notification; not a second log |
 
-Analysis never leaves the device unless the user enables **Online reputation**.
+Analysis stays on the device unless you turn on **Online reputation**, or you confirm a public false-alarm report (below).
 
 The phishing host list (Phishing.Database, MIT) ships inside the extension and is matched by Chrome's network rules. Visited addresses are not sent anywhere to check them. The same is true for the popularity list (Majestic Million top 50,000) and the Public Suffix List: both are packaged files, looked up on the device.
 
@@ -86,6 +86,10 @@ The shipped telemetry client still has no endpoint (no-op).
 If Pro is active, Fundament may POST the Stripe session or subscription id (not the page URL) to `/v1/license/status` on the configured pay host so refunds can turn Pro off.
 
 User-initiated Have I Been Pwned (options page only, Free): SHA-1 is computed in the page, then a 5-character prefix is sent to `api.pwnedpasswords.com`. The password is cleared from the form before the request. Padding header is set.
+
+User-initiated false-alarm report (warning page only): the first click only shows a preview. The preview says the report is **publicly visible**. A second click opens a **public GitHub issue**. The issue contains the hostname, the signal ids, and the engine, weights, and extension versions. It does not contain the path, query, fragment, page text, or anything you typed. GitHub sees your IP address and, if you submit, the account you are logged in with. Nothing is sent until you confirm. Home-network names, private IP addresses, DNS-rebind names such as `nip.io`, and hosts that are not under a public suffix (Public Suffix List) have **no report link**, so those names are never offered for a public issue.
+
+Settings has a separate link for phishing Fundament did not catch. It opens an empty public GitHub issue form and sends no address until you type a domain yourself.
 
 Optional pinned filter pack: HTTPS URL + SHA-256 of the host list. Hosts only. No EasyList download.
 

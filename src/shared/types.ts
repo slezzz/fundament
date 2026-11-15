@@ -36,6 +36,8 @@ export interface ParsedDomain {
   labelsUnicode: string[];
   registrableDomain: string;
   publicSuffix: string;
+  /** False when the suffix is only the last-label fallback, not a Public Suffix List rule. */
+  inPublicSuffixList: boolean;
   subdomain: string;
   tld: string;
   containsPunycode: boolean;

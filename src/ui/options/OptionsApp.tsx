@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import { paidCheckoutLive } from "@billing/launch";
 import { openCheckout } from "@billing/checkout";
 import { parseSettings } from "@storage/settings";
+import { missedPhishingIssueUrl } from "@engine/report/githubIssue";
 import { APP_VERSION, ENGINE_VERSION } from "@engine/version";
 import { pwnedCountForHash, sha1Hex } from "@privacy/hibp";
 import { send } from "../lib/messaging";
@@ -124,6 +125,13 @@ export function OptionsApp() {
               <a href={chrome.runtime.getURL("THIRD_PARTY_NOTICES.txt")} target="_blank" rel="noopener">
                 {t("dash_creditsLink")}
               </a>
+            </p>
+            <p className="muted credits">
+              <a href={missedPhishingIssueUrl()} target="_blank" rel="noopener noreferrer">
+                {t("dash_missedPhish")}
+              </a>
+              {" — "}
+              {t("dash_missedPhishNote")}
             </p>
           </div>
         </div>

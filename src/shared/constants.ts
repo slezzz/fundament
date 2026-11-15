@@ -1,3 +1,6 @@
+/** Public GitHub repo. False-alarm and missed-phish reports open an issue here and nowhere else. */
+export const REPORT_GITHUB_REPO = "slezzz/fundament";
+
 export const MAX_URL_LENGTH = 4096;
 export const MAX_LABEL_LENGTH = 63;
 export const MAX_HOST_LENGTH = 253;

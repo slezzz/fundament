@@ -1,5 +1,7 @@
 import { useEffect, useState } from "react";
 import type { UrlAnalysis } from "@shared/types";
+import { falsePositiveReport, type FalsePositiveReport } from "@engine/report/githubIssue";
+import { APP_VERSION } from "@engine/version";
 import { send } from "../lib/messaging";
 import { explanation, statusFrom } from "../lib/status";
 import { StatusMark, poseFromStatus } from "../components/StatusMark";
@@ -23,6 +25,23 @@ function blockedReason(): string | undefined {
   return raw && /^(feed|ioc|threat|user)$/.test(raw) ? raw : undefined;
 }
 
+/** Hostname plus signal keys only. Null for local, private, and non-public-suffix hosts. */
+function reportFor(analysis: UrlAnalysis): FalsePositiveReport | null {
+  const hostname = analysis.domain?.hostnameUnicode ?? analysis.parsed?.hostnameUnicode ?? "";
+  const hostnameAscii = analysis.domain?.hostname ?? analysis.parsed?.hostname ?? "";
+  if (!hostname || !hostnameAscii) return null;
+  return falsePositiveReport({
+    hostname,
+    hostnameAscii,
+    inPublicSuffixList: analysis.domain?.inPublicSuffixList ?? false,
+    registrableDomain: analysis.domain?.registrableDomain ?? "",
+    signalKeys: analysis.signals.filter((s) => s.severity === "fail" || s.severity === "warn").map((s) => s.key ?? s.id),
+    engineVersion: analysis.engineVersion,
+    weightsVersion: analysis.weightsVersion,
+    extensionVersion: APP_VERSION,
+  });
+}
+
 async function resolveTabId(): Promise<number | null> {
   const fromQuery = tabIdFromLocation();
   if (fromQuery !== null) return fromQuery;
@@ -39,6 +58,7 @@ export function WarningApp() {
   const [analysis, setAnalysis] = useState<UrlAnalysis | null>(null);
   const [why, setWhy] = useState(false);
   const [confirming, setConfirming] = useState(false);
+  const [reporting, setReporting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
@@ -92,6 +112,7 @@ export function WarningApp() {
   const topText = top ? sigText(top) : null;
   const reason = topText?.title ?? t("warn_multi");
   const host = analysis.domain?.hostnameUnicode ?? analysis.parsed?.hostnameUnicode ?? "";
+  const report = reportFor(analysis);
 
   return (
     <div className="wrap">
@@ -122,6 +143,29 @@ export function WarningApp() {
           </button>
         )}
       </div>
+      {report ? (
+        reporting ? (
+          <div className="report-preview">
+            <p className="public">{t("warn_reportPublic")}</p>
+            <p className="host">{report.host}</p>
+            {report.hostAscii ? <p className="sig-id">{report.hostAscii}</p> : null}
+            <p className="sig-id">{report.signals.join(", ")}</p>
+            <p className="sig-id">{t("warn_reportVersions", [report.engineVersion, report.weightsVersion, report.extensionVersion])}</p>
+            <div className="actions">
+              <button type="button" className="ghost" onClick={() => void chrome.tabs.create({ url: report.url })}>
+                {t("warn_reportOpen")}
+              </button>
+              <button type="button" className="ghost" onClick={() => setReporting(false)}>
+                {t("warn_reportCancel")}
+              </button>
+            </div>
+          </div>
+        ) : (
+          <button type="button" className="report" onClick={() => setReporting(true)}>
+            {t("warn_report")}
+          </button>
+        )
+      ) : null}
       {why && (
         <ul className="why">
           {analysis.signals
