@@ -2,6 +2,25 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-15 — Over-length clipboard command
+
+- Hypothesis: `clickFixTier` returns null above 12 000 characters, so a real command plus padding is copied and still runs.
+- Result: Whitespace, including U+00A0, U+2000–U+200A, and U+3000, is collapsed. U+200B, U+200C, U+200D, and U+2060 are removed. The scanner reads the first 12 000 characters, the last 12 000, and a short slice around the first and last hit of each command name. The same head-and-tail change is in the prompt, DOM-XSS, obfuscation, miner, session-id, prototype-gadget, and QR checks. A host over 253 characters and a URL the parser rejects past 4 096 still stop: those are not a marker hiding past a cutoff.
+- Evidence: `tests/unit/clickfix.test.ts` “still flags a command buried in padding”. `tests/security/redos.test.ts` now expects `strong` for one million spaces and for one million `a`s in front of the command, under 100 ms. The old “oversized means null” assertion was the bug; changing it is the fix. Edge fake-captcha copies the command after 13 000 spaces, Unicode spaces, and a 13 000-character `#` comment. 280 tests, corpus ceilings held, E2E 13.
+- Open doubt: a command whose keyword is not in the marker list, sitting more than 12 000 characters from both ends, is still missed. Every current pattern’s keyword is in that list. Letters glued directly onto `curl` (`aaaacurl`) do not match `\b`, which is what we want.
+
+### Self-check
+
+- Real user, real attack: Yes. A page can pad a PowerShell command and the old check waved it through. The bridge blocks that copy. The exact CrashFix figure is still not transcribed; this closes the length bypass for the class we already detect.
+- Five-minute bypass: Command in the middle, more than 12 000 characters from both ends, with a keyword we list. Tested (`a` × 20 000, command, `a` × 20 000). A keyword we forgot would miss. The list is the keywords the patterns already use.
+- False alarm: rustup’s `curl | sh` stays `weak`, including after a long prefix and a newline. Measured. It is blocked only when the page shows the captcha / Win+R script, which was already the rule. Corpus ceilings unchanged.
+- Simpler or more complicated: More code in two copies (engine and bridge). The sync test compares the patterns and the marker list. The extra code is the check that was missing.
+- AGENTS.md: The ReDoS test was changed because it required the bypass. No threshold or fixture was loosened to hide a miss. Corpus ceilings untouched.
+- Would I defend it: Yes. A long string is not harmless. I would not claim every possible command shape in the middle of a novel is caught.
+- Harmless on weird input: The old `length > 12000 return null` is gone. Prompt, script, session-id, and QR checks no longer return “no” only because the string is long. A too-long host and an unparseable URL still return no, on purpose.
+
+## 2026-11-15 — CrashFix and TerminalFix command text
+
 ## 2026-11-15 — CrashFix and TerminalFix command text
 
 - Hypothesis: The February 2026 CrashFix advisory contains a clipboard command that `clickFixTier` does not treat as strong, so a user who pastes it is unprotected.

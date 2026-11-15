@@ -237,6 +237,16 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Over-length give-up, 2026-11-15
+
+`clickFixTier` returned null when the string was longer than 12 000 characters. Padding left the command itself runnable. `tests/security/redos.test.ts` had recorded that as “rejects an oversized command”. That assertion was the bug. It now requires a real command wrapped in one million spaces, and the same command after one million `a`s, to stay `strong`, each under 100 ms. A million `a`s with no command stay null.
+
+`tests/unit/clickfix.test.ts` “still flags a command buried in padding” covers 12 000 and 100 000 spaces, a `#` comment, a newline, U+00A0 / U+2000 / U+3000, a U+200B inside `powershell`, and the command between two 20 000-character pads. `curl … | sh` for rustup stays `weak`. The Edge ClickFix test copies that command after 13 000 spaces, U+00A0, U+2000, U+3000, U+200B, and a 13 000-character `#` comment.
+
+The same give-up was in `looksLikePromptInjection` (8 000), `looksDomXssSink` / `looksObfuscatedJs` / `looksPrototypePollution` (50 000), `looksMinerPayload` (80 000), `sessionIdInUrl` and `looksUrlPrototypePollution` (4 096, head only), and `looksQuishingResource` (2 048, head only). They now test a fixed head and a fixed tail. A host longer than 253 and a URL the parser rejects past 4 096 are still rejected: those are not markers hidden inside a longer string.
+
+Commands after that change: typecheck pass, lint pass, `npm test` 35 files / **280 tests** pass (corpus ceilings unchanged). `tests/security/redos.test.ts` finished in 104 ms. Edge E2E **13** pass, including the padded fake-captcha copy.
+
 ## Paste-lure advisories read 2026-11-15
 
 [CrashFix](https://www.microsoft.com/en-us/security/blog/2026/02/05/clickfix-variant-crashfix-deploying-python-rat-trojan/) (5 Feb 2026) and [TerminalFix](https://www.microsoft.com/en-us/security/blog/2026/08/28/terminalfix-campaign-deploys-reverse-tunnel-through-multistage-intrusion/) (28 Aug 2026). The clipboard command is in a figure in both posts. The CrashFix hunting query requires `cmd.exe`, `start`, `finger.exe`, and `ct.exe` together. No pattern was added. The extension id in that post was not added to any list.

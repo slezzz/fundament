@@ -153,7 +153,9 @@ function collectHiddenPrompt(kinds: string[]): void {
   for (const node of Array.from(nodes).slice(0, 200)) {
     if (node.childElementCount > 3) continue;
     const text = (node.textContent || "").replace(/\s+/g, " ").trim();
-    if (text.length < 24 || text.length > 4000 || !inject.test(text)) continue;
+    if (text.length < 24) continue;
+    const parts = text.length <= 4000 ? [text] : [text.slice(0, 4000), text.slice(-4000)];
+    if (!parts.some((part) => part.length >= 24 && inject.test(part))) continue;
     const style = window.getComputedStyle(node);
     const hidden =
       node.getAttribute("aria-hidden") === "true" ||
@@ -174,7 +176,8 @@ function collectQr(kinds: string[]): void {
   const re = /(?:api\.qrserver\.com|chart\.googleapis\.com\/chart\?[^'"]*cht=qr|quickchart\.io\/qr)/i;
   for (const node of Array.from(document.querySelectorAll("img[src], iframe[src]")).slice(0, 40)) {
     const src = node.getAttribute("src") || "";
-    if (re.test(src.slice(0, 2048))) {
+    const parts = src.length <= 2048 ? [src] : [src.slice(0, 2048), src.slice(-2048)];
+    if (parts.some((part) => re.test(part))) {
       kinds.push("quishing");
       return;
     }
@@ -183,20 +186,23 @@ function collectQr(kinds: string[]): void {
 
 function collectInlineScripts(kinds: string[]): void {
   for (const node of Array.from(document.querySelectorAll("script:not([src])")).slice(0, 20)) {
-    const source = (node.textContent || "").slice(0, 4000);
-    if (source.length < 40) continue;
-    const compact = source.replace(/\s+/g, " ");
-    if (/(?:eval|function)\s*\(\s*(?:atob|unescape|decodeuricomponent|string\.fromcharcode)|fromcharcode\s*\([^)]{0,80}(?:eval|function)|atob\s*\(\s*['"][a-z0-9+/=]{80,}/i.test(compact)) {
-      kinds.push("obfuscated-js");
-    }
-    if (/(?:__proto__|constructor\s*\[(?:\s*['"]prototype['"]\s*)\]|constructor\.prototype)\s*=/.test(compact)) {
-      kinds.push("prototype-pollution");
-    }
-    if (/(?:location\.(?:hash|search|href)|document\.url|document\.referrer).{0,120}(?:innerhtml|outerhtml|document\.write|insertadjacenthtml|eval\()|(?:innerhtml|outerhtml|document\.write|insertadjacenthtml).{0,80}(?:location\.(?:hash|search|href)|document\.url|document\.referrer|decodeuricomponent)/i.test(compact)) {
-      kinds.push("dom-xss");
-    }
-    if (/coinhive|cryptonight|cryptoloot|webmine|wasmminer|throttleminer|stratum\+tcp/i.test(compact)) {
-      kinds.push("miner-wasm");
+    const full = node.textContent || "";
+    const slices = full.length <= 4000 ? [full] : [full.slice(0, 4000), full.slice(-4000)];
+    for (const source of slices) {
+      if (source.length < 12) continue;
+      const compact = source.replace(/\s+/g, " ");
+      if (source.length >= 40 && !kinds.includes("obfuscated-js") && /(?:eval|function)\s*\(\s*(?:atob|unescape|decodeuricomponent|string\.fromcharcode)|fromcharcode\s*\([^)]{0,80}(?:eval|function)|atob\s*\(\s*['"][a-z0-9+/=]{80,}/i.test(compact)) {
+        kinds.push("obfuscated-js");
+      }
+      if (!kinds.includes("prototype-pollution") && /(?:__proto__|constructor\s*\[(?:\s*['"]prototype['"]\s*)\]|constructor\.prototype)\s*=/.test(compact)) {
+        kinds.push("prototype-pollution");
+      }
+      if (!kinds.includes("dom-xss") && /(?:location\.(?:hash|search|href)|document\.url|document\.referrer).{0,120}(?:innerhtml|outerhtml|document\.write|insertadjacenthtml|eval\()|(?:innerhtml|outerhtml|document\.write|insertadjacenthtml).{0,80}(?:location\.(?:hash|search|href)|document\.url|document\.referrer|decodeuricomponent)/i.test(compact)) {
+        kinds.push("dom-xss");
+      }
+      if (!kinds.includes("miner-wasm") && /coinhive|cryptonight|cryptoloot|webmine|wasmminer|throttleminer|stratum\+tcp/i.test(compact)) {
+        kinds.push("miner-wasm");
+      }
     }
   }
 }

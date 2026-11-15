@@ -2,23 +2,28 @@
 
 Highest user benefit first. A row is done only after a test or a cited measurement in `RELEASE_AUDIT.md`.
 
+Over-length give-up on clipboard commands is fixed (head, tail, and a slice around a command name). What an attacker can still do today is at the top.
+
 ## Next
 
-1. **Paste-lure command text is not in the advisory prose.** Microsoft’s CrashFix post (5 Feb 2026, https://www.microsoft.com/en-us/security/blog/2026/02/05/clickfix-variant-crashfix-deploying-python-rat-trojan/) and TerminalFix post (28 Aug 2026, https://www.microsoft.com/en-us/security/blog/2026/08/28/terminalfix-campaign-deploys-reverse-tunnel-through-multistage-intrusion/) put the clipboard command in a figure. The CrashFix hunting query names `cmd.exe`, `start`, `finger.exe`, and `ct.exe`. Fundament already treats `finger user@host |` as a strong command. Whether the published command matches that shape is **nicht bestätigt**. Do not add a regex until the command text is read. ConsentFix still needs a written concept and a yes before code. The malicious extension id in that CrashFix post is not added: an extension-id list needs a license first.
-2. **Store listing versus behavior.** Single-purpose and privacy-form text against the dashboard. Policies fetched 2026-11-15. A wrong listing is a store rejection, not a missed phish.
+1. **Paste-lure class, not one command string.** A page writes something runnable (LOLBin, `start`/`cmd` chain, Base64 into a shell) or tells the user to paste it into an OS surface. ClickFix, FileFix, CrashFix, TerminalFix, DownloadFix, macOS Terminal. Also a fake “Chrome crashed / is outdated” screen, checked against the real version in `posture.ts`. Counterexamples: brew, winget, rustup, nvm, Docker, npm, pip install pages. Microsoft posts of 5 Feb 2026 and 28 Aug 2026 describe the class; the exact clipboard figure is still not transcribed, and that does not block the class.
+2. **Wallet calls.** EIP-7702 delegation and EIP-5792 `wallet_sendCalls` in the bridge. Batches that hide `approve` / `setApprovalForAll` / Permit2. Address poisoning (same start and end). Primary sources: the EIPs and the wallet RPC docs. Counterexamples: static copies of real dapp flows.
+3. **Extension supply chain.** Dangerous permission combinations on install and on update, an `updateUrl` outside the store, new `externally_connectable`. Also against Fundament: another extension covering the warning page, forging a message, or overriding rules.
+4. **Hidden prompt injection** (invisible text, off-screen, zero width, `aria-hidden`). Rank it as a hint, not a solution. The length give-up on that detector is already closed.
+5. **Own supply chain** (after the May 2026 npm worm reports): pin Actions by SHA, least token rights, no `pull_request_target`, `FEED_SIGNING_KEY` only in its own workflow with a protected environment and no third-party actions, proof via a test PR, `npm ci` from the lockfile, `npm audit`, zip built twice with the same checksum. Provenance is not a security proof.
+6. **Budgets and store text.** A test for milliseconds per navigation, service-worker start, and content-script cost on a large page. Keyboard, names, contrast, dark mode. Store listing against behavior. Chrome Web Store policy as of 1 July 2026: data only when strictly necessary for the single purpose, and changes disclosed.
 
 ## Wartet auf Freigabe
 
-- Move `contentSettings` to `optional_permissions` and request it from the notification-prompt toggle. Pros: drops the install warning “Change your settings that control websites' access to features…”. Cons: needs a user gesture; unknown whether an update keeps an already granted required permission. `privacy`, `scripting`, and `management` stay required (see the audit proposal). Do not edit the manifest until this is a yes.
-- ConsentFix-style localhost redirect detection. Concept before code.
-- Device-code opener / referrer hint. Concept before code.
-- A malicious extension-id list. Needs a license before any data is added.
+Code waits for a yes. The concept file comes first and does not wait.
 
-## Later, already named in the audit
+- `concepts/consentfix.md` — localhost redirect that takes an OAuth code. Not written yet.
+- `concepts/device-code.md` — device-code opener / referrer hint. Not written yet.
+- `concepts/extension-blocklist.md` — a list of extension ids. Needs a license before any data is added. Not written yet.
+- `concepts/content-settings-optional.md` — move only `contentSettings` to `optional_permissions`. `privacy`, `scripting`, and `management` stay required. Not written yet.
+- After those: `concepts/passkey-downgrade.md`, `concepts/password-reuse.md`. Password reuse changes the privacy promise. Do not implement either without a yes.
 
-- Current attack variants (AiTM, device-code, passkey downgrade, later paste-lures, wallet delegation, agent prompt injection) only after Phase 1 measurement gaps above are closed.
-- Password reuse and card skimmers: each changes the privacy promise or needs a checkout corpus. Plan first.
-- No milliseconds-per-navigation budget.
-- Accessibility of popup, warning page, and dashboard.
+## Later
+
 - Manual checklist not clicked by a person.
-- Supply chain: `npm audit`, action SHA pins, reproducible zip.
+- Card skimmers: need a checkout corpus and a written plan.

@@ -82,6 +82,7 @@ describe("script gadgets (defensive detection only)", () => {
 
   it("detects __proto__ gadgets in query strings", () => {
     expect(looksUrlPrototypePollution("https://app.test/?__proto__[admin]=true")).toBe(true);
+    expect(looksUrlPrototypePollution(`https://app.test/?q=${"a".repeat(5000)}&__proto__[admin]=true`)).toBe(true);
     expect(looksUrlPrototypePollution("https://app.test/?q=hello")).toBe(false);
   });
 

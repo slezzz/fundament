@@ -220,6 +220,16 @@ describe("ClickFix tiers", () => {
     const bridge = pick("src/content/walletBridge.ts", "commandTier");
     expect(engine.length).toBeGreaterThan(15);
     expect(bridge).toEqual(engine);
+    const markers = (file: string, fn: string): string | undefined => {
+      const text = readFileSync(resolve(__dirname, "../..", file), "utf8");
+      const start = text.indexOf(`function ${fn}(`);
+      return text.slice(start, start + 2200).match(/const markers = (\[[^\]]+\]);/)?.[1];
+    };
+    const engineMarkers = markers("src/engine/page/clickfix.ts", "clickFixTier");
+    expect(engineMarkers).toBeTruthy();
+    expect(markers("src/content/walletBridge.ts", "commandTier")).toBe(engineMarkers);
+    expect(readFileSync(resolve(__dirname, "../../src/engine/page/clickfix.ts"), "utf8")).not.toContain("length > 12_000");
+    expect(readFileSync(resolve(__dirname, "../../src/content/walletBridge.ts"), "utf8")).not.toContain("length > 12000) return null");
   });
 });
 

@@ -7,6 +7,7 @@
 - Detection floor on a deterministic sample of real phishing hosts analyzed as if unlisted (URL only ≥ 4 %, with login form ≥ 28 %).
 
 ### Fixed
+- A clipboard command longer than 12 000 characters was treated as harmless. Spaces, a long `#` comment, newlines, or Unicode spaces no longer hide a command at the start, the end, or next to a command name. The same cutoff on page-script, prompt, session-id, and QR checks scanned the start only or gave up; those now also look at the end. A normal install line such as rustup stays a weak match.
 - The browser check for the shipped phishing list opens a host from the last rule, not only one from the top of the file. A live-list rule uses id 80000 and redirects that host only. A different host stays up, and deleting the rule lets the first host load.
 - An update rewrites stored settings before rules are applied. A 1.0 blob (`enabled` / `allow`), a broken value, or an off switch that is not a boolean comes back with protection on. A public suffix in the allowlist (`com`, `github.io`) is dropped. A boolean the current settings stored, including an explicit off, is kept.
 - Attacker-controlled strings are cut to a fixed length before a regular expression sees them (URL, host, page text, cookie name, filename, feed host). A worst-case input has to finish in under 100 ms (`tests/security/redos.test.ts`). Patterns keep working on a normal URL, a real ClickFix command, and a disguised filename.

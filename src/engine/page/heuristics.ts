@@ -30,8 +30,17 @@ const QR_GENERATOR_RE =
 
 const WEAK_CSP_RE = /unsafe-inline|unsafe-eval|data:|blob:/i;
 
+const URL_GADGET_RE =
+  /(?:\?|&|%5b)__proto__(?:%5d|=|\[)|(?:\?|&)constructor(?:%5b|\[)prototype/;
+
+/** Head and tail, never "too long, so harmless". */
+function scanWindows(value: string, cap: number): string[] {
+  if (value.length <= cap) return [value];
+  return [value.slice(0, cap), value.slice(-cap)];
+}
+
 export function sessionIdInUrl(href: string): boolean {
-  return SESSION_URL_RE.test(href.length > 4096 ? href.slice(0, 4096) : href);
+  return scanWindows(href, 4096).some((part) => SESSION_URL_RE.test(part));
 }
 
 export function looksLikeSessionCookieName(name: string): boolean {
@@ -47,7 +56,8 @@ export function looksLikeSessionCookieName(name: string): boolean {
 export function documentCookieSessionNames(cookieHeader: string): string[] {
   if (!cookieHeader) return [];
   const names: string[] = [];
-  for (const part of cookieHeader.slice(0, 8192).split(";").slice(0, 40)) {
+  const chunks = cookieHeader.length <= 8192 ? [cookieHeader] : [cookieHeader.slice(0, 8192), cookieHeader.slice(-8192)];
+  for (const part of chunks.flatMap((chunk) => chunk.split(";").slice(0, 40))) {
     const name = part.split("=")[0]?.trim() ?? "";
     if (name && looksLikeSessionCookieName(name) && !names.includes(name.toLowerCase())) {
       names.push(name.toLowerCase());
@@ -57,8 +67,9 @@ export function documentCookieSessionNames(cookieHeader: string): string[] {
 }
 
 export function looksLikePromptInjection(text: string): boolean {
-  if (text.length < 24 || text.length > 8000) return false;
-  return PROMPT_INJECT_RE.test(text.replace(/\s+/g, " "));
+  const flat = text.replace(/\s+/g, " ").trim();
+  if (flat.length < 24) return false;
+  return scanWindows(flat, 8000).some((part) => part.length >= 24 && PROMPT_INJECT_RE.test(part));
 }
 
 export function looksHiddenForAgents(style: {
@@ -86,30 +97,35 @@ export function looksHiddenForAgents(style: {
 }
 
 export function looksObfuscatedJs(source: string): boolean {
-  if (source.length < 40 || source.length > 50_000) return false;
-  const compact = source.replace(/\s+/g, " ");
-  if (OBFUSCATED_JS_RE.test(compact)) return true;
-  const b64 = compact.match(/['"][A-Za-z0-9+/=]{200,}['"]/);
-  return Boolean(b64 && /(?:eval|function|atob)\s*\(/i.test(compact));
+  if (source.length < 40) return false;
+  return scanWindows(source.replace(/\s+/g, " "), 50_000).some((compact) => {
+    if (compact.length < 40) return false;
+    if (OBFUSCATED_JS_RE.test(compact)) return true;
+    const b64 = compact.match(/['"][A-Za-z0-9+/=]{200,}['"]/);
+    return Boolean(b64 && /(?:eval|function|atob)\s*\(/i.test(compact));
+  });
 }
 
 export function looksPrototypePollution(source: string): boolean {
-  if (source.length < 12 || source.length > 50_000) return false;
-  return PROTOTYPE_POLLUTION_RE.test(source.replace(/\s+/g, " "));
+  if (source.length < 12) return false;
+  const flat = source.replace(/\s+/g, " ");
+  return scanWindows(flat, 50_000).some((part) => part.length >= 12 && PROTOTYPE_POLLUTION_RE.test(part));
 }
 
 export function looksDomXssSink(source: string): boolean {
-  if (source.length < 20 || source.length > 50_000) return false;
-  return DOM_XSS_RE.test(source.replace(/\s+/g, " "));
+  if (source.length < 20) return false;
+  const flat = source.replace(/\s+/g, " ");
+  return scanWindows(flat, 50_000).some((part) => part.length >= 20 && DOM_XSS_RE.test(part));
 }
 
 export function looksMinerPayload(source: string): boolean {
-  if (source.length < 16 || source.length > 80_000) return false;
-  return MINER_RE.test(source.replace(/\s+/g, " "));
+  if (source.length < 16) return false;
+  const flat = source.replace(/\s+/g, " ");
+  return scanWindows(flat, 80_000).some((part) => part.length >= 16 && MINER_RE.test(part));
 }
 
 export function looksQuishingResource(src: string): boolean {
-  return QR_GENERATOR_RE.test(src.length > 2048 ? src.slice(0, 2048) : src);
+  return scanWindows(src, 2048).some((part) => QR_GENERATOR_RE.test(part));
 }
 
 function registrableHint(host: string): string {
@@ -156,12 +172,12 @@ export function looksMalvertisingNest(iframeCount: number, adIframeCount: number
 
 /** Classic gadget URLs (e.g. ?__proto__[admin]=true). Detection only. */
 export function looksUrlPrototypePollution(href: string): boolean {
-  if (href.length > 4096) return false;
-  try {
-    const url = new URL(href);
-    const blob = `${url.search}${url.hash}`.toLowerCase();
-    return /(?:\?|&|%5b)__proto__(?:%5d|=|\[)|(?:\?|&)constructor(?:%5b|\[)prototype/.test(blob);
-  } catch {
-    return false;
-  }
+  return scanWindows(href, 4096).some((part) => {
+    try {
+      const url = new URL(part);
+      return URL_GADGET_RE.test(`${url.search}${url.hash}`.toLowerCase());
+    } catch {
+      return URL_GADGET_RE.test(part.toLowerCase());
+    }
+  });
 }
