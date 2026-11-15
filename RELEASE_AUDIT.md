@@ -10,7 +10,6 @@ A row is done only when a test name or a command output from this date is cited.
 |-----|------|-------------------------|
 | P1 | Permission review | Written 2026-11-15. No permission moves. Applying the optional-permission candidates still needs a yes. See “Permission proposal”. |
 | P1 | `THREAT_MODEL.md` is behind the code | It says there is no `externally_connectable` and that DNR never redirects. `src/manifest.json` allows `http://127.0.0.1:8787/*` and `http://localhost:8787/*`. The store pack refuses a zip that still has those matches (`scripts/pack-store.mjs`). Static feed rules redirect to `warning.html`. Doc drift, not a measured code bug. |
-| P2 | Shipped phishing list: file vs browser | Compiled file: **49 rules, 385,353 hosts**, priority 5, action `redirect` (counted 2026-11-15 from `public/rules/threats-feed.json`, 8,000 hosts per rule in `scripts/compile-filters.mjs`). Chrome’s limit is on **rules**, not on host entries: guaranteed minimum 30,000 static rules, 50 enabled rulesets since Chrome 120 ([DNR reference](https://developer.chrome.com/docs/extensions/reference/api/declarativeNetRequest), fetched 2026-11-15). 49 rules is inside that budget. The reference lists no numeric cap on `requestDomains` length. Browser enforcement is measured for **one** host in `tests/e2e/live.spec.ts` (“a host from the shipped phishing feed is redirected, and Continue works”), not for a host in the last chunk. |
 | P2 | Current attack variants | AiTM, device-code and OAuth-consent phishing, passkey downgrade, FileFix and later ClickFix variants, current wallet delegation types, prompt injection against browser agents. Some older shapes have tests (`tests/unit/clickfix.test.ts`, `tests/unit/depth-layers.test.ts` “AI prompt injection and quishing”). No fresh corpus and no false-positive measurement for the variants named in the release plan. |
 | P2 | Password reuse, logo hash, card skimmers | Not started. Each needs a written plan before code, because the first changes the privacy promise and the third needs a checkout corpus. |
 | P3 | No performance budget test | No assertion on milliseconds per navigation, service-worker start, or content-script cost. A comment in git history mentions an impersonation cache (4.5 ms → 1.6 ms). That number was not remeasured on 2026-11-15. |
@@ -100,6 +99,18 @@ There is no 1.0 settings file in this repository (`git log` for `src/storage/set
 A boolean `false` stored under the current key is a user choice and is not forced back on. `chrome.storage` is extension-specific ([storage](https://developer.chrome.com/docs/extensions/reference/api/storage), fetched 2026-11-15): this extension's service worker and content scripts can read it, and a page cannot. A content script of this extension could still write a boolean `false`. The page-check script also ignores an allowlist entry with no dot or with `*`, so a `com` entry does not skip page checks even before the rewrite finishes.
 
 Commands after that change: typecheck pass, lint pass, `npm test` 35 files / **279 tests** pass (corpus ceilings unchanged), Edge E2E **11** pass.
+
+## Feed rules in the browser, 2026-11-15
+
+Compiled file from this tree, counted before the browser run: `dist/rules/threats-feed.json` has **49** rules. Rule id 1 is the first chunk. Rule id **49** holds **1,353** hosts. Its first host is `www-robinhood-com-login-guide.typedream.app`. Its last host is `zzzzzzbxxxx.weebly.com`. Chrome’s DNR reference (fetched 2026-11-15) states no numeric cap on `requestDomains` length. That is not the same as the browser applying the last entry.
+
+`tests/e2e/live.spec.ts` “a host in the last shipped phishing-feed rule is redirected” loads both of those hosts through Edge with `--host-resolver-rules=MAP * 127.0.0.1`. Both must land on `warning.html?blocked=feed`.
+
+`tests/security/live-feed.test.ts` “turns live hosts into warning-page redirects within the dynamic rule budget” pins `DYNAMIC_RULE_ID_LIVE_START` at 80000. 2,500 hosts become rules 80000, 80001, and 80002. The first host of 80000 is `kit0.example`. The last host of 80002 is `kit2499.example`.
+
+`tests/e2e/live.spec.ts` “a dynamic rule at the live-feed id redirects only its own host” installs one dynamic redirect at that id for `live-rule-probe.example`. `live-rule-other.example` must stay on `/clean` while the rule exists. After `removeRuleIds` of that id, `live-rule-probe.example` must stay on `/clean` too.
+
+Commands after that change: typecheck pass, lint pass, `npm test` 35 files / **279 tests** pass (corpus ceilings unchanged; the new assertions sit inside the existing live-feed test), Edge E2E **13** pass. The last-rule navigation and the id-80000 navigation both passed. Two hosts in a 1,353-host rule were loaded, not the other 1,351.
 
 ## Permissions
 

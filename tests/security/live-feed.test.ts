@@ -1,6 +1,7 @@
 import { createPrivateKey, generateKeyPairSync, sign } from "node:crypto";
 import { canonicalLivePayload, clientSafeHosts, parseLiveFeed, verifyLiveFeed } from "@engine/feeds/live";
 import { buildDynamicRules } from "@network/dnr";
+import { DYNAMIC_RULE_ID_LIVE_START } from "@shared/constants";
 import { canonical } from "../../scripts/build-live-feed.mjs";
 import { keepHost } from "../../scripts/fetch-threat-feeds.mjs";
 
@@ -81,6 +82,14 @@ describe("live feed trust", () => {
     const hosts = Array.from({ length: 2500 }, (_, i) => `kit${i}.example`);
     const rules = buildDynamicRules([], [], [], [], [], hosts).filter((r) => r.action.redirect?.extensionPath === "/warning.html?blocked=feed");
     expect(rules).toHaveLength(3);
+    expect(DYNAMIC_RULE_ID_LIVE_START).toBe(80_000);
+    expect(rules.map((r) => r.id)).toEqual([
+      DYNAMIC_RULE_ID_LIVE_START,
+      DYNAMIC_RULE_ID_LIVE_START + 1,
+      DYNAMIC_RULE_ID_LIVE_START + 2,
+    ]);
+    expect(rules[0]?.condition.requestDomains?.[0]).toBe("kit0.example");
+    expect(rules[2]?.condition.requestDomains?.at(-1)).toBe("kit2499.example");
     expect(rules.every((r) => (r.condition.requestDomains ?? []).length <= 1000)).toBe(true);
   });
 });

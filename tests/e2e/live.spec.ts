@@ -4,7 +4,7 @@
  * request ever reaches a real phishing host.
  */
 import { test, expect, chromium, type BrowserContext, type Worker } from "@playwright/test";
-import { REPORT_GITHUB_REPO } from "../../src/shared/constants";
+import { DYNAMIC_RULE_ID_LIVE_START, REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
@@ -188,6 +188,69 @@ test("a host from the shipped phishing feed is redirected, and Continue works", 
   await page.locator("button.continue.danger").click();
   await expect.poll(() => page.url(), { timeout: 8000 }).toContain(`${host}:${port}/clean`);
   await page.close();
+});
+
+test("a host in the last shipped phishing-feed rule is redirected", async () => {
+  const rules = JSON.parse(readFileSync(resolve(dist, "rules/threats-feed.json"), "utf8")) as {
+    id: number;
+    condition: { requestDomains: string[] };
+  }[];
+  const first = rules[0];
+  const last = rules[rules.length - 1];
+  expect(rules.length).toBeGreaterThan(1);
+  expect(last?.id).not.toBe(first?.id);
+  const head = last?.condition.requestDomains[0];
+  const tail = last?.condition.requestDomains[last.condition.requestDomains.length - 1];
+  expect(head).toBeTruthy();
+  expect(tail).toBeTruthy();
+  expect(tail).not.toBe(head);
+  for (const host of [head, tail]) {
+    const page = await freshPage();
+    await page.goto(`http://${host}:${port}/clean`).catch(() => undefined);
+    await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html?blocked=feed");
+    await page.close();
+  }
+});
+
+test("a dynamic rule at the live-feed id redirects only its own host", async () => {
+  const probe = "live-rule-probe.example";
+  const other = "live-rule-other.example";
+  await worker.evaluate(async (ruleId) => {
+    await chrome.declarativeNetRequest.updateDynamicRules({
+      removeRuleIds: [ruleId],
+      addRules: [
+        {
+          id: ruleId,
+          priority: 5,
+          action: { type: "redirect" as chrome.declarativeNetRequest.RuleActionType, redirect: { extensionPath: "/warning.html?blocked=feed" } },
+          condition: {
+            requestDomains: ["live-rule-probe.example"],
+            resourceTypes: ["main_frame", "sub_frame"] as chrome.declarativeNetRequest.ResourceType[],
+          },
+        },
+      ],
+    });
+  }, DYNAMIC_RULE_ID_LIVE_START);
+  try {
+    const bystander = await freshPage();
+    await bystander.goto(`http://${other}:${port}/clean`);
+    expect(bystander.url()).toContain(`http://${other}:${port}/clean`);
+    await bystander.close();
+
+    const page = await freshPage();
+    await page.goto(`http://${probe}:${port}/clean`).catch(() => undefined);
+    await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html?blocked=feed");
+    await page.close();
+  } finally {
+    await worker.evaluate(async (ruleId) => {
+      await chrome.declarativeNetRequest.updateDynamicRules({ removeRuleIds: [ruleId] });
+    }, DYNAMIC_RULE_ID_LIVE_START);
+  }
+
+  const after = await freshPage();
+  await after.goto(`http://${probe}:${port}/clean`);
+  expect(after.url()).toContain(`http://${probe}:${port}/clean`);
+  await after.close();
 });
 
 test("a program downloaded over plain HTTP is cancelled", async () => {

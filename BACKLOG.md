@@ -4,9 +4,8 @@ Highest user benefit first. A row is done only after a test or a cited measureme
 
 ## Next
 
-1. **Last phishing-feed chunk and live-feed rule id 80000, in the browser.** The compiled file has 49 rules and 385,353 hosts (8,000 per rule). E2E redirects one host from the top of `filters/feeds/phishing-hosts.txt`, which lands in the first rule. A broken last rule would leave the end of the list unenforced. Live rules start at id 80000 (`src/network/dnr.ts`); the unit test checks chunk size, not that Chrome applies id 80000. Source: DNR reference, fetched 2026-11-15, cited in `RELEASE_AUDIT.md`.
-2. **`THREAT_MODEL.md` still denies `externally_connectable` and says DNR never redirects.** The manifest allows the local pay origin; the store pack strips it. Static and dynamic feed rules redirect to `warning.html`. A reviewer who trusts the old paragraph will miss both. Doc fix, no new protection by itself.
-3. **Store listing versus behavior.** Single-purpose and privacy-form text against the dashboard. Policies fetched 2026-11-15. A wrong listing is a store rejection, not a missed phish.
+1. **`THREAT_MODEL.md` still denies `externally_connectable` and says DNR never redirects.** The manifest allows the local pay origin; the store pack strips it. Static and dynamic feed rules redirect to `warning.html`. A reviewer who trusts the old paragraph will miss both. Doc fix, no new protection by itself. The feed-tail check is done (rule 49 ends, live id 80000); the untested middle of that rule is a residual note in `RELEASE_AUDIT.md`, not a reason to navigate 1,351 more hosts before the doc matches the code.
+2. **Store listing versus behavior.** Single-purpose and privacy-form text against the dashboard. Policies fetched 2026-11-15. A wrong listing is a store rejection, not a missed phish.
 
 ## Wartet auf Freigabe
 

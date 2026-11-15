@@ -7,6 +7,7 @@
 - Detection floor on a deterministic sample of real phishing hosts analyzed as if unlisted (URL only ≥ 4 %, with login form ≥ 28 %).
 
 ### Fixed
+- The browser check for the shipped phishing list opens a host from the last rule, not only one from the top of the file. A live-list rule uses id 80000 and redirects that host only. A different host stays up, and deleting the rule lets the first host load.
 - An update rewrites stored settings before rules are applied. A 1.0 blob (`enabled` / `allow`), a broken value, or an off switch that is not a boolean comes back with protection on. A public suffix in the allowlist (`com`, `github.io`) is dropped. A boolean the current settings stored, including an explicit off, is kept.
 - Attacker-controlled strings are cut to a fixed length before a regular expression sees them (URL, host, page text, cookie name, filename, feed host). A worst-case input has to finish in under 100 ms (`tests/security/redos.test.ts`). Patterns keep working on a normal URL, a real ClickFix command, and a disguised filename.
 - A page in the MAIN world could replace the clipboard and wallet hooks after they were installed and skip the check. Those hooks are now sealed: a later assignment is wrapped again. The isolated page scan reads a fake address bar from the HTML `value` attribute, not from the live field, and a `postMessage` raises a warning only when `__fundament` is the page's own property and one of the known kinds.
