@@ -7,7 +7,7 @@ Out of scope: a future reputation backend, Chrome itself, the operating system.
 
 1. User navigates → Chromium → `webNavigation` URL to service worker.
 2. Worker → local engine → risk band.
-3. Worker → DNR (parallel, browser-enforced blocks).
+3. Worker → DNR (parallel). Rules block, allow, upgrade HTTP to HTTPS, or redirect the tab to this extension's `warning.html`. The redirect target is an `extensionPath` chosen in our rule builder. A page does not supply it.
 4. Worker → popup/warning via extension messaging.
 5. Optional future: worker → TI HTTP (origin only).
 
@@ -58,9 +58,9 @@ Out of scope: a future reputation backend, Chrome itself, the operating system.
 
 | Threat | Status | Mitigation |
 |--------|--------|------------|
-| Website talks to the worker | In scope | No `externally_connectable`; content script only sends `PAGE_CHECK`; other messages from web tabs are rejected |
+| Website talks to the worker | In scope | Source manifest allows `http://127.0.0.1:8787/*` and `http://localhost:8787/*` so a local checkout page can send `ACTIVATE_LICENSE`. A store build (`VITE_STORE_PACK=1`) keeps only an `https` `VITE_PAY_ORIGIN`, or drops `externally_connectable` when that origin is absent (`src/billing/connectable.ts`). `scripts/pack-store.mjs` exits if localhost is still in the built manifest. External messages are `ACTIVATE_LICENSE` only, and only from an origin on that list. An empty list rejects all. A web tab can send `PAGE_CHECK` or `SEARCH_MARK` only. Those cannot turn protection off. |
 | Warning page `continue` used as open redirect | In scope | Continue only to the tab’s last analyzed http(s) URL from worker state |
-| `declarativeNetRequest` used to MITM | Residual | Actions are block/allow/`upgradeScheme` (HTTP→HTTPS), never redirect-to-attacker |
+| `declarativeNetRequest` used to MITM | Residual | Dynamic actions are block, allow, `upgradeScheme` (HTTP→HTTPS), or redirect to `/warning.html?blocked=feed` or `blocked=user` (`warningRedirect` in `src/network/dnr.ts`). Static feed rules use the same warning page. No rule redirects to an attacker URL. A same-profile attacker who can rewrite the extension package can still change rules. |
 
 ## Risk scoring abuse
 

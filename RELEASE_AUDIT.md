@@ -9,7 +9,7 @@ A row is done only when a test name or a command output from this date is cited.
 | Pri | Item | Why it blocks a release |
 |-----|------|-------------------------|
 | P1 | Permission review | Written 2026-11-15. No permission moves. Applying the optional-permission candidates still needs a yes. See “Permission proposal”. |
-| P1 | `THREAT_MODEL.md` is behind the code | It says there is no `externally_connectable` and that DNR never redirects. `src/manifest.json` allows `http://127.0.0.1:8787/*` and `http://localhost:8787/*`. The store pack refuses a zip that still has those matches (`scripts/pack-store.mjs`). Static feed rules redirect to `warning.html`. Doc drift, not a measured code bug. |
+| P1 | `THREAT_MODEL.md` matched the code | Updated 2026-11-15. See “Threat model alignment”. |
 | P2 | Current attack variants | AiTM, device-code and OAuth-consent phishing, passkey downgrade, FileFix and later ClickFix variants, current wallet delegation types, prompt injection against browser agents. Some older shapes have tests (`tests/unit/clickfix.test.ts`, `tests/unit/depth-layers.test.ts` “AI prompt injection and quishing”). No fresh corpus and no false-positive measurement for the variants named in the release plan. |
 | P2 | Password reuse, logo hash, card skimmers | Not started. Each needs a written plan before code, because the first changes the privacy promise and the third needs a checkout corpus. |
 | P3 | No performance budget test | No assertion on milliseconds per navigation, service-worker start, or content-script cost. A comment in git history mentions an impersonation cache (4.5 ms → 1.6 ms). That number was not remeasured on 2026-11-15. |
@@ -50,7 +50,7 @@ Store package, after the unit run, without a second non-store build:
 
 | Step | Result |
 |------|--------|
-| `npm run pack` | `fundament-store.zip`, 4,196,942 bytes, SHA-256 `3a597b60c1b8568015b1183d5ab5119202a6ec55657cb7f665915eb4d7a237a0`. `dist/manifest.json` has no `externally_connectable` (the pack script removes the localhost pay origin). |
+| `npm run pack` | `fundament-store.zip`, 4,196,942 bytes, SHA-256 `3a597b60c1b8568015b1183d5ab5119202a6ec55657cb7f665915eb4d7a237a0`. That pack set `VITE_STORE_PACK=1` with no `VITE_PAY_ORIGIN`, so the build deleted `externally_connectable`. `scripts/pack-store.mjs` exits if localhost is still present. It does not delete the key itself. |
 | `npx playwright test` on that `dist/`, Edge | 11 passed. This loaded the store build. The zip omits `.map` files; the scripts are the ones just packed. |
 | `node scripts/store-screenshots.mjs` on that `dist/` | Wrote `store-assets/screenshots/{de,en}/`. Looked at DE and EN warning, DE protected, DE dashboard. |
 
@@ -166,7 +166,15 @@ If a later yes moves `contentSettings`: request it from the options toggle’s c
 
 Commands after that review: typecheck pass, lint pass, `npm test` 35 files / **279 tests** pass (corpus ceilings unchanged), Edge E2E **11** pass. Manifest permissions unchanged.
 
-`externally_connectable` matches only the local pay server in source. The store pack exits if those matches are still present.
+`externally_connectable` in source matches only the local pay server. With `VITE_STORE_PACK=1` and no https `VITE_PAY_ORIGIN`, the build deletes the key (`src/billing/connectable.ts` returns null). `scripts/pack-store.mjs` then exits if localhost is still present.
+
+## Threat model alignment, 2026-11-15
+
+`THREAT_MODEL.md` used to say there is no `externally_connectable` and that DNR never redirects. Both sentences were false for this tree.
+
+The elevation row now matches `storeConnectableMatches`: unpacked builds keep `http://127.0.0.1:8787/*` and `http://localhost:8787/*`. A store pack keeps a single `https` pay origin, or no key. External messages stay `ACTIVATE_LICENSE` only (`tests/unit/message-gate.test.ts`). The DNR row now says redirect goes to `/warning.html?blocked=feed` or `blocked=user`, which Edge enforced in the feed tests above.
+
+No scoring change. Commands after that edit: typecheck pass, lint pass, `npm test` 35 files / **279 tests** pass (corpus ceilings unchanged), Edge E2E **13** pass.
 
 `web_accessible_resources` is `warning.html` for `<all_urls>`, without `use_dynamic_url`. A site can probe that URL and learn the extension is installed. Documented in `PRIVACY.md`. The manifest test asserts `use_dynamic_url` is unset, so this fingerprint is current behavior, not an accident of a missing key.
 

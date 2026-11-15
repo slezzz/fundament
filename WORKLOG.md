@@ -2,6 +2,22 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-15 — Threat model matches the manifest
+
+- Hypothesis: `THREAT_MODEL.md` still told a reviewer that websites cannot connect and that DNR never redirects. Both were already false in code, so the doc was the bug.
+- Result: The elevation row now describes localhost in source, deletion of that key on a store pack with no https pay origin, and `ACTIVATE_LICENSE` only. The DNR row now says the redirect target is this extension's warning page.
+- Evidence: `src/billing/connectable.ts`, `scripts/pack-store.mjs`, `warningRedirect` in `src/network/dnr.ts`. Tests unchanged: 279 unit, 13 Edge E2E. Corpus ceilings held.
+- Open doubt: none in the doc. The pay-origin path with a real `VITE_PAY_ORIGIN` was not packed again in this pass. The code path is the one read above. The earlier pack measurement (no key) is still the 2026-11-15 zip in the P0 table.
+
+### Self-check
+
+- Real user, real attack: No new block. A reviewer who believed the old sentence would miss a real connectable origin and a real redirect. The code was already restricted. This pass stops the doc from hiding that.
+- Five-minute bypass: Not a new control. The message gate still refuses `UPDATE_SETTINGS` from a web page. That test already exists.
+- False alarm: None. No scoring change.
+- Simpler or more complicated: The threat model is longer and accurate. No runtime code.
+- AGENTS.md: Not stretched.
+- Would I defend it: Yes, as a correction. Not as a new protection.
+
 ## 2026-11-15 — Last feed chunk and live rule 80000
 
 - Hypothesis: Chrome might accept a 49-rule file and still not enforce the tail of `requestDomains`, and a dynamic rule id of 80000 might be stored but not applied.

@@ -4,7 +4,7 @@ Highest user benefit first. A row is done only after a test or a cited measureme
 
 ## Next
 
-1. **`THREAT_MODEL.md` still denies `externally_connectable` and says DNR never redirects.** The manifest allows the local pay origin; the store pack strips it. Static and dynamic feed rules redirect to `warning.html`. A reviewer who trusts the old paragraph will miss both. Doc fix, no new protection by itself. The feed-tail check is done (rule 49 ends, live id 80000); the untested middle of that rule is a residual note in `RELEASE_AUDIT.md`, not a reason to navigate 1,351 more hosts before the doc matches the code.
+1. **Paste-lure class beyond the current ClickFix patterns.** CrashFix, TerminalFix, FileFix, and ConsentFix are named in the release plan. ConsentFix (a localhost redirect that steals an OAuth code) needs a written concept and a yes before code. The others can be checked against `src/engine/page/clickfix.ts` first: if a real lure is already missed by the current patterns, that is the next code change. Source must be a vendor advisory read that day, not the research-link list alone.
 2. **Store listing versus behavior.** Single-purpose and privacy-form text against the dashboard. Policies fetched 2026-11-15. A wrong listing is a store rejection, not a missed phish.
 
 ## Wartet auf Freigabe
