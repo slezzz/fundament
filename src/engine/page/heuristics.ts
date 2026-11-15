@@ -31,11 +31,13 @@ const QR_GENERATOR_RE =
 const WEAK_CSP_RE = /unsafe-inline|unsafe-eval|data:|blob:/i;
 
 export function sessionIdInUrl(href: string): boolean {
-  return SESSION_URL_RE.test(href);
+  return SESSION_URL_RE.test(href.length > 4096 ? href.slice(0, 4096) : href);
 }
 
 export function looksLikeSessionCookieName(name: string): boolean {
-  return SESSION_COOKIE_RE.test(name.trim());
+  const trimmed = name.trim();
+  if (trimmed.length === 0 || trimmed.length > 128) return false;
+  return SESSION_COOKIE_RE.test(trimmed);
 }
 
 /**
@@ -45,7 +47,7 @@ export function looksLikeSessionCookieName(name: string): boolean {
 export function documentCookieSessionNames(cookieHeader: string): string[] {
   if (!cookieHeader) return [];
   const names: string[] = [];
-  for (const part of cookieHeader.split(";")) {
+  for (const part of cookieHeader.slice(0, 8192).split(";").slice(0, 40)) {
     const name = part.split("=")[0]?.trim() ?? "";
     if (name && looksLikeSessionCookieName(name) && !names.includes(name.toLowerCase())) {
       names.push(name.toLowerCase());
@@ -107,7 +109,7 @@ export function looksMinerPayload(source: string): boolean {
 }
 
 export function looksQuishingResource(src: string): boolean {
-  return QR_GENERATOR_RE.test(src);
+  return QR_GENERATOR_RE.test(src.length > 2048 ? src.slice(0, 2048) : src);
 }
 
 function registrableHint(host: string): string {
@@ -142,7 +144,7 @@ export function looksMixedContent(pageProtocol: string, resourceUrl: string): bo
 
 export function looksWeakCsp(policy: string | null, loginShaped: boolean): boolean {
   if (!policy || !policy.trim()) return loginShaped;
-  const lower = policy.toLowerCase();
+  const lower = policy.slice(0, 4000).toLowerCase();
   if (!/default-src|script-src/.test(lower)) return loginShaped;
   if (WEAK_CSP_RE.test(lower) && /script-src/.test(lower) && loginShaped) return true;
   return false;
@@ -154,6 +156,7 @@ export function looksMalvertisingNest(iframeCount: number, adIframeCount: number
 
 /** Classic gadget URLs (e.g. ?__proto__[admin]=true). Detection only. */
 export function looksUrlPrototypePollution(href: string): boolean {
+  if (href.length > 4096) return false;
   try {
     const url = new URL(href);
     const blob = `${url.search}${url.hash}`.toLowerCase();

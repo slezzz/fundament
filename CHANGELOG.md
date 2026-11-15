@@ -7,6 +7,7 @@
 - Detection floor on a deterministic sample of real phishing hosts analyzed as if unlisted (URL only ≥ 4 %, with login form ≥ 28 %).
 
 ### Fixed
+- Attacker-controlled strings are cut to a fixed length before a regular expression sees them (URL, host, page text, cookie name, filename, feed host). A worst-case input has to finish in under 100 ms (`tests/security/redos.test.ts`). Patterns keep working on a normal URL, a real ClickFix command, and a disguised filename.
 - A page in the MAIN world could replace the clipboard and wallet hooks after they were installed and skip the check. Those hooks are now sealed: a later assignment is wrapped again. The isolated page scan reads a fake address bar from the HTML `value` attribute, not from the live field, and a `postMessage` raises a warning only when `__fundament` is the page's own property and one of the known kinds.
 - Runtime messages are rebuilt from a fixed field list before the worker acts on them. A web page can only report page checks and search marks. Settings patches cannot set the license token. The checkout page can only activate a license, and only from an origin listed in the manifest. A sender with no extension id and no page is refused.
 - Full Public Suffix List instead of ~45 hand-picked endings. `google.com.ua`, `google.com.vn` and dozens of other country sites were shown as "Fake Google address".

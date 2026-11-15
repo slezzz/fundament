@@ -411,7 +411,7 @@
     const WorkerRef = globalThis.Worker;
     if (typeof WorkerRef === "function") {
       const Wrapped = function (url: string | URL, options?: WorkerOptions) {
-        if (/coinhive|cryptonight|webmine|coinimp|cryptoloot/i.test(String(url))) ping("miner-wasm");
+        if (/coinhive|cryptonight|webmine|coinimp|cryptoloot/i.test(String(url).slice(0, 300))) ping("miner-wasm");
         return new WorkerRef(url, options);
       } as unknown as typeof Worker;
       Wrapped.prototype = WorkerRef.prototype;

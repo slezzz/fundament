@@ -25,7 +25,8 @@ function looksNamed(el: Element, re: RegExp): boolean {
     el.getAttribute("aria-label"),
   ]
     .filter(Boolean)
-    .join(" ");
+    .join(" ")
+    .slice(0, 240);
   return re.test(blob);
 }
 
@@ -123,7 +124,7 @@ function collectMixed(kinds: string[]): void {
 function collectCsp(kinds: string[]): void {
   if (!document.querySelector("input[type='password']")) return;
   const meta = document.querySelector("meta[http-equiv='Content-Security-Policy' i]");
-  const policy = (meta?.getAttribute("content") ?? "").toLowerCase();
+  const policy = (meta?.getAttribute("content") ?? "").slice(0, 4000).toLowerCase();
   if (policy && /unsafe-inline|unsafe-eval/.test(policy) && /script-src/.test(policy)) kinds.push("weak-csp");
 }
 
@@ -137,7 +138,7 @@ function collectCookies(kinds: string[]): void {
   if (!cookie) return;
   const session = /^(?:phpsessid|jsessionid|asp\.net_sessionid|sessionid|sid|auth(?:token)?|token|jwt|connect\.sid)$/i;
   for (const part of cookie.split(";").slice(0, 40)) {
-    const name = part.split("=")[0]?.trim() ?? "";
+    const name = (part.split("=")[0]?.trim() ?? "").slice(0, 128);
     if (name && session.test(name)) {
       kinds.push("cookie-flags");
       return;
@@ -172,7 +173,8 @@ function collectHiddenPrompt(kinds: string[]): void {
 function collectQr(kinds: string[]): void {
   const re = /(?:api\.qrserver\.com|chart\.googleapis\.com\/chart\?[^'"]*cht=qr|quickchart\.io\/qr)/i;
   for (const node of Array.from(document.querySelectorAll("img[src], iframe[src]")).slice(0, 40)) {
-    if (re.test(node.getAttribute("src") || "")) {
+    const src = node.getAttribute("src") || "";
+    if (re.test(src.slice(0, 2048))) {
       kinds.push("quishing");
       return;
     }

@@ -44,11 +44,12 @@ export function looksDangerousDownload(
 
 export function quickVerdict(url: string, filename: string, extraHosts: Iterable<string> = extraMalwareHosts): DownloadVerdict {
   const name = basename(filename).toLowerCase();
+  const tail = name.slice(-512);
   if (name && looksLikeHtmlSmugglingName(name)) return { block: true, reason: "disguised file type" };
-  if (name && /\.(pdf|jpe?g|png|gif|txt|docx?|xlsx?|pptx?|zip|mp3|mp4)\s*\.(exe|scr|js|bat|cmd|com|ps1|html?|svg|lnk|hta|vbs|msi)$/i.test(name)) {
+  if (tail && /\.(pdf|jpe?g|png|gif|txt|docx?|xlsx?|pptx?|zip|mp3|mp4)\s*\.(exe|scr|js|bat|cmd|com|ps1|html?|svg|lnk|hta|vbs|msi)$/i.test(tail)) {
     return { block: true, reason: "double extension" };
   }
-  if (name && /[‪-‮⁦-⁩]/.test(name)) return { block: true, reason: "right-to-left filename trick" };
+  if (name && /[‪-‮⁦-⁩]/.test(name.slice(0, 64) + name.slice(-256))) return { block: true, reason: "right-to-left filename trick" };
   try {
     const parsed = new URL(url);
     if (parsed.protocol === "blob:" || parsed.protocol === "data:") return { block: false };
@@ -60,7 +61,7 @@ export function quickVerdict(url: string, filename: string, extraHosts: Iterable
     const path = parsed.pathname.toLowerCase();
     const urlName = basename(path);
     if (looksLikeHtmlSmugglingName(urlName)) return { block: true, reason: "disguised file type" };
-    if (/\.(pdf|jpg|jpeg|png|gif|txt|doc|docx|zip)\.(exe|scr|js|bat|cmd|com|ps1|html|htm)$/i.test(path)) {
+    if (/\.(pdf|jpg|jpeg|png|gif|txt|doc|docx|zip)\.(exe|scr|js|bat|cmd|com|ps1|html|htm)$/i.test(urlName.slice(-512))) {
       return { block: true, reason: "double extension" };
     }
     const executable = EXECUTABLE_EXT.test(name || urlName);

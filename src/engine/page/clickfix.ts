@@ -43,7 +43,7 @@ export function looksLikeClickFixCommand(text: string, pageShowsClickFixInstruct
 }
 
 export function looksLikeHtmlSmugglingName(name: string): boolean {
-  const n = name.toLowerCase();
+  const n = name.slice(-180).toLowerCase();
   if (/\.(pdf|docx?|xlsx?|zip|txt|jpe?g|png|gif)\.(html?|svg|js|iso|img|exe|scr|hta)$/i.test(n)) {
     return true;
   }

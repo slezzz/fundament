@@ -49,7 +49,7 @@ export function parseLiveFeed(raw: unknown): LiveResult {
   if (!Array.isArray(o.hosts) || o.hosts.length > LIVE_MAX_HOSTS) return { ok: false, error: "bad host list" };
   const hosts: string[] = [];
   for (const item of o.hosts) {
-    if (typeof item !== "string" || !HOST_RE.test(item)) return { ok: false, error: "malformed host" };
+    if (typeof item !== "string" || item.length > 253 || !HOST_RE.test(item)) return { ok: false, error: "malformed host" };
     hosts.push(item);
   }
   for (let i = 1; i < hosts.length; i++) {
