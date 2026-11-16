@@ -2,6 +2,26 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-16 — Page scripts cannot replace the bridge's functions
+
+- Hypothesis: the bridge decides in the page's world and calls functions the page can replace after load, so one assignment turns the clipboard check off.
+- Result: Confirmed for `RegExp.prototype.test`, the `innerText` getter, `performance.now`, and `getBoundingClientRect`. Each of those four pages stayed up. The bridge now captures the functions it uses before page scripts run and calls them through `Reflect.apply`. `test` is not used: it looks up `exec`, so matching goes through the captured `exec` on a fresh regexp. `::before` text is read with `getPropertyValue`, because `content` is not a prototype getter.
+- Evidence: the four override pages were red on `c22bbf4` (8 s on the page) and reach `warning.html` after the change. The older shadow, CSS, picture, crash, and github.io cases still pass. `tests/security/bridge-natives.test.ts` fails if a later edit calls a method that was not captured.
+- Open doubt: a fresh regexp's own `lastIndex` is assigned, not redefined, because the property is not configurable. A getter we did not list is still the page's. The test covers method calls and the getters `innerText`, `textContent`, `isTrusted`, `shadowRoot`, and the rect edges.
+
+### Self-check
+
+- Real user, real attack: A page that replaces `RegExp.prototype.test` still cannot copy a hidden PowerShell command. A page that blanks `innerText` still cannot copy a weak command next to a visible Win+R line.
+- Five-minute bypass: Replace a getter the bridge still reads as a property, or poison something the captured `exec` itself looks up. `test` and `Symbol.replace` are not on that path.
+- False alarm: No new signal. The github.io doc stays up. The page-text corpus and the hosted-doc lines are unchanged. Weights unchanged.
+- Simpler or more complicated: One captured table and `Reflect.apply`, instead of trusting the prototypes at click time.
+- AGENTS.md: A page script cannot turn this check off by replacing the function. Nothing new is sent. No new permission.
+- Would I defend it: Yes, as “the check uses the functions from before the page ran.” Not as “every getter on every object is frozen.”
+- Harmless on weird input: A missing DOM function is skipped. A throw inside one walk does not erase a decision already made from `innerText`. The sealed `attachShadow` still returns the real root.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? From the captured `innerText`, shadow text, and `getPropertyValue("content")`. A picture, a canvas, or a cross-origin frame is still invisible.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? Before this change: `RegExp.prototype.test`, `innerText`, `performance.now`, and `getBoundingClientRect`. Those are captured now. What still belongs to the page is the document itself: which nodes exist, and any getter that is not in the captured table.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? Pages that replace built-ins on purpose. A docs site that polyfills `String.prototype` or a framework that wraps `attachShadow` still gets the original behavior from the bridge, and its own code still sees its own replacement. `github.com` and `youtube.com` do both.
+
 ## 2026-11-16 — Shadow roots are not kept after removal
 
 - Hypothesis: the `attachShadow` list holds every root strongly, including ones the page has removed, so a later lure can fall outside the 12 ms walk.

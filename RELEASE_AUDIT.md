@@ -237,6 +237,21 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Bridge functions, 2026-11-16
+
+The clipboard check runs in the page's world and was calling functions the page can replace. Red first, on the build from `c22bbf4`. Four pages each replaced one function and then copied:
+
+- `RegExp.prototype.test = () => false`, then a strong command. Stayed on the page.
+- `innerText` forced to `""`, then a weak command next to a visible Win+R line. Stayed on the page.
+- `performance.now` returned 0 and then `1e12`, with a `::before` lure after 300 divs. Stayed on the page.
+- `getBoundingClientRect` returned a zero box, same lure. Stayed on the page.
+
+The bridge now captures those functions at `document_start` and calls them with the captured `Reflect.apply`. Regex checks use the captured `exec` on a fresh regexp, because `RegExp.prototype.test` looks up `exec` on the way through. `::before` / `::after` text is read with `getPropertyValue("content")`. In Edge that property is own on the style object, not a prototype getter, so a captured `content` getter did not exist. After the change the four pages reach `warning.html`. `tests/security/bridge-natives.test.ts` walks the bridge and fails if a method call is not on the captured object. Weights stay 2.1.0.
+
+Still open: a getter that is read as a property and is not in the captured list. `lastIndex` on a fresh regexp is assigned, because the property is not configurable.
+
+Same run: typecheck, lint, 288 tests, URL-corpus ceilings unchanged, Edge E2E 33.
+
 ## Shadow-root list, 2026-11-16
 
 `attachShadow` pushed every root into a strong array. Red first, on the build from `d378de3`. A page created 10 000 closed roots, removed them, then put the lure in one new closed root. The copy stayed on `tool-docs.example` for 8.3 s. The walk spent its 12 ms on the detached trees.

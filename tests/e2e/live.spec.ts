@@ -7,6 +7,7 @@ import { test, expect, chromium, type BrowserContext, type Worker } from "@playw
 import { hiddenLureBodies } from "./hidden-lures";
 import { hostedDocsPage } from "./hosted-docs";
 import { componentHookPage } from "./component-hook";
+import { builtinOverridePages } from "./builtin-overrides";
 import { DYNAMIC_RULE_ID_LIVE_START, REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -40,6 +41,8 @@ for (const [path, body] of Object.entries(hiddenLureBodies(step))) {
 const docsCommand = (PAGES["/installer"] ?? "").match(/t\.value='([^']+)'/)?.[1] ?? "";
 PAGES["/hosted-docs"] = hostedDocsPage(docsCommand);
 PAGES["/components"] = componentHookPage();
+const strongCommand = (PAGES["/clickfix"] ?? "").match(/var cmd='([^']+)'/)?.[1] ?? "";
+for (const [path, body] of Object.entries(builtinOverridePages(strongCommand, docsCommand, step))) PAGES[path] = body;
 
 let server: Server;
 let port = 0;
@@ -187,6 +190,19 @@ test("a kit on a popular platform does not borrow the platform's reputation", as
   await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
   await page.close();
 });
+
+for (const path of ["/override-test", "/override-inner", "/override-now", "/override-box"]) {
+  test(`a page that replaces one builtin still cannot copy a lure (${path})`, async () => {
+    expect(strongCommand.length).toBeGreaterThan(10);
+    expect(docsCommand.length).toBeGreaterThan(10);
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const page = await freshPage();
+    await page.goto(`http://tool-docs.example:${port}${path}`);
+    await page.locator("#copy").click();
+    await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+    await page.close();
+  });
+}
 
 test("a fake browser-crash page cannot copy a shell command", async () => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);

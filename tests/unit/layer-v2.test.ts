@@ -214,7 +214,33 @@ describe("ClickFix tiers", () => {
       const text = readFileSync(resolve(__dirname, "../..", file), "utf8");
       const start = text.indexOf(`function ${fn}(`);
       const body = text.slice(start, text.indexOf("\n  return null;", start));
-      return [...body.matchAll(/if \((\/.*)\) return "(strong|weak)";/g)].map((m) => `${m[2]} ${m[1]}`);
+      const out: string[] = [];
+      for (const line of body.split("\n")) {
+        const tier = line.match(/return "(strong|weak)"/);
+        if (!tier) continue;
+        const regs: string[] = [];
+        for (let i = 0; i < line.length; i += 1) {
+          if (line[i] !== "/" || (i > 0 && !/[(\s&]/.test(line[i - 1] ?? ""))) continue;
+          let j = i + 1;
+          let cls = false;
+          while (j < line.length) {
+            if (line[j] === "\\") {
+              j += 2;
+              continue;
+            }
+            if (line[j] === "[") cls = true;
+            else if (line[j] === "]") cls = false;
+            else if (line[j] === "/" && !cls) break;
+            j += 1;
+          }
+          let k = j + 1;
+          while (/[gimsuy]/.test(line[k] ?? "")) k += 1;
+          regs.push(line.slice(i, k));
+          i = k;
+        }
+        if (regs.length) out.push(`${tier[1]} ${regs.join(" && ")}`);
+      }
+      return out;
     };
     const engine = pick("src/engine/page/clickfix.ts", "clickFixTier");
     const bridge = pick("src/content/walletBridge.ts", "commandTier");
