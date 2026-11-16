@@ -234,6 +234,20 @@ for (const path of ["/img-lure", "/canvas-lure", "/iframe-lure"]) {
   });
 }
 
+for (const path of ["/late-300", "/late-3000", "/shadow-deep", "/iframe-seventh"]) {
+  test(`a lure past the old element cap cannot copy a shell command (${path})`, async () => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const page = await freshPage();
+    await page.goto(`http://tool-docs.example:${port}${path}`);
+    if (path === "/iframe-seventh") await page.waitForTimeout(400);
+    const started = Date.now();
+    await page.locator("#copy").click();
+    await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+    if (path === "/late-3000") expect(Date.now() - started).toBeLessThan(1000);
+    await page.close();
+  });
+}
+
 for (const path of ["/shadow-open", "/shadow-closed", "/css-lure"]) {
   test(`a hidden instruction in the page tree cannot copy a shell command (${path})`, async () => {
     await context.grantPermissions(["clipboard-read", "clipboard-write"]);

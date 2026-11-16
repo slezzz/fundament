@@ -192,42 +192,64 @@
    */
   function hiddenInstructionText(): string {
     const chunks: string[] = [];
+    const deadline = performance.now() + 12;
+    const seen = new Set<ShadowRoot>();
     const push = (value: string | null | undefined) => {
       if (!value) return;
       chunks.push(value.length > 4000 ? `${value.slice(0, 2000)}\n${value.slice(-2000)}` : value);
     };
-    const walkShadows = (root: ParentNode | null | undefined, depth: number) => {
-      if (!root || depth > 5) return;
+    const room = () => performance.now() < deadline;
+    // An empty padding div has no height. A lure the visitor can see has a box.
+    const hasBox = (el: Element): boolean => {
+      try {
+        const box = el.getBoundingClientRect();
+        const height = window.innerHeight || 800;
+        return box.height >= 1 && box.width >= 1 && box.bottom > -80 && box.top < height + 80;
+      } catch {
+        return false;
+      }
+    };
+    const readOpen = (root: ParentNode | null | undefined, depth: number) => {
+      if (!root || depth > 32 || !room()) return;
       let nodes: Element[] = [];
       try {
-        nodes = Array.from(root.querySelectorAll("*")).slice(0, 200);
+        nodes = Array.from(root.querySelectorAll("*"));
       } catch {
         return;
       }
       for (const el of nodes) {
+        if (!room()) return;
         const open = el.shadowRoot;
-        if (!open) continue;
+        if (!open || seen.has(open)) continue;
+        seen.add(open);
         push(textNodes(open));
-        walkShadows(open, depth + 1);
+        readOpen(open, depth + 1);
       }
     };
     try {
-      walkShadows(document.body, 0);
+      readOpen(document.body, 0);
     } catch {
       /* ignore */
     }
     for (const root of shadowRoots) {
+      if (!room() || seen.has(root)) continue;
       try {
+        seen.add(root);
         push(textNodes(root));
       } catch {
         /* detached */
       }
     }
     try {
-      const hosts = [document.documentElement, document.body, ...Array.from(document.querySelectorAll("*")).slice(0, 80)].filter(
-        (el): el is Element => Boolean(el),
-      );
+      const hosts: Element[] = [];
+      if (document.documentElement) hosts.push(document.documentElement);
+      if (document.body) hosts.push(document.body);
+      for (const el of document.querySelectorAll("*")) {
+        if (!room()) break;
+        if (hasBox(el)) hosts.push(el);
+      }
       for (const el of hosts) {
+        if (!room()) break;
         for (const pseudo of ["::before", "::after"]) {
           const content = getComputedStyle(el, pseudo).content;
           if (content && content !== "none" && content !== "normal") push(content);
@@ -237,7 +259,8 @@
       /* ignore */
     }
     try {
-      for (const frame of Array.from(document.querySelectorAll("iframe")).slice(0, 6)) {
+      for (const frame of document.querySelectorAll("iframe")) {
+        if (!room() || !hasBox(frame)) continue;
         try {
           const body = frame.contentDocument?.body;
           if (body) push(textNodes(body));

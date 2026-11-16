@@ -2,6 +2,25 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-16 — Hidden text past the first elements
+
+- Hypothesis: stopping at the first 200 nodes, the first 80 for CSS, and the first 6 frames lets a lure sit behind empty padding.
+- Result: Confirmed for generated content, a declarative shadow, and a same-origin frame. A shadow created with `attachShadow` was already recorded and scanned with no element cap, so that shape was not a gap. The walk now follows open roots to depth 32, every recorded closed root, `::before` / `::after` only on elements with a box near the viewport, and every same-origin frame with a box. It stops after 12 ms.
+- Evidence: `/late-300`, `/late-3000`, `/shadow-deep`, and `/iframe-seventh` stayed on the page before the change and reach `warning.html` after it. The 3 000-div case asserts click-to-warning under 1 000 ms; that test finished in 339 ms including navigation. Edge E2E 27, including the older shadow, CSS, picture, and github.io cases.
+- Open doubt: a `::before` on an element with no box is still skipped. One root still stops at 400 text nodes. Depth 33 is past the safety stop. A page large enough to spend the 12 ms on boxes before the lure is still open; the 3 000-div page did not. The recorded shadow list still grows without a limit.
+
+### Self-check
+
+- Real user, real attack: A weak command whose only instruction is a `::before` after 3 000 empty divs, a declarative shadow seven deep, or the 7th frame is blocked.
+- Five-minute bypass: Put the instruction on an element whose box has height 0, or behind more text nodes than 400 inside one root, or deeper than 32 declarative shadows.
+- False alarm: The page-text corpus and the 29 hosted-doc lines stay at 0. The github.io fixture stays up. No new signal.
+- Simpler or more complicated: One time budget and a box check, instead of three document-order caps.
+- AGENTS.md: Still local text. Nothing new is sent. No new permission. Weights unchanged.
+- Would I defend it: Yes, as “a visible lure is not skipped because empty divs came first.” Not as “every hidden string on a huge page is read.”
+- Harmless on weird input: A foreign frame still throws and is skipped. A detached root is skipped. The deadline stops the walk.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? From text nodes, CSS generated content, and same-origin frames, only where there is a box. A picture, a canvas, a cross-origin frame, and a `::before` with no box stay invisible.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? Pages whose real text lives in shadow roots, generated content, or a same-origin frame. `github.com` file views and `youtube.com` are full of web components. A docs page that says “Press Windows + R” inside a component and also copies an install line would now be blocked. That pair is not in the 22 excerpts.
+
 ## 2026-11-16 — Visible install commands on hosting zones
 
 - Hypothesis: `clickfix-unseen` treats every non-popular user site on a hosting zone as a lure, including a doc whose copy button shows `curl | sh`.

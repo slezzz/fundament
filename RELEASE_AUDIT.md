@@ -237,6 +237,16 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Element caps, 2026-11-16
+
+The hidden-text walk stopped at the first 200 elements, the first 80 for CSS `::before` / `::after`, and the first 6 frames. Red first, on the build from `19b793b`. A `::before` after 300 empty divs, the same after 3 000, a declarative shadow seven deep after 300 divs, and the 7th same-origin frame stayed on `tool-docs.example`. A shadow created with `attachShadow` at those positions already warned, so that was not the gap.
+
+The walk now has no document-order cap. Open roots are followed to a depth stop of 32. Closed roots come from the `attachShadow` list. Generated content is read only for `documentElement`, `body`, and elements whose box is at least 1×1 and within 80 px of the viewport. Same-origin frames are read when they have a box. The walk stops 12 ms after it starts. After the change those four pages reach `warning.html`. The 3 000-div case asserts click-to-warning under 1 000 ms, and that test finished in 339 ms including navigation. The older shadow, CSS, weebly picture, and github.io doc cases still pass. Weights stay 2.1.0. Page-text corpus and the 29 hosted-doc lines stay at 0.
+
+Still open: a `::before` with no box, 400 text nodes inside one root, depth past 32, and a page that spends the 12 ms before the lure. The recorded shadow list still keeps removed roots.
+
+Same run: typecheck, lint, 287 tests, URL-corpus ceilings unchanged, Edge E2E 27.
+
 ## Hosted documentation, 2026-11-16
 
 `clickfix-unseen` warned on every non-popular user site on a hosting zone. That includes open-source docs. Red first: 17 pages fetched the same day from `github.io`, `gitlab.io`, `gitbook.io`, `netlify.app`, `vercel.app`, and `pages.dev`, plus three Read the Docs pages. 29 copy lines are weak install commands and each line is in the page text. All 29 were warnings. A local doc fixture on `project-docs.github.io` reached `warning.html`.
