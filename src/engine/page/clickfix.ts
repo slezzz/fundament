@@ -100,14 +100,20 @@ export function pasteLureContext(text: string): boolean {
   );
 }
 
+/** The copied command is already visible page text (a code block, a pre). Whitespace is ignored. */
+export function weakCommandIsShown(command: string, pageText: string): boolean {
+  const needle = String(command).replace(/[\s\u00A0]+/g, " ").trim().toLowerCase();
+  if (needle.length < 12) return false;
+  return String(pageText).replace(/[\s\u00A0]+/g, " ").toLowerCase().includes(needle);
+}
+
 /**
- * A weak command the page copied, when no lure text was visible.
- * Popular hosts stay quiet (install docs, brand sites). A user site on a
- * hosting zone does not. The command text is not an argument: the worker
- * only learns that the tier was weak.
+ * A weak command the page copied, when that command is not visible on the page.
+ * Popular hosts stay quiet. A command the page already shows is a doc copy, not a lure,
+ * including on a hosting zone. The command text is not an argument.
  */
-export function warnUnseenWeakCommand(host: { popular: boolean; userHosted: boolean }): boolean {
-  if (host.popular) return false;
+export function warnUnseenWeakCommand(host: { popular: boolean; userHosted: boolean; commandShown?: boolean }): boolean {
+  if (host.popular || host.commandShown) return false;
   return host.userHosted;
 }
 

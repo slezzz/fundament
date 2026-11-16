@@ -2,6 +2,25 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-16 — Visible install commands on hosting zones
+
+- Hypothesis: `clickfix-unseen` treats every non-popular user site on a hosting zone as a lure, including a doc whose copy button shows `curl | sh`.
+- Result: Confirmed. 29 weak lines on 17 doc pages were warnings, and a `github.io` fixture reached the warning screen. The page now sends `clickfix-weak` only when that command is not already visible text. Docs stay up. The weebly picture lure still warns, because its command is not on the page.
+- Evidence: `tests/security/hosted-docs.test.ts` and `tests/fixtures/page-text/hosted-docs.json`, fetched 2026-11-16. The github.io end-to-end test was red before the change.
+- Open doubt: a doc that copies a command it never shows (only a “Copy” label, command only in a script) still warns on a hosting zone. None of the 29 lines were like that. A lure that also prints the command in hidden-but-innerText text would look like a doc.
+
+### Self-check
+
+- Real user, real attack: The picture lure on a hosting zone still reaches the warning screen. A person copying the install line from a GitHub Pages doc does not.
+- Five-minute bypass: Print the same `curl | sh` somewhere in the page text, then copy it from a button. That is the doc case, and it is quiet on purpose.
+- False alarm: The 29 lines are 0. The 22 older excerpts stay 0. `readthedocs.io` is not a hosting suffix and was already quiet.
+- Simpler or more complicated: One substring check on text the page already has. No new host list.
+- AGENTS.md: The command text still does not leave the page. No new permission, no network. Weights unchanged.
+- Would I defend it: Yes, as “a command the page already shows is not an unseen lure.” Not as “a hosting zone is safe.”
+- Harmless on weird input: A command shorter than 12 characters is not treated as shown. A textarea value is not page text, so the hidden copy field on the weebly fixture does not count.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? From `innerText`. A command drawn only as a picture is still unseen, which is the case that warns. An attacker who also puts the command in ordinary page text makes it look like a doc.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? Hosting zones. `michaelcurrin.github.io`, `script-ware.gitbook.io`, `blueberrypy.netlify.app`, `opensoul-web.vercel.app`, `termix.pages.dev`, and `flywheel-io.gitlab.io` are docs, not kits. A hosting zone is not phishing.
+
 ## 2026-11-16 — File and URI lures
 
 - Hypothesis: A `search-ms:` URI, a WebDAV UNC, or an Explorer path padded away from a command is copied and is not `strong`.

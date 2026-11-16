@@ -1,4 +1,4 @@
-import { clickFixTier, looksLikeClickFixCommand, looksLikeHtmlSmugglingName, pasteLureContext, warnUnseenWeakCommand } from "@engine/page/clickfix";
+import { clickFixTier, looksLikeClickFixCommand, looksLikeHtmlSmugglingName, pasteLureContext, warnUnseenWeakCommand, weakCommandIsShown } from "@engine/page/clickfix";
 import { analyzeUrl } from "@engine/analyze";
 import { presentAnalysis } from "@engine/status/present";
 import { looksDangerousDownload } from "../../src/background/downloads";
@@ -104,6 +104,9 @@ describe("ClickFix command detector", () => {
     expect(warnUnseenWeakCommand({ popular: true, userHosted: true })).toBe(false);
     expect(warnUnseenWeakCommand({ popular: false, userHosted: false })).toBe(false);
     expect(warnUnseenWeakCommand({ popular: false, userHosted: true })).toBe(true);
+    expect(warnUnseenWeakCommand({ popular: false, userHosted: true, commandShown: true })).toBe(false);
+    expect(weakCommandIsShown("curl -fsSL https://example.test/install.sh | sh", "Install the CLI\ncurl -fsSL https://example.test/install.sh | sh")).toBe(true);
+    expect(weakCommandIsShown("curl -fsSL https://example.test/install.sh | sh", "Follow the picture Fix Chrome")).toBe(false);
   });
 
   it("does not flag ordinary documentation snippets", () => {

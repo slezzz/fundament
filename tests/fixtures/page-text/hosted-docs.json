@@ -1,0 +1,214 @@
+[
+  {
+    "id": "code-cookbook",
+    "url": "https://michaelcurrin.github.io/code-cookbook/recipes/shell/use-curl.html",
+    "fetched": "2026-11-16",
+    "text": "Install an application by running a remote script in the terminal. curl -fsSL https://deno.land/x/install/install.sh | sh curl -o- -L https://yarnpkg.com/install.sh | bash curl https://sh.rustup.rs -sSf | sh",
+    "copyButtons": [
+      "curl -fsSL https://deno.land/x/install/install.sh | sh",
+      "curl -o- -L https://yarnpkg.com/install.sh | bash",
+      "curl https://sh.rustup.rs -sSf | sh"
+    ],
+    "note": "Code blocks on a GitHub Pages cookbook. The theme copy control copies the block."
+  },
+  {
+    "id": "curlpipebash",
+    "url": "https://pforret.github.io/curlpipebash/",
+    "fetched": "2026-11-16",
+    "text": "One-liner installation scripts like curl -fsSL https://example.com/install.sh | bash are everywhere.",
+    "copyButtons": [
+      "curl -fsSL https://example.com/install.sh | bash"
+    ],
+    "note": "The page explains the pattern and shows the example in a code block."
+  },
+  {
+    "id": "cyberdrop",
+    "url": "https://script-ware.gitbook.io/cyberdrop-dl/getting-started/cyberdrop-dl-install",
+    "fetched": "2026-11-16",
+    "text": "The recommended way to install cyberdrop-dl is using uv. curl -LsSf https://astral.sh/uv/install.sh | sh powershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\"",
+    "copyButtons": [
+      "curl -LsSf https://astral.sh/uv/install.sh | sh",
+      "powershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\""
+    ],
+    "note": "GitBook code blocks with a copy control."
+  },
+  {
+    "id": "catapa-uv",
+    "url": "https://gdplabs.gitbook.io/catapa/developer-documentation/digital-employee-de-pipeline/prerequisites/package-manager",
+    "fetched": "2026-11-16",
+    "text": "Installing uv. curl -LsSf https://astral.sh/uv/install.sh | sh powershell -c \"irm https://astral.sh/uv/install.ps1 | iex\"",
+    "copyButtons": [
+      "curl -LsSf https://astral.sh/uv/install.sh | sh",
+      "powershell -c \"irm https://astral.sh/uv/install.ps1 | iex\""
+    ],
+    "note": "GitBook code blocks with a copy control."
+  },
+  {
+    "id": "dsom-uv",
+    "url": "https://malaysia-open-source-community.gitbook.io/deep-state-of-mind-dsom-protocol-for-my-ai/10.-diataxis-developer-space/cli-quick-reference",
+    "fetched": "2026-11-16",
+    "text": "Official installer. curl -LsSf https://astral.sh/uv/install.sh | sh powershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\"",
+    "copyButtons": [
+      "curl -LsSf https://astral.sh/uv/install.sh | sh",
+      "powershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\""
+    ],
+    "note": "GitBook code blocks with a copy control."
+  },
+  {
+    "id": "kiro-uv",
+    "url": "https://whchoi98.gitbook.io/kirocli/kiro-cli/mcp/mcp",
+    "fetched": "2026-11-16",
+    "text": "Astral uv install. curl -LsSf https://astral.sh/uv/install.sh | sh irm https://astral.sh/uv/install.ps1 | iex",
+    "copyButtons": [
+      "curl -LsSf https://astral.sh/uv/install.sh | sh",
+      "irm https://astral.sh/uv/install.ps1 | iex"
+    ],
+    "note": "GitBook code blocks with a copy control."
+  },
+  {
+    "id": "berkeley-humanoid",
+    "url": "https://berkeley-humanoid-lite.gitbook.io/docs/getting-started-with-software/motion-capture-system",
+    "fetched": "2026-11-16",
+    "text": "We use uv for Python environment management. To install it on Windows, run powershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\"",
+    "copyButtons": [
+      "powershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\""
+    ],
+    "note": "GitBook code block with a copy control."
+  },
+  {
+    "id": "pnpm-oneliner",
+    "url": "https://blueberrypy.netlify.app/post/one-liner-pnpm/",
+    "fetched": "2026-11-16",
+    "text": "Install pnpm using one line of command. curl -fsSL https://get.pnpm.io/install.sh | sh",
+    "copyButtons": [
+      "curl -fsSL https://get.pnpm.io/install.sh | sh"
+    ],
+    "note": "Code block on a Netlify page."
+  },
+  {
+    "id": "bun-oneliner",
+    "url": "https://blueberrypy.netlify.app/post/one-liner-bun/",
+    "fetched": "2026-11-16",
+    "text": "Install Bun using one line of command. curl -fsSL https://bun.com/install | bash powershell -c \"irm bun.sh/install.ps1|iex\"",
+    "copyButtons": [
+      "curl -fsSL https://bun.com/install | bash",
+      "powershell -c \"irm bun.sh/install.ps1|iex\""
+    ],
+    "note": "Code blocks on a Netlify page."
+  },
+  {
+    "id": "porter",
+    "url": "https://release-v1--porter.netlify.app/install/",
+    "fetched": "2026-11-16",
+    "text": "Latest MacOS. curl -L https://cdn.porter.sh/latest/install-mac.sh | bash Latest Linux. curl -L https://cdn.porter.sh/latest/install-linux.sh | bash",
+    "copyButtons": [
+      "curl -L https://cdn.porter.sh/latest/install-mac.sh | bash",
+      "curl -L https://cdn.porter.sh/latest/install-linux.sh | bash"
+    ],
+    "note": "Install page on Netlify. The commands are in code blocks."
+  },
+  {
+    "id": "opensoul",
+    "url": "https://opensoul-web.vercel.app/docs/install/installer",
+    "fetched": "2026-11-16",
+    "text": "Quick commands. curl -fsSL --proto '=https' --tlsv1.2 https://opensoul.ai/install.sh | bash",
+    "copyButtons": [
+      "curl -fsSL --proto '=https' --tlsv1.2 https://opensoul.ai/install.sh | bash"
+    ],
+    "note": "Docs on Vercel. The command is in a code block."
+  },
+  {
+    "id": "askphysics",
+    "url": "https://askphysics.vercel.app/more-installers",
+    "fetched": "2026-11-16",
+    "text": "curl, sh. curl -fsSL https://askphysics.vercel.app/install.sh | sh PowerShell. irm https://askphysics.vercel.app/install.ps1 | iex",
+    "copyButtons": [
+      "curl -fsSL https://askphysics.vercel.app/install.sh | sh",
+      "irm https://askphysics.vercel.app/install.ps1 | iex"
+    ],
+    "note": "The page labels each line with a Copy control."
+  },
+  {
+    "id": "termix",
+    "url": "https://termix.pages.dev/guide/installation",
+    "fetched": "2026-11-16",
+    "text": "Install or update to the latest version. curl -fsSL https://raw.githubusercontent.com/amrohan/termix/main/install.sh | bash",
+    "copyButtons": [
+      "curl -fsSL https://raw.githubusercontent.com/amrohan/termix/main/install.sh | bash"
+    ],
+    "note": "Install guide on Cloudflare Pages. The command is in a code block."
+  },
+  {
+    "id": "claude-playbook",
+    "url": "https://claude-code-playbook.pages.dev/en/docs/level-1/installation",
+    "fetched": "2026-11-16",
+    "text": "Native install. curl -fsSL https://claude.ai/install.sh | bash irm https://claude.ai/install.ps1 | iex",
+    "copyButtons": [
+      "curl -fsSL https://claude.ai/install.sh | bash",
+      "irm https://claude.ai/install.ps1 | iex"
+    ],
+    "note": "Install guide on Cloudflare Pages. The commands are in code blocks."
+  },
+  {
+    "id": "pi-agent",
+    "url": "https://pi-agent-docs.pages.dev/quickstart",
+    "fetched": "2026-11-16",
+    "text": "Install Pi with the installer. curl -fsSL https://pi.dev/install.sh | sh powershell -c \"irm https://pi.dev/install.ps1 | iex\"",
+    "copyButtons": [
+      "curl -fsSL https://pi.dev/install.sh | sh",
+      "powershell -c \"irm https://pi.dev/install.ps1 | iex\""
+    ],
+    "note": "Quickstart on Cloudflare Pages. The commands are in code blocks."
+  },
+  {
+    "id": "flywheel",
+    "url": "https://flywheel-io.gitlab.io/tools/app/cli/main/flyw/",
+    "fetched": "2026-11-16",
+    "text": "The stable version can be installed using a bootstrap script. curl https://storage.googleapis.com/flywheel-dist/fw-cli/stable/install.sh | sh irm https://storage.googleapis.com/flywheel-dist/fw-cli/stable/install.ps1 | iex",
+    "copyButtons": [
+      "curl https://storage.googleapis.com/flywheel-dist/fw-cli/stable/install.sh | sh",
+      "irm https://storage.googleapis.com/flywheel-dist/fw-cli/stable/install.ps1 | iex"
+    ],
+    "note": "GitLab Pages install guide. The commands are in code blocks."
+  },
+  {
+    "id": "glci",
+    "url": "https://glci-e20136.gitlab.io/getting-started/installation/",
+    "fetched": "2026-11-16",
+    "text": "One-liner. curl -fsSL https://gitlab.com/gitlab-org/ci-cd/runner-tools/glci/-/raw/main/install.sh | bash",
+    "copyButtons": [
+      "curl -fsSL https://gitlab.com/gitlab-org/ci-cd/runner-tools/glci/-/raw/main/install.sh | bash"
+    ],
+    "note": "GitLab Pages install guide. The command is in a code block."
+  },
+  {
+    "id": "luish",
+    "url": "https://luish.readthedocs.io/en/latest/installation.html",
+    "fetched": "2026-11-16",
+    "text": "The install script picks the right binary. curl -fsSL https://raw.githubusercontent.com/luispedro/luish/main/install.sh | sh",
+    "copyButtons": [
+      "curl -fsSL https://raw.githubusercontent.com/luispedro/luish/main/install.sh | sh"
+    ],
+    "note": "Read the Docs. Not a free-hosting suffix today. Sphinx copy button copies the block."
+  },
+  {
+    "id": "ddev",
+    "url": "https://ddev.readthedocs.io/en/latest/users/install/ddev-installation/",
+    "fetched": "2026-11-16",
+    "text": "The install script downloads and sets up ddev. curl -fsSL https://ddev.com/install.sh | bash",
+    "copyButtons": [
+      "curl -fsSL https://ddev.com/install.sh | bash"
+    ],
+    "note": "Read the Docs. Not a free-hosting suffix today. Sphinx copy button copies the block."
+  },
+  {
+    "id": "python-a2a",
+    "url": "https://python-a2a.readthedocs.io/en/latest/uv-installation.html",
+    "fetched": "2026-11-16",
+    "text": "You can install UV with curl -LsSf https://astral.sh/uv/install.sh | sh",
+    "copyButtons": [
+      "curl -LsSf https://astral.sh/uv/install.sh | sh"
+    ],
+    "note": "Read the Docs. Not a free-hosting suffix today. Sphinx copy button copies the block."
+  }
+]

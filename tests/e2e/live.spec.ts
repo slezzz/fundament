@@ -5,6 +5,7 @@
  */
 import { test, expect, chromium, type BrowserContext, type Worker } from "@playwright/test";
 import { hiddenLureBodies } from "./hidden-lures";
+import { hostedDocsPage } from "./hosted-docs";
 import { DYNAMIC_RULE_ID_LIVE_START, REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -35,6 +36,8 @@ const step = (PAGES["/clickfix"] ?? "").match(/Press Windows \+ R/)?.[0] ?? "";
 for (const [path, body] of Object.entries(hiddenLureBodies(step))) {
   PAGES[path] = path === "/iframe-text" ? body : `${body}${copiedButton}`;
 }
+const docsCommand = (PAGES["/installer"] ?? "").match(/t\.value='([^']+)'/)?.[1] ?? "";
+PAGES["/hosted-docs"] = hostedDocsPage(docsCommand);
 
 let server: Server;
 let port = 0;
@@ -189,6 +192,15 @@ test("a fake browser-crash page cannot copy a shell command", async () => {
   await page.goto(`http://cdn-check.example:${port}/crashfix`);
   await page.locator("#fix").click();
   await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+  await page.close();
+});
+
+test("a visible install command on a github.io doc is left alone", async () => {
+  const page = await freshPage();
+  await page.goto(`http://project-docs.github.io:${port}/hosted-docs`);
+  await page.locator("#copy").click();
+  await page.waitForTimeout(1200);
+  expect(page.url()).toContain("/hosted-docs");
   await page.close();
 });
 

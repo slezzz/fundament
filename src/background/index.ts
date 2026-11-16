@@ -475,6 +475,7 @@ async function onPageCheck(
     const userHosted = Boolean(freeHostingSuffix(host, record.analysis.parsed?.pathname) || cloudAppSuffix(host));
     const popular = record.analysis.signals.some((signal) => signal.id === "popular");
     kinds = kinds.filter((kind) => kind !== "clickfix-weak");
+    // The page sends clickfix-weak only when the command is not visible text. A doc copy is not this kind.
     if (!record.analysis.allowlisted && warnUnseenWeakCommand({ popular, userHosted })) kinds.push("clickfix-unseen");
   }
 

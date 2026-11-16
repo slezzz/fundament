@@ -237,6 +237,14 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Hosted documentation, 2026-11-16
+
+`clickfix-unseen` warned on every non-popular user site on a hosting zone. That includes open-source docs. Red first: 17 pages fetched the same day from `github.io`, `gitlab.io`, `gitbook.io`, `netlify.app`, `vercel.app`, and `pages.dev`, plus three Read the Docs pages. 29 copy lines are weak install commands and each line is in the page text. All 29 were warnings. A local doc fixture on `project-docs.github.io` reached `warning.html`.
+
+`free-hosting` has weight 0, so it is not a second signal. Taking `clickfix-unseen` out of the escalating set would also drop the picture lure on `fundament-lure-probe.weebly.com`, which has no brand, feed, credential form, keyboard lock, or fullscreen. That lure's command is not in the page text. The doc commands are. The page now reports `clickfix-weak` only when the copied command is not visible text. The 29 lines stay quiet. The weebly picture lure still reaches the warning screen. Weights stay 2.1.0.
+
+Read the Docs is in the fixture and is not a hosting suffix, so it was already quiet. Same run: typecheck, lint, 287 tests, URL-corpus ceilings unchanged, Edge E2E 23.
+
 ## File and URI lures, 2026-11-16
 
 Red first. `search-ms:query=…` was `null`. After the change it is `strong`, with `ms-search:`, `ms-msdt:`, `ms-settings:`, a `search:` URI that has `query=` or `crumb=`, `\\host@SSL\`, `\\host@80\`, `\\host@443\`, `\DavWWWRoot\`, and a path separated from a command by 40 spaces or a `#`. The command-then-path order is strong too. `\\fileserver\share\readme.txt`, a path alone, a path and `powershell Get-Process` with one space, and `search: see the manual` stay `null`.

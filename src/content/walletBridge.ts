@@ -269,11 +269,27 @@
     }
   }
 
+  /**
+   * Same rule as weakCommandIsShown in clickfix.ts. innerText includes a visible
+   * pre/code and does not include a textarea's value. A hidden copy field is not "shown".
+   */
+  function commandIsShown(command: string): boolean {
+    const needle = String(command).replace(/[\s\u00A0]+/g, " ").trim().toLowerCase();
+    if (needle.length < 12) return false;
+    let hay = "";
+    try {
+      hay = document.body?.innerText ?? "";
+    } catch {
+      /* ignore */
+    }
+    return hay.replace(/[\s\u00A0]+/g, " ").toLowerCase().includes(needle);
+  }
+
   /** "block" replaces the clipboard. "signal" reports the tier only and leaves the text. */
   function commandVerdict(text: string): "block" | "signal" | "allow" {
     const tier = commandTier(text);
     if (tier === "strong" || (tier === "weak" && clickFixContext())) return "block";
-    if (tier === "weak") return "signal";
+    if (tier === "weak" && !commandIsShown(text)) return "signal";
     return "allow";
   }
 
