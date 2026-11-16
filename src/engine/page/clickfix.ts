@@ -4,12 +4,19 @@
  *
  * KEEP IN SYNC with commandTier() in src/content/walletBridge.ts (classic script, no imports).
  *
- * "strong": only malware does this (hidden window, encoded payload, LOLBins, fake-captcha tail).
+ * "strong": only malware does this (hidden window, encoded payload, LOLBins, fake-captcha tail,
+ * a search-ms / ms-msdt / ms-settings URI, a WebDAV UNC, or a path padded away from a command).
  * "weak":   real installers look like this too (irm …|iex, curl …|sh, powershell -c). The bridge
  *           blocks these only when pasteLureContext is true (a key combination, or a claim
  *           about this browser together with a paste or run instruction).
  */
 export function clickFixTier(text: string): "strong" | "weak" | null {
+  // FileFix (Huntress, 2025-09-29; the padding is the point of the Explorer address bar):
+  // a path, then a long space run or a #, then a command — or the command first.
+  // Checked before spaces are collapsed, which would erase that run.
+  const raw = String(text);
+  if (/(?:[a-z]:\\|\\\\)[^\n]{0,240}(?:[ \t\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]{20,}|#).{0,80}\b(?:powershell|pwsh|cmd|conhost|mshta|curl|wget|bitsadmin|certutil|rundll32|regsvr32|wscript|cscript|msiexec|finger)\b/i.test(raw)) return "strong";
+  if (/\b(?:powershell|pwsh|cmd|conhost|mshta|curl|wget|bitsadmin|certutil|rundll32|regsvr32|wscript|cscript|msiexec|finger)\b[^\n]{0,80}(?:[ \t\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]{20,}|#).{0,240}(?:[a-z]:\\|\\\\)/i.test(raw)) return "strong";
   // A length cutoff used to return "harmless". Padding (spaces, a # comment, newlines,
   // Unicode spaces) kept the command runnable in Run / Terminal. Collapse that padding,
   // then scan the head, the tail, and a short slice around each command marker.
@@ -20,7 +27,7 @@ export function clickFixTier(text: string): "strong" | "weak" | null {
     .replace(/\u2060/g, "")
     .replace(/[\s\u00A0\u1680\u2000-\u200A\u2028\u2029\u202F\u205F\u3000]+/g, " ")
     .trim();
-  const markers = ["powershell", "mshta", "bitsadmin", "certutil", "regsvr32", "rundll32", "msiexec", "wscript", "cscript", "conhost", "finger", "curl", "wget", "iex", "invoke-expression", "invoke-webrequest", "invoke-restmethod", "osascript", "frombase64string", "add-mppreference", "set-mppreference", "base64", "cmd", "captcha", "robot"];
+  const markers = ["powershell", "mshta", "bitsadmin", "certutil", "regsvr32", "rundll32", "msiexec", "wscript", "cscript", "conhost", "finger", "curl", "wget", "iex", "invoke-expression", "invoke-webrequest", "invoke-restmethod", "osascript", "frombase64string", "add-mppreference", "set-mppreference", "base64", "cmd", "captcha", "robot", "search-ms", "ms-search", "ms-msdt", "ms-settings", "davwwwroot"];
   const windows: string[] = flat.length <= 12000 ? [flat] : [flat.slice(0, 12000), flat.slice(-12000)];
   if (flat.length > 12000) {
     const lower = flat.toLowerCase();
@@ -33,6 +40,11 @@ export function clickFixTier(text: string): "strong" | "weak" | null {
   }
   for (const n of windows) {
     if (/(?:^|\s|["'])(?:[a-z]:\\|\\\\|file:\/\/)?[\w .\\/-]{1,180}\.(?:search-ms|library-ms|lnk|scf|hta|diagcab|settingcontent-ms)\b/i.test(n)) return "strong";
+    if (/(?:^|[\s"'`(])(?:search-ms|ms-search|ms-msdt):/i.test(n)) return "strong";
+    if (/(?:^|[\s"'`(])search:[^\s"'`]{0,180}(?:query=|crumb=)/i.test(n)) return "strong";
+    if (/(?:^|[\s"'`(])ms-settings:[a-z0-9-]/i.test(n)) return "strong";
+    if (/\\\\[^\s\\]{1,120}@(?:ssl|80|443)\b/i.test(n)) return "strong";
+    if (/[/\\]davwwwroot[/\\]/i.test(n)) return "strong";
     if (n.length < 12) continue;
     if (/#.{0,8}(?:i am not a robot|i'?m not a robot|ich bin kein roboter|captcha|verification id|verify you are human)/i.test(n)) return "strong";
     if (/powershell(?:\.exe)?\b.{0,80}-(?:w(?:indowstyle)?)\s+(?:h|hidden|1)\b/i.test(n)) return "strong";

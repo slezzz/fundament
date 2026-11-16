@@ -2,6 +2,25 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-16 — File and URI lures
+
+- Hypothesis: A `search-ms:` URI, a WebDAV UNC, or an Explorer path padded away from a command is copied and is not `strong`.
+- Result: Confirmed. `search-ms:query=…` was `null` before the change. Those shapes are now `strong` in the engine and in the bridge, same expressions. A normal UNC, a path alone, and `search:` without `query=` or `crumb=` stay quiet.
+- Evidence: `tests/unit/clickfix.test.ts`. The sync test compares the bridge. Page-text corpus stays 0 blocked copy buttons. The shell-link paragraph is still `strong`. The `.lnk` / `.hta` rule was not narrowed, because no copy button matched it.
+- Sources: Proofpoint, 1 March 2024, TA571 “Auto-fix” uses `search-ms` to show a WebDAV file. Huntress, 29 September 2025, FileFix uses the Explorer address bar and hides the command with padding.
+- Open doubt: `ms-settings:windowsupdate` on a real support copy button would be blocked. Not in the 22 excerpts. A space run shorter than 20 stays at the old tier.
+
+### Self-check
+
+- Real user, real attack: Yes. The page copies the URI or the padded path. The bridge replaces that clipboard text.
+- Five-minute bypass: Use a normal `\\server\share` without `@SSL`, `@80`, `@443`, or `DavWWWRoot`, or put fewer than 20 spaces between the path and the command. Both stay at the old tier, on purpose.
+- False alarm: The 32 copy buttons still do not warn. `search: see the manual` and `\\fileserver\share\readme.txt` are null. The known `.lnk` sentence in the shell-link excerpt is still strong.
+- Simpler or more complicated: Five expressions on the clipboard string. No new list and no network.
+- AGENTS.md: Nothing leaves the device. The command text is still not stored or sent. No new permission.
+- Would I defend it: Yes, as “these URI and WebDAV spellings, and a path padded away from a command, are blocked.” Not as “every UNC path” and not as “every mention of Settings.”
+- Harmless on weird input: The new expressions are bounded. A million spaces still finishes inside the existing time budget.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? These rules do not use page context. They read the string the page writes to the clipboard. Spaces and a `#` used to hide the command from the user and, after collapsing, from the weak check. That padding is now the signal. A picture of the URI still is not readable, which is the open case from the previous pass. The string the page actually copies is what is checked.
+
 ## 2026-11-16 — Hidden instruction context
 
 - Hypothesis: After a bare “captcha” stopped counting, a weak command plus an instruction the bridge cannot see (`innerText` only) is copied.

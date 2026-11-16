@@ -237,6 +237,16 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## File and URI lures, 2026-11-16
+
+Red first. `search-ms:query=…` was `null`. After the change it is `strong`, with `ms-search:`, `ms-msdt:`, `ms-settings:`, a `search:` URI that has `query=` or `crumb=`, `\\host@SSL\`, `\\host@80\`, `\\host@443\`, `\DavWWWRoot\`, and a path separated from a command by 40 spaces or a `#`. The command-then-path order is strong too. `\\fileserver\share\readme.txt`, a path alone, a path and `powershell Get-Process` with one space, and `search: see the manual` stay `null`.
+
+The `.lnk` / `.hta` rule was not narrowed. The page-text corpus still has 0 blocked copy buttons, so a bare file name did not hit a real button. The shell-link paragraph that mentions `.lnk` is still `strong`. That assertion was left as it is for that reason.
+
+Sources: Proofpoint, “Clipboard to Compromise”, TA571 on 1 March 2024 (`search-ms` opens a WebDAV share). Huntress, 29 September 2025 (FileFix pastes into the Explorer address bar). Same run: typecheck, lint, 286 tests, URL-corpus ceilings unchanged, Edge E2E 22.
+
+Still open: a support page whose copy button is only `ms-settings:windowsupdate` would be blocked. That button is not in the 22 excerpts.
+
 ## Hidden instructions, 2026-11-16
 
 Red first, on the build from `052fb6f`. A weak `curl | sh` with the only instruction in an open shadow root, a closed shadow root, or CSS `::before` stayed on `tool-docs.example`. The same command with the instruction only in an image, a canvas, or a cross-origin frame stayed on `fundament-lure-probe.weebly.com`. `pages.dev` could not be used: the `.dev` TLD is HTTPS-only, so the local fixture server never saw the request.

