@@ -237,6 +237,14 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Hidden instructions, 2026-11-16
+
+Red first, on the build from `052fb6f`. A weak `curl | sh` with the only instruction in an open shadow root, a closed shadow root, or CSS `::before` stayed on `tool-docs.example`. The same command with the instruction only in an image, a canvas, or a cross-origin frame stayed on `fundament-lure-probe.weebly.com`. `pages.dev` could not be used: the `.dev` TLD is HTTPS-only, so the local fixture server never saw the request.
+
+After the change, those six pages reach the warning screen. `netflix.net` (popular) and `tool-docs.example` (not a hosting zone) still allow the picture lure. The page-text corpus stays at 0. The command text is not sent. Weights 2.1.0. Same run: typecheck, lint, 285 tests, URL-corpus ceilings unchanged, Edge E2E 22.
+
+Still open: a picture lure on a host that is neither popular nor a user site on a hosting zone. Reading pixels would be a new dependency. Not done.
+
 ## Page-text corpus, 2026-11-16
 
 `tests/security/corpus.test.ts` still checks URLs and hosts only. Page signals are measured on `tests/fixtures/page-text/snapshots.json`: 22 excerpts, 32 copy buttons, fetched 2026-11-16.

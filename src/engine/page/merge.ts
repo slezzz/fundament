@@ -67,6 +67,11 @@ export function signalsForPageChecks(kinds: PageSignalKind[]): RiskSignal[] {
       textSignal("clickfix-clipboard", "clickfix-clipboard", WEIGHTS.clickFixClipboard, "warn"),
     );
   }
+  if (unique.includes("clickfix-unseen")) {
+    out.push(
+      textSignal("clickfix-unseen", "clickfix-unseen", WEIGHTS.clickFixUnseen, "warn"),
+    );
+  }
   if (unique.includes("fullscreen-trap")) {
     out.push(
       textSignal("fullscreen-trap", "fullscreen-trap", WEIGHTS.fullscreenTrap, "warn"),

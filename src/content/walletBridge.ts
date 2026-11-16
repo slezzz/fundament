@@ -3,7 +3,9 @@
  *
  * Runs before page scripts so it holds the original browser functions. What it does:
  * - ClickFix: a page-initiated clipboard write that is a shell/PowerShell command is
- *   replaced with a harmless warning. The user's own copies are never touched or read.
+ *   replaced when the lure text is on the page, including open and closed shadow
+ *   roots and CSS ::before/::after. A weak command with no such text is reported
+ *   by tier only. The user's own copies are never touched or read.
  * - Clipboard hijack: if you copied a wallet address and the page swaps in another one
  *   within a second, your original address is kept.
  * - Wallet drainers: unlimited approvals, setApprovalForAll, Permit/Permit2 signatures,
@@ -81,10 +83,48 @@
 
   /* ----------------------------------------------------------- ClickFix */
 
+  const shadowRoots: ShadowRoot[] = [];
+  try {
+    seal(Element.prototype, "attachShadow", (original) => {
+      return function (this: Element, init?: ShadowRootInit) {
+        const root = (original as (this: Element, init?: ShadowRootInit) => ShadowRoot).call(this, init);
+        try {
+          shadowRoots.push(root);
+        } catch {
+          /* ignore */
+        }
+        return root;
+      };
+    });
+  } catch {
+    /* ignore */
+  }
+
+  function textNodes(root: ParentNode): string {
+    const parts: string[] = [];
+    try {
+      const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT);
+      let count = 0;
+      let node = walker.nextNode();
+      while (node && count < 400) {
+        const tag = node.parentElement?.tagName;
+        if (tag !== "SCRIPT" && tag !== "STYLE" && tag !== "INPUT" && tag !== "TEXTAREA" && tag !== "SELECT") {
+          const value = node.textContent?.trim();
+          if (value) parts.push(value);
+        }
+        count += 1;
+        node = walker.nextNode();
+      }
+    } catch {
+      /* ignore */
+    }
+    return parts.join(" ");
+  }
+
   /**
    * "strong": only malware does this (hidden window, encoded payload, LOLBins, fake-captcha tail).
    * "weak":   also how real installers look (irm …|iex, curl …|sh, powershell -c). Blocked only
-   *           when the page itself shows the ClickFix script (Win+R, captcha, "not a robot").
+   *           when the page shows a key combination or a browser-fix instruction.
    */
   function commandTier(text: string): "strong" | "weak" | null {
     const flat = String(text)
@@ -142,9 +182,70 @@
    * out of date together with a paste/run instruction. A word alone (captcha, reCAPTCHA,
    * "out of date") is not a lure. Same expressions as pasteLureContext in clickfix.ts.
    */
+  function hiddenInstructionText(): string {
+    const chunks: string[] = [];
+    const push = (value: string | null | undefined) => {
+      if (!value) return;
+      chunks.push(value.length > 4000 ? `${value.slice(0, 2000)}\n${value.slice(-2000)}` : value);
+    };
+    const walkShadows = (root: ParentNode | null | undefined, depth: number) => {
+      if (!root || depth > 5) return;
+      let nodes: Element[] = [];
+      try {
+        nodes = Array.from(root.querySelectorAll("*")).slice(0, 200);
+      } catch {
+        return;
+      }
+      for (const el of nodes) {
+        const open = el.shadowRoot;
+        if (!open) continue;
+        push(textNodes(open));
+        walkShadows(open, depth + 1);
+      }
+    };
+    try {
+      walkShadows(document.body, 0);
+    } catch {
+      /* ignore */
+    }
+    for (const root of shadowRoots) {
+      try {
+        push(textNodes(root));
+      } catch {
+        /* detached */
+      }
+    }
+    try {
+      const hosts = [document.documentElement, document.body, ...Array.from(document.querySelectorAll("*")).slice(0, 80)].filter(
+        (el): el is Element => Boolean(el),
+      );
+      for (const el of hosts) {
+        for (const pseudo of ["::before", "::after"]) {
+          const content = getComputedStyle(el, pseudo).content;
+          if (content && content !== "none" && content !== "normal") push(content);
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    try {
+      for (const frame of Array.from(document.querySelectorAll("iframe")).slice(0, 6)) {
+        try {
+          const body = frame.contentDocument?.body;
+          if (body) push(textNodes(body));
+        } catch {
+          /* a foreign frame is not readable */
+        }
+      }
+    } catch {
+      /* ignore */
+    }
+    return chunks.join("\n");
+  }
+
   function clickFixContext(): boolean {
     try {
-      const text = document.body?.innerText ?? "";
+      const text = `${document.body?.innerText ?? ""}\n${hiddenInstructionText()}`;
       const parts = text.length <= 20000 ? [text] : [text.slice(0, 20000), text.slice(-20000)];
       const KEY_ACTION_RE =
         /(?:windows\s*(?:key|taste)?\s*\+\s*r\b|win\s*\+\s*r\b|⊞\s*\+?\s*r\b|run dialog|ausführen-dialog|press\s+(?:ctrl|strg|control)\s*\+\s*v|(?:ctrl|strg|control)\s*\+\s*v\b|cmd\s*\+\s*space)/i;
@@ -160,9 +261,12 @@
     }
   }
 
-  function looksCommand(text: string): boolean {
+  /** "block" replaces the clipboard. "signal" reports the tier only and leaves the text. */
+  function commandVerdict(text: string): "block" | "signal" | "allow" {
     const tier = commandTier(text);
-    return tier === "strong" || (tier === "weak" && clickFixContext());
+    if (tier === "strong" || (tier === "weak" && clickFixContext())) return "block";
+    if (tier === "weak") return "signal";
+    return "allow";
   }
 
   /** Ctrl/Cmd+C, Ctrl+Insert, or the context menu: the user is copying on purpose. */
@@ -211,10 +315,12 @@
   /** Returns the text that should actually reach the clipboard. */
   function vet(text: string): string {
     const value = String(text);
-    if (looksCommand(value)) {
+    const verdict = commandVerdict(value);
+    if (verdict === "block") {
       ping("clickfix-clipboard");
       return SAFE_TEXT;
     }
+    if (verdict === "signal") ping("clickfix-weak");
     if (looksPromptInject(value)) ping("prompt-injection");
     if (lastUserCopy && Date.now() - lastUserCopy.at < 1500 && isAddress(value) && value.trim() !== lastUserCopy.text) {
       ping("clipboard-hijack");
@@ -254,10 +360,15 @@
         // execCommand("copy") on a hidden textarea is how many ClickFix kits copy.
         // A copy the user made with Ctrl+C or the context menu is never touched.
         const userCopy = Date.now() - lastCopyGesture < 2000;
-        if (copied && !userCopy && looksCommand(copied)) {
-          event.preventDefault();
-          event.clipboardData?.setData("text/plain", SAFE_TEXT);
-          ping("clickfix-clipboard");
+        if (copied && !userCopy) {
+          const verdict = commandVerdict(copied);
+          if (verdict === "block") {
+            event.preventDefault();
+            event.clipboardData?.setData("text/plain", SAFE_TEXT);
+            ping("clickfix-clipboard");
+          } else if (verdict === "signal") {
+            ping("clickfix-weak");
+          }
         }
       } catch {
         /* ignore */

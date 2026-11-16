@@ -2,7 +2,7 @@
  * Versioned weights. Changing a number requires bumping WEIGHTS_VERSION
  * and updating frozen unit tests.
  */
-export const WEIGHTS_VERSION = "2.0.0";
+export const WEIGHTS_VERSION = "2.1.0";
 
 export const WEIGHTS = {
   knownMaliciousHost: 80,
@@ -57,6 +57,7 @@ export const WEIGHTS = {
   aiCredentialUrl: 16,
   clickFixUrl: 22,
   clickFixClipboard: 45,
+  clickFixUnseen: 45,
   browserUpdateUrl: 20,
   passkeyLookalike: 18,
   oauthProxy: 16,

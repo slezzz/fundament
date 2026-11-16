@@ -21,6 +21,8 @@ import { analyzeUrl } from "@engine/analyze";
 import { searchHitLabel, unwrapSearchDestination } from "@engine/search/unwrap";
 import { mapPool } from "@engine/search/pool";
 import { ESCALATING_KINDS, SUBFRAME_KINDS, isPageSignalKind } from "@engine/page/kinds";
+import { warnUnseenWeakCommand } from "@engine/page/clickfix";
+import { cloudAppSuffix, freeHostingSuffix } from "@engine/url/hosting";
 import { brandContentSignal, mergeSignals, signalsForPageChecks } from "@engine/page/merge";
 import { brandsNamedOnPage } from "@engine/impersonation/detect";
 import { attachDownloadProtection } from "./downloads";
@@ -467,6 +469,14 @@ async function onPageCheck(
 
   const record = await getTab(tabId);
   if (!record?.analysis || (record.analysis.url !== tabUrl && hostOnly(record.analysis.url) !== hostOnly(tabUrl))) return;
+
+  if (kinds.includes("clickfix-weak")) {
+    const host = record.analysis.domain?.hostname ?? "";
+    const userHosted = Boolean(freeHostingSuffix(host, record.analysis.parsed?.pathname) || cloudAppSuffix(host));
+    const popular = record.analysis.signals.some((signal) => signal.id === "popular");
+    kinds = kinds.filter((kind) => kind !== "clickfix-weak");
+    if (!record.analysis.allowlisted && warnUnseenWeakCommand({ popular, userHosted })) kinds.push("clickfix-unseen");
+  }
 
   const extra = signalsForPageChecks(kinds);
   const hasCredential =

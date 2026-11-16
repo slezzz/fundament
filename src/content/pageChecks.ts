@@ -473,6 +473,7 @@ void chrome.storage.local.get("settings").then((stored) => {
       [
         "wallet-http",
         "clickfix-clipboard",
+        "clickfix-weak",
         "prompt-injection",
         "miner-wasm",
         "fingerprint-canvas",

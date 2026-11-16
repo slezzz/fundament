@@ -7,6 +7,8 @@ export const PAGE_SIGNAL_KINDS = [
   "seed-form",
   "api-key-field",
   "clickfix-clipboard",
+  "clickfix-weak",
+  "clickfix-unseen",
   "fullscreen-trap",
   "cross-origin-login",
   "mixed-content",
@@ -34,6 +36,7 @@ export const PAGE_SIGNAL_KINDS = [
 /** Kinds strong enough to replace the page with the warning screen on their own or with the URL score. */
 export const ESCALATING_KINDS = new Set<string>([
   "clickfix-clipboard",
+  "clickfix-unseen",
   "browser-in-browser",
   "tech-support-scam",
   "clipboard-hijack",
@@ -50,6 +53,7 @@ export const SUBFRAME_KINDS = new Set<string>([
   "insecure-form",
   "hidden-autofill",
   "clickfix-clipboard",
+  "clickfix-weak",
   "clipboard-hijack",
   "wallet-drainer",
 ]);

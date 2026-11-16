@@ -88,6 +88,17 @@ export function pasteLureContext(text: string): boolean {
   );
 }
 
+/**
+ * A weak command the page copied, when no lure text was visible.
+ * Popular hosts stay quiet (install docs, brand sites). A user site on a
+ * hosting zone does not. The command text is not an argument: the worker
+ * only learns that the tier was weak.
+ */
+export function warnUnseenWeakCommand(host: { popular: boolean; userHosted: boolean }): boolean {
+  if (host.popular) return false;
+  return host.userHosted;
+}
+
 /** `pageShowsClickFixInstructions` = pasteLureContext(page text). */
 export function looksLikeClickFixCommand(text: string, pageShowsClickFixInstructions = true): boolean {
   const tier = clickFixTier(text);

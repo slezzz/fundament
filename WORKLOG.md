@@ -2,6 +2,24 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-16 — Hidden instruction context
+
+- Hypothesis: After a bare “captcha” stopped counting, a weak command plus an instruction the bridge cannot see (`innerText` only) is copied.
+- Result: Confirmed on the previous build. Open shadow, closed shadow, and CSS `::before` on an ordinary host stayed up. Image, canvas, and a cross-origin frame on a weebly.com user site stayed up. Shadow text and CSS generated content are now part of the lure check, and those copies are replaced. Image, canvas, and a foreign frame are still unreadable. Those report `clickfix-weak` and nothing else. The worker warns only when the host is a user site on a hosting zone and not popular.
+- Evidence: The six end-to-end tests were red before the change (shadow and CSS timed out on the page URL; the weebly cases did too once `.dev` was dropped). `tests/unit/clickfix.test.ts` covers the hosting-zone decision. Page-text corpus stays 0 warnings.
+- Open doubt: a picture and a weak command on a normal unknown host, not a hosting zone, still copies. Blocking every weak command would also block install docs.
+
+### Self-check
+
+- Real user, real attack: Yes for a hosting-zone page whose instructions are a picture, and for a shadow or CSS instruction on any host. Not for a picture on a random domain.
+- Five-minute bypass: Put the steps in a picture and the `curl | sh` on a domain that is not a hosting zone. Tested: `tool-docs.example` stays. A closed shadow on that same host is now blocked.
+- False alarm: Popular `netflix.net` and ordinary `tool-docs.example` allow the picture. The 22 page-text excerpts still do not warn. Install copy buttons are not blocked.
+- Simpler or more complicated: Reading shadow roots and CSS content is local. The worker decision is one boolean on facts the analysis already has. No new list of doc domains.
+- AGENTS.md: No new permission, no network, no reading of typed fields or of the user’s own clipboard. The command text does not leave the page. `PRIVACY.md` says so.
+- Would I defend it: Yes, as “shadow and CSS instructions are blocked, and a hidden instruction on a user hosting site warns.” Not as “an image cannot hide a command.”
+- Harmless on weird input: Input and textarea values are not part of the extra text. A foreign frame that throws is skipped.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? From `innerText`, shadow text nodes (open roots and roots we saw at `attachShadow`, including closed), CSS `::before` / `::after`, and same-origin frames. Yes for a picture, a canvas, and a cross-origin frame. Those no longer decide the block. They only raise `clickfix-weak`, and only a hosting-zone user site is warned.
+
 ## 2026-11-16 — Page-text corpus
 
 - Hypothesis: “reCAPTCHA” and “Your browser is out of date” set the paste-lure context with no instruction to paste or run anything, and there is no count of that on real pages.

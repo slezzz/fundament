@@ -247,6 +247,10 @@ export const SIGNAL_COPY: Record<string, Record<SignalLang, Copy>> = {
     en: ["Command blocked from your clipboard", "This page tried to copy a PowerShell or terminal command for you to paste. Fundament replaced it. Never paste commands from websites."],
     de: ["Befehl aus der Zwischenablage blockiert", "Diese Seite wollte einen PowerShell- oder Terminal-Befehl zum Einfügen kopieren. Fundament hat ihn ersetzt. Füge nie Befehle von Webseiten ein."],
   },
+  "clickfix-unseen": {
+    en: ["Shell command copied without instructions", "This page put a terminal command on the clipboard, and the instructions were not in the page text. Don't paste it into Run, PowerShell, or Terminal."],
+    de: ["Befehl ohne sichtbare Anweisung", "Die Seite hat einen Terminal-Befehl in die Zwischenablage gelegt. Der Text dazu war nicht zu sehen. Füge ihn nicht in Ausführen, PowerShell oder das Terminal ein."],
+  },
   "fullscreen-trap": {
     en: ["Fullscreen over a login", "Fullscreen can fake a browser window. Press Esc and check the real address bar."],
     de: ["Vollbild über einer Anmeldung", "Im Vollbild lässt sich ein Browserfenster vortäuschen. Drück Esc und prüf die echte Adressleiste."],

@@ -4,6 +4,7 @@
  * request ever reaches a real phishing host.
  */
 import { test, expect, chromium, type BrowserContext, type Worker } from "@playwright/test";
+import { hiddenLureBodies } from "./hidden-lures";
 import { DYNAMIC_RULE_ID_LIVE_START, REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -28,6 +29,12 @@ const PAGES: Record<string, string> = {
     <form action="/session" method="post"><input type="email" name="email"><input type="password" name="password"><button>Sign in</button></form>`,
   "/dl": `<!doctype html><title>Downloads</title><a id="dl" href="/setup.exe" download>Download</a>`,
 };
+
+const copiedButton = (PAGES["/crashfix"] ?? "").replace('id="fix"', 'id="copy"').match(/<button id="copy"[\s\S]*<\/button>/)?.[0] ?? "";
+const step = (PAGES["/clickfix"] ?? "").match(/Press Windows \+ R/)?.[0] ?? "";
+for (const [path, body] of Object.entries(hiddenLureBodies(step))) {
+  PAGES[path] = path === "/iframe-text" ? body : `${body}${copiedButton}`;
+}
 
 let server: Server;
 let port = 0;
@@ -191,6 +198,47 @@ test("a real installer copy button on a normal page is left alone", async () => 
   await page.locator("#copy").click();
   await page.waitForTimeout(1200);
   expect(page.url()).toContain("/installer");
+  await page.close();
+});
+
+test("a weak command stays on a popular install page when the instruction is only a picture", async () => {
+  const page = await freshPage();
+  await page.goto(`http://netflix.net:${port}/img-lure`);
+  await page.locator("#copy").click();
+  await page.waitForTimeout(1200);
+  expect(page.url()).toContain("/img-lure");
+  await page.close();
+});
+
+for (const path of ["/img-lure", "/canvas-lure", "/iframe-lure"]) {
+  test(`a hidden instruction on a hosting-zone page cannot copy a shell command (${path})`, async () => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const page = await freshPage();
+    await page.goto(`http://fundament-lure-probe.weebly.com:${port}${path}`);
+    if (path === "/iframe-lure") await page.waitForTimeout(400);
+    await page.locator("#copy").click();
+    await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+    await page.close();
+  });
+}
+
+for (const path of ["/shadow-open", "/shadow-closed", "/css-lure"]) {
+  test(`a hidden instruction in the page tree cannot copy a shell command (${path})`, async () => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const page = await freshPage();
+    await page.goto(`http://tool-docs.example:${port}${path}`);
+    await page.locator("#copy").click();
+    await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+    await page.close();
+  });
+}
+
+test("the same picture lure on an ordinary host is left alone", async () => {
+  const page = await freshPage();
+  await page.goto(`http://tool-docs.example:${port}/img-lure`);
+  await page.locator("#copy").click();
+  await page.waitForTimeout(1200);
+  expect(page.url()).toContain("/img-lure");
   await page.close();
 });
 

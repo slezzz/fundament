@@ -1,4 +1,4 @@
-import { clickFixTier, looksLikeClickFixCommand, looksLikeHtmlSmugglingName, pasteLureContext } from "@engine/page/clickfix";
+import { clickFixTier, looksLikeClickFixCommand, looksLikeHtmlSmugglingName, pasteLureContext, warnUnseenWeakCommand } from "@engine/page/clickfix";
 import { analyzeUrl } from "@engine/analyze";
 import { presentAnalysis } from "@engine/status/present";
 import { looksDangerousDownload } from "../../src/background/downloads";
@@ -78,6 +78,13 @@ describe("ClickFix command detector", () => {
     const buried = `${"Install docs. ".repeat(2000)}Press Windows + R.`;
     expect(pasteLureContext(buried)).toBe(true);
     expect(pasteLureContext(`${"Install docs. ".repeat(2000)}Chrome has crashed.`)).toBe(false);
+  });
+
+  it("warns on an unseen weak command only for a user site on a hosting zone", () => {
+    expect(warnUnseenWeakCommand({ popular: true, userHosted: false })).toBe(false);
+    expect(warnUnseenWeakCommand({ popular: true, userHosted: true })).toBe(false);
+    expect(warnUnseenWeakCommand({ popular: false, userHosted: false })).toBe(false);
+    expect(warnUnseenWeakCommand({ popular: false, userHosted: true })).toBe(true);
   });
 
   it("does not flag ordinary documentation snippets", () => {
