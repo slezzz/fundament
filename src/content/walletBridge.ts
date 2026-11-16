@@ -4,8 +4,9 @@
  * Runs before page scripts so it holds the original browser functions. What it does:
  * - ClickFix: a page-initiated clipboard write that is a shell/PowerShell command is
  *   replaced when the lure text is on the page, including open and closed shadow
- *   roots and CSS ::before/::after. A weak command with no such text is reported
- *   by tier only. Text counts as shown only when a person could read it.
+ *   roots and CSS ::before/::after. Text near the click and on screen is read before
+ *   shadow trees. A weak command with no such text is reported by tier only.
+ *   Text counts as shown only when a person could read it.
  *   The user's own copies are never touched or read.
  * - Clipboard hijack: if you copied a wallet address and the page swaps in another one
  *   within a second, your original address is kept.
@@ -68,6 +69,7 @@
     now: pick(() => Performance.prototype.now),
     preventDefault: pick(() => Event.prototype.preventDefault),
     isTrusted: pick(() => Object.getOwnPropertyDescriptor(Event.prototype, "isTrusted")?.get),
+    eventTarget: pick(() => Object.getOwnPropertyDescriptor(Event.prototype, "target")?.get),
     key: pick(() => Object.getOwnPropertyDescriptor(KeyboardEvent.prototype, "key")?.get),
     isConnected: pick(() => Object.getOwnPropertyDescriptor(Node.prototype, "isConnected")?.get),
     textContent: pick(() => Object.getOwnPropertyDescriptor(Node.prototype, "textContent")?.get),
@@ -325,6 +327,7 @@
   // Weak refs only. A strong list would keep every removed component's tree alive.
   // Disconnected roots are dropped when the list gets long, and again on each copy.
   const shadowRefs: WeakRef<ShadowRoot>[] = [];
+  let lastClick: Element | null = null;
   function rememberShadow(root: ShadowRoot): void {
     if (shadowRefs.length >= 512) {
       let write = 0;
@@ -437,11 +440,14 @@
    * A key combination or the Run dialog, or a claim that this browser crashed or is
    * out of date together with a paste/run instruction. A word alone (captcha, reCAPTCHA,
    * "out of date") is not a lure. Same expressions as pasteLureContext in clickfix.ts.
+   * Generated text near the click and on screen is read before shadow trees, so filler
+   * roots cannot spend the 12 ms first.
    */
   function hiddenInstructionText(): string {
     const chunks: string[] = [];
     const deadline = clock() + 12;
     const seen = new native.set<ShadowRoot>();
+    const seenEl = new native.set<Element>();
     const addChunk = (value: string | null | undefined) => {
       if (!value) return;
       push(chunks, value.length > 4000 ? `${slice(value, 0, 2000)}\n${slice(value, -2000)}` : value);
@@ -450,6 +456,10 @@
     const saw = (root: ShadowRoot) => apply(native.setHas, seen, [root]) === true;
     const mark = (root: ShadowRoot) => {
       apply(native.setAdd, seen, [root]);
+    };
+    const sawEl = (el: Element) => apply(native.setHas, seenEl, [el]) === true;
+    const markEl = (el: Element) => {
+      apply(native.setAdd, seenEl, [el]);
     };
     // An empty padding div has no height. A lure the visitor can see has a box.
     const hasBox = (el: Element): boolean => {
@@ -460,6 +470,14 @@
         return read(native.rectHeight) >= 1 && read(native.rectWidth) >= 1 && read(native.rectBottom) > -80 && read(native.rectTop) < height + 80;
       } catch {
         return false;
+      }
+    };
+    const readGenerated = (el: Element) => {
+      for (const pseudo of ["::before", "::after"]) {
+        if (!room()) return;
+        const style = styles(el, pseudo);
+        const content = style && native.getPropertyValue ? apply(native.getPropertyValue, style, ["content"]) : "";
+        if (content && content !== "none" && content !== "normal") addChunk(content);
       }
     };
     const readOpen = (root: ParentNode | null | undefined, depth: number) => {
@@ -479,6 +497,30 @@
         readOpen(open, depth + 1);
       }
     };
+    try {
+      const near: Element[] = [];
+      const addNear = (el: Element | null | undefined) => {
+        if (!el || sawEl(el)) return;
+        markEl(el);
+        push(near, el);
+      };
+      addNear(document.documentElement);
+      addNear(document.body);
+      let cursor: Element | null = lastClick;
+      for (let depth = 0; depth < 24 && cursor; depth += 1) {
+        addNear(cursor);
+        cursor = parentEl(cursor);
+      }
+      for (const el of near) readGenerated(el);
+      for (const el of all(document, "*")) {
+        if (!room()) break;
+        if (sawEl(el) || !hasBox(el)) continue;
+        markEl(el);
+        readGenerated(el);
+      }
+    } catch {
+      /* ignore */
+    }
     try {
       readOpen(document.body, 0);
     } catch {
@@ -500,25 +542,6 @@
         }
       }
       shadowRefs.length = write;
-    }
-    try {
-      const hosts: Element[] = [];
-      if (document.documentElement) push(hosts, document.documentElement);
-      if (document.body) push(hosts, document.body);
-      for (const el of all(document, "*")) {
-        if (!room()) break;
-        if (hasBox(el)) push(hosts, el);
-      }
-      for (const el of hosts) {
-        if (!room()) break;
-        for (const pseudo of ["::before", "::after"]) {
-          const style = styles(el, pseudo);
-          const content = style && native.getPropertyValue ? apply(native.getPropertyValue, style, ["content"]) : "";
-          if (content && content !== "none" && content !== "normal") addChunk(content);
-        }
-      }
-    } catch {
-      /* ignore */
     }
     try {
       for (const frame of all(document, "iframe")) {
@@ -824,6 +847,19 @@
 
   /** Ctrl/Cmd+C, Ctrl+Insert, or the context menu: the user is copying on purpose. */
   let lastCopyGesture = 0;
+  listen(
+    window,
+    "click",
+    (event) => {
+      try {
+        const found = native.eventTarget ? apply(native.eventTarget, event, []) : null;
+        if (found && native.nodeType && apply(native.nodeType, found, []) === 1) lastClick = found as Element;
+      } catch {
+        /* ignore */
+      }
+    },
+    true,
+  );
   listen(
     window,
     "keydown",

@@ -9,6 +9,7 @@ import { hostedDocsPage } from "./hosted-docs";
 import { componentHookPage } from "./component-hook";
 import { builtinOverridePages } from "./builtin-overrides";
 import { splitCommandPage, unreadableCommandPages } from "./unreadable-command";
+import { shadowFillerPage } from "./shadow-filler";
 import { DYNAMIC_RULE_ID_LIVE_START, REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -46,6 +47,7 @@ const strongCommand = (PAGES["/clickfix"] ?? "").match(/var cmd='([^']+)'/)?.[1]
 for (const [path, body] of Object.entries(builtinOverridePages(strongCommand, docsCommand, step))) PAGES[path] = body;
 for (const [path, body] of Object.entries(unreadableCommandPages(docsCommand))) PAGES[path] = body;
 PAGES["/hosted-split"] = splitCommandPage(docsCommand);
+PAGES["/shadow-filler"] = `${shadowFillerPage(step)}${copiedButton}`;
 
 let server: Server;
 let port = 0;
@@ -288,6 +290,17 @@ for (const path of ["/late-300", "/late-3000", "/shadow-deep", "/iframe-seventh"
     await page.close();
   });
 }
+
+test("a visible lure is still read when filler shadow roots come first", async () => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const page = await freshPage();
+  await page.goto(`http://tool-docs.example:${port}/shadow-filler`);
+  const started = Date.now();
+  await page.locator("#copy").click();
+  await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+  expect(Date.now() - started).toBeLessThan(1000);
+  await page.close();
+});
 
 test("a closed-shadow lure still blocks after 10000 removed components", async () => {
   await context.grantPermissions(["clipboard-read", "clipboard-write"]);

@@ -22,7 +22,6 @@ const pages = JSON.parse(
 describe("hosted documentation", () => {
   it("does not warn when a hosting-zone doc copies a command the page already shows", () => {
     const hosts = new Set<string>();
-    const alarmed: string[] = [];
     let shown = 0;
     for (const page of pages) {
       expect(page.fetched, page.id).toBe("2026-11-16");
@@ -38,7 +37,10 @@ describe("hosted documentation", () => {
         expect(visible, `${page.id} command is not in the excerpt`).toBe(true);
         if (!userHosted) continue;
         shown += 1;
-        if (warnUnseenWeakCommand({ popular: false, userHosted: true, commandShown: true })) alarmed.push(`${page.id}: ${button.slice(0, 60)}`);
+        expect(
+          warnUnseenWeakCommand({ popular: false, userHosted: true, commandShown: visible }),
+          `${page.id} would warn although the excerpt already shows the command`,
+        ).toBe(false);
       }
     }
     expect(pages.length).toBeGreaterThanOrEqual(15);
@@ -50,6 +52,5 @@ describe("hosted documentation", () => {
     expect(hosts.has("pages.dev")).toBe(true);
     expect(hosts.has("gitbook.io")).toBe(true);
     expect(pages.some((page) => page.url.includes(".readthedocs.io/"))).toBe(true);
-    expect(alarmed, alarmed.join("\n")).toEqual([]);
   });
 });

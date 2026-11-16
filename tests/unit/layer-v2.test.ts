@@ -266,6 +266,27 @@ describe("ClickFix tiers", () => {
     };
     expect(lures("src/content/walletBridge.ts")).toEqual(lures("src/engine/page/clickfix.ts"));
   });
+
+  it("uses the same shown-command whitespace rule in the bridge and the engine", () => {
+    const bodyOf = (file: string, name: string): string => {
+      const text = readFileSync(resolve(__dirname, "../..", file), "utf8");
+      const start = text.indexOf(`function ${name}(`);
+      expect(start, name).toBeGreaterThan(0);
+      const nextExport = text.indexOf("\nexport function ", start + 10);
+      const nextInner = text.indexOf("\n  function ", start + 10);
+      const ends = [nextExport, nextInner].filter((at) => at > start);
+      return text.slice(start, ends.length ? Math.min(...ends) : text.length);
+    };
+    const engine = bodyOf("src/engine/page/clickfix.ts", "weakCommandIsShown");
+    const bridge = bodyOf("src/content/walletBridge.ts", "commandIsShown");
+    const engineClass = engine.match(/\/(\[[^\]]+\]\+)\/g/)?.[1];
+    const quoted = bridge.match(/"(\[(?:\\.|[^"\\])*\]\+)"/)?.[1];
+    expect(engineClass).toBeTruthy();
+    expect(quoted).toBeTruthy();
+    expect(JSON.parse(`"${quoted}"`)).toBe(engineClass);
+    expect(engine).toContain("length < 12");
+    expect(bridge).toContain("length < 12");
+  });
 });
 
 describe("downloads", () => {

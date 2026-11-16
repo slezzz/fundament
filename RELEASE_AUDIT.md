@@ -237,6 +237,16 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Scan order, 2026-11-16
+
+The 12 ms walk read every open shadow root before `::before` / `::after`. Red first, on the build from `abda6a7`. A page put 2 000 open shadow roots of filler text in a zero-height box, then showed “Press Windows + R” in an on-screen `::before`, and copied a weak command. The page stayed up for 8 s.
+
+The walk now reads the clicked element, its ancestors, and other elements with a box on screen before open shadow text, then closed roots, then frames. The same page reaches `warning.html`, and the click is under a second. `commandIsShown` and `weakCommandIsShown` are checked for the same whitespace class and the same length floor. The hosted-doc test feeds that visible result into `warnUnseenWeakCommand` instead of passing `commandShown: true` on its own. Weights stay 2.1.0.
+
+Still open: a `::before` with no box, and a shadow lure that sits behind enough on-screen elements to spend the 12 ms.
+
+Same run: typecheck, lint, 289 tests, URL-corpus ceilings unchanged, Edge E2E 40.
+
 ## Readable text, 2026-11-16
 
 `commandIsShown` treated `innerText` as “the visitor can read this.” Red first, on the build from `b4c387e`. A picture lure on `fundament-lure-probe.weebly.com` also printed the install command in white on white, at 1 px, at opacity 0, at `left: -9999px`, and inside `overflow: hidden; height: 0`. All five stayed on the page.

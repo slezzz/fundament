@@ -2,6 +2,26 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-16 — Read the visible lure before filler shadow roots
+
+- Hypothesis: the 12 ms walk reads every open shadow root before `::before` / `::after`, so filler roots can hide a lure the visitor can see.
+- Result: Confirmed. A page with 2 000 open shadow roots of filler text, and “Press Windows + R” in an on-screen `::before`, stayed up. The walk now reads the clicked element, its ancestors, and other on-screen elements first, then open shadows, then closed ones. The shown-command whitespace class is the same string in `commandIsShown` and `weakCommandIsShown`. The hosted-doc test passes that visible result into the worker check instead of a hardcoded `true`.
+- Evidence: the filler page was red (8 s on the page) and then reaches `warning.html` in the same click, under a second. The older shadow, CSS, picture, and github.io cases still pass. Weights unchanged.
+- Open doubt: thousands of on-screen elements can still spend the 12 ms before a later shadow lure. A `::before` with no box is still skipped. Text below the fold is not in the first pass.
+
+### Self-check
+
+- Real user, real attack: A page that hides the Win+R line in a visible `::before` and pads the document with open shadow roots still cannot copy the weak command.
+- Five-minute bypass: Put the instruction in a shadow root after enough on-screen elements to spend the 12 ms, or in a `::before` that has no box.
+- False alarm: No new signal. A component page is only blocked when the visible text is actually a lure. The github.io doc and the 29 hosted-doc lines stay quiet.
+- Simpler or more complicated: The same walk, in a different order, plus the click target. The string comparison did not change.
+- AGENTS.md: Still local. Nothing new is sent. No new permission. The page cannot turn the check off by adding shadow roots.
+- Would I defend it: Yes, as “what the visitor can see is read first.” Not as “every shadow on a huge page is read.”
+- Harmless on weird input: A click target that is not an element is ignored. A throw in one pass does not drop text already collected.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? From generated text on screen and near the click, then from shadow text if time remains. A picture, a canvas, a cross-origin frame, or a `::before` with no box is still invisible. Enough on-screen elements can still crowd out a later shadow.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? The click target is read through the captured `target` getter. Which nodes exist still belongs to the page.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? A page built from many components, such as `github.com` or `youtube.com`. It stays quiet unless the visible text is a lure. A docs page that shows “Press Windows + R” and also copies an install command would be blocked; that pair is not in the 22 excerpts.
+
 ## 2026-11-16 — Unreadable text is not a shown command
 
 - Hypothesis: `commandIsShown` treats `innerText` as proof the visitor can read the command, so a hosting-zone page can print it in the background color, at 1 px, at opacity 0, off-screen, or clipped, and the copy is left alone.
