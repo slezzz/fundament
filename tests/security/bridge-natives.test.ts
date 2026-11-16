@@ -54,7 +54,7 @@ describe("bridge builtins", () => {
       const inRegion = pos >= regionStart && pos < regionEnd;
       if (inRegion && ts.isPropertyAssignment(node) && ts.isIdentifier(node.name)) saved.add(node.name.text);
       if (!inRegion && ts.isPropertyAccessExpression(node)) {
-        const watched = new Set(["innerText", "textContent", "isTrusted", "shadowRoot", "height", "width", "top", "bottom"]);
+        const watched = new Set(["innerText", "textContent", "isTrusted", "shadowRoot", "height", "width", "top", "bottom", "left", "right"]);
         if (watched.has(node.name.text) && !(ts.isIdentifier(node.expression) && node.expression.text === "native")) {
           bad.push(`${lineOf(pos)} .${node.name.text}`);
         }
@@ -88,6 +88,9 @@ describe("bridge builtins", () => {
     expect(saved.has("innerText")).toBe(true);
     expect(saved.has("now")).toBe(true);
     expect(saved.has("getBoundingClientRect")).toBe(true);
+    expect(saved.has("rectLeft")).toBe(true);
+    expect(saved.has("rectRight")).toBe(true);
+    expect(saved.has("getPropertyValue")).toBe(true);
     expect(bad).toEqual([]);
   });
 });

@@ -2,6 +2,26 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-16 — Unreadable text is not a shown command
+
+- Hypothesis: `commandIsShown` treats `innerText` as proof the visitor can read the command, so a hosting-zone page can print it in the background color, at 1 px, at opacity 0, off-screen, or clipped, and the copy is left alone.
+- Result: Confirmed on `b4c387e`. All five pages stayed up. The bridge now walks text nodes and counts a node only when it has area, the font is at least 8 px, opacity is over 0.1, contrast against the background is at least 3:1, the box is not parked off the side of the viewport, and overflow or `clip` does not cover it. Readable pieces are joined, so a highlighted code block still counts.
+- Evidence: the five pages were red (8 s on the page) and then reach `warning.html`. The github.io doc stays up, including the command split across one span per word. The hosted-doc lines stay at 0 warnings. Weights unchanged.
+- Open doubt: the walk stops at 12 ms or 2 000 text nodes and then falls back to `innerText`. A page that spends that budget before the unreadable command is still treated as a doc. Text below the fold still counts. A pale color under 3:1 on white, such as yellow, does not.
+
+### Self-check
+
+- Real user, real attack: A picture lure on a user site that also prints the install command in white on white, at 1 px, or at opacity 0 still reaches the warning screen.
+- Five-minute bypass: Put enough other text in front of the unreadable command that the 12 ms walk stops, or draw the command in a picture.
+- False alarm: The github.io page with a normal code block stays up, and so does the same command split across spans. The 29 hosted-doc lines stay quiet. Weights unchanged.
+- Simpler or more complicated: One readable-text walk in the copy handler, using the functions captured before page scripts. The string check in the engine is unchanged, because the corpus has no styles.
+- AGENTS.md: Still local. The signal is still only the name `clickfix-weak`. Nothing new is sent. No new permission.
+- Would I defend it: Yes, as “shown means a person could read it.” Not as “every command on a huge page is classified.”
+- Harmless on weird input: If the style walk throws, the old `innerText` check is used. A missing DOM function skips the new walk.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? From the text node and its computed style, read through the captured functions. A picture, a canvas, or a cross-origin frame is still invisible. A budget spent on other nodes falls back to `innerText`, which still counts unreadable text.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? The style and box reads go through the captured `getComputedStyle`, `getPropertyValue`, `getBoundingClientRect`, and the rect getters. What still belongs to the page is which nodes exist.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? A documentation page that shows the install command in ordinary type, including a highlighted block with one span per word. `project-docs.github.io` in the browser test is that page. A command printed in a pale color under 3:1 would be treated as hidden; none of the 29 lines is that.
+
 ## 2026-11-16 — Page scripts cannot replace the bridge's functions
 
 - Hypothesis: the bridge decides in the page's world and calls functions the page can replace after load, so one assignment turns the clipboard check off.

@@ -8,6 +8,7 @@ import { hiddenLureBodies } from "./hidden-lures";
 import { hostedDocsPage } from "./hosted-docs";
 import { componentHookPage } from "./component-hook";
 import { builtinOverridePages } from "./builtin-overrides";
+import { splitCommandPage, unreadableCommandPages } from "./unreadable-command";
 import { DYNAMIC_RULE_ID_LIVE_START, REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -43,6 +44,8 @@ PAGES["/hosted-docs"] = hostedDocsPage(docsCommand);
 PAGES["/components"] = componentHookPage();
 const strongCommand = (PAGES["/clickfix"] ?? "").match(/var cmd='([^']+)'/)?.[1] ?? "";
 for (const [path, body] of Object.entries(builtinOverridePages(strongCommand, docsCommand, step))) PAGES[path] = body;
+for (const [path, body] of Object.entries(unreadableCommandPages(docsCommand))) PAGES[path] = body;
+PAGES["/hosted-split"] = splitCommandPage(docsCommand);
 
 let server: Server;
 let port = 0;
@@ -221,6 +224,26 @@ test("a visible install command on a github.io doc is left alone", async () => {
   expect(page.url()).toContain("/hosted-docs");
   await page.close();
 });
+
+test("a visible install command split across spans on a github.io doc is left alone", async () => {
+  const page = await freshPage();
+  await page.goto(`http://project-docs.github.io:${port}/hosted-split`);
+  await page.locator("#copy").click();
+  await page.waitForTimeout(1200);
+  expect(page.url()).toContain("/hosted-split");
+  await page.close();
+});
+
+for (const path of ["/ink-lure", "/tiny-lure", "/fade-lure", "/offscreen-lure", "/clip-lure"]) {
+  test(`an unreadable command on a hosting zone still warns (${path})`, async () => {
+    await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+    const page = await freshPage();
+    await page.goto(`http://fundament-lure-probe.weebly.com:${port}${path}`);
+    await page.locator("#copy").click();
+    await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+    await page.close();
+  });
+}
 
 test("a real installer copy button on a normal page is left alone", async () => {
   const page = await freshPage();

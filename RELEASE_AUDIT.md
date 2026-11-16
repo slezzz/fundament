@@ -237,6 +237,16 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Readable text, 2026-11-16
+
+`commandIsShown` treated `innerText` as “the visitor can read this.” Red first, on the build from `b4c387e`. A picture lure on `fundament-lure-probe.weebly.com` also printed the install command in white on white, at 1 px, at opacity 0, at `left: -9999px`, and inside `overflow: hidden; height: 0`. All five stayed on the page.
+
+A text node now counts only when the captured style and box functions say it is readable: area at least 1 px, font at least 8 px, opacity over 0.1, contrast at least 3:1 against the background behind it, not parked off the side of the viewport, and not covered by overflow or `clip`. Text below the fold still counts. Readable nodes are joined, so a code block split across spans still counts. After the change the five pages reach `warning.html`. The github.io doc stays up, including the split command. The 29 hosted-doc lines stay at 0 warnings. Weights stay 2.1.0.
+
+Still open: the walk stops at 12 ms or 2 000 text nodes and then uses `innerText` again, so a padded page can keep an unreadable command looking shown. A pale color under 3:1 is treated as hidden.
+
+Same run: typecheck, lint, 288 tests, URL-corpus ceilings unchanged, Edge E2E 39.
+
 ## Bridge functions, 2026-11-16
 
 The clipboard check runs in the page's world and was calling functions the page can replace. Red first, on the build from `c22bbf4`. Four pages each replaced one function and then copied:

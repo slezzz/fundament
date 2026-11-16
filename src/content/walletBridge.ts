@@ -5,7 +5,8 @@
  * - ClickFix: a page-initiated clipboard write that is a shell/PowerShell command is
  *   replaced when the lure text is on the page, including open and closed shadow
  *   roots and CSS ::before/::after. A weak command with no such text is reported
- *   by tier only. The user's own copies are never touched or read.
+ *   by tier only. Text counts as shown only when a person could read it.
+ *   The user's own copies are never touched or read.
  * - Clipboard hijack: if you copied a wallet address and the page swaps in another one
  *   within a second, your original address is kept.
  * - Wallet drainers: unlimited approvals, setApprovalForAll, Permit/Permit2 signatures,
@@ -86,6 +87,8 @@
     rectWidth: pick(() => Object.getOwnPropertyDescriptor(DOMRectReadOnly.prototype, "width")?.get),
     rectTop: pick(() => Object.getOwnPropertyDescriptor(DOMRectReadOnly.prototype, "top")?.get),
     rectBottom: pick(() => Object.getOwnPropertyDescriptor(DOMRectReadOnly.prototype, "bottom")?.get),
+    rectLeft: pick(() => Object.getOwnPropertyDescriptor(DOMRectReadOnly.prototype, "left")?.get),
+    rectRight: pick(() => Object.getOwnPropertyDescriptor(DOMRectReadOnly.prototype, "right")?.get),
     getComputedStyle: pick(() => globalThis.getComputedStyle),
     showText: pick(() => NodeFilter.SHOW_TEXT),
     addEventListener: pick(() => EventTarget.prototype.addEventListener),
@@ -98,6 +101,11 @@
     setHas: Set.prototype.has,
     bind: Function.prototype.bind,
     innerHeight: pick(() => Object.getOwnPropertyDescriptor(Window.prototype, "innerHeight")?.get),
+    innerWidth: pick(() => Object.getOwnPropertyDescriptor(Window.prototype, "innerWidth")?.get),
+    createRange: pick(() => Document.prototype.createRange),
+    selectNodeContents: pick(() => Range.prototype.selectNodeContents),
+    rangeRect: pick(() => Range.prototype.getBoundingClientRect),
+    pow: Math.pow,
     contentDocument: pick(() => Object.getOwnPropertyDescriptor(HTMLIFrameElement.prototype, "contentDocument")?.get),
     getPropertyValue: pick(() => CSSStyleDeclaration.prototype.getPropertyValue),
     clipboardData: pick(() => Object.getOwnPropertyDescriptor(ClipboardEvent.prototype, "clipboardData")?.get),
@@ -548,20 +556,262 @@
     }
   }
 
+  /** A number in a computed style, such as "12px" or "0.5". */
+  function readFloatAt(value: string, start: number): { n: number; i: number } | null {
+    let i = start;
+    const len = value.length;
+    while (i < len) {
+      const code = apply(native.charCodeAt, value, [i]);
+      if ((code >= 48 && code <= 57) || code === 46) break;
+      i += 1;
+      if (i - start > 24) return null;
+    }
+    if (i >= len) return null;
+    let whole = 0;
+    let frac = 0;
+    let scale = 1;
+    let saw = false;
+    let dot = false;
+    for (; i < len; i += 1) {
+      const code = apply(native.charCodeAt, value, [i]);
+      if (code >= 48 && code <= 57) {
+        saw = true;
+        if (!dot) whole = whole * 10 + (code - 48);
+        else {
+          scale *= 10;
+          frac = frac * 10 + (code - 48);
+        }
+      } else if (code === 46 && !dot) dot = true;
+      else break;
+    }
+    if (!saw) return null;
+    return { n: whole + frac / scale, i };
+  }
+
+  function cssOf(el: Element): CSSStyleDeclaration | null {
+    return native.getComputedStyle ? apply(native.getComputedStyle, window, [el]) : null;
+  }
+  function cssProp(style: CSSStyleDeclaration | null, name: string): string {
+    if (!style || !native.getPropertyValue) return "";
+    const value = apply(native.getPropertyValue, style, [name]);
+    return value ? native.string(value) : "";
+  }
+  function parentEl(node: Node): Element | null {
+    return native.parentElement ? apply(native.parentElement, node, []) ?? null : null;
+  }
+  function edges(box: object): { y: number; xEnd: number; yEnd: number; x: number; across: number; down: number } {
+    const read = (get: ((this: Element) => number) | undefined) => (get ? apply(get, box, []) : 0);
+    return {
+      y: read(native.rectTop),
+      xEnd: read(native.rectRight),
+      yEnd: read(native.rectBottom),
+      x: read(native.rectLeft),
+      across: read(native.rectWidth),
+      down: read(native.rectHeight),
+    };
+  }
+  function parseColor(value: string): { r: number; g: number; b: number; a: number } | null {
+    const text = lower(trim(native.string(value)));
+    if (text === "transparent") return { r: 0, g: 0, b: 0, a: 0 };
+    if (!startsWith(text, "rgb")) return null;
+    const channels: number[] = [];
+    let i = 0;
+    while (channels.length < 4 && i < text.length) {
+      const found = readFloatAt(text, i);
+      if (!found) break;
+      let n = found.n;
+      let at = found.i;
+      if (at < text.length && apply(native.charCodeAt, text, [at]) === 37) {
+        n = channels.length < 3 ? (n / 100) * 255 : n / 100;
+        at += 1;
+      }
+      push(channels, n);
+      i = at;
+    }
+    const red = channels[0];
+    const green = channels[1];
+    const blue = channels[2];
+    const fourth = channels[3];
+    if (red === undefined || green === undefined || blue === undefined) return null;
+    const alpha = fourth === undefined ? 1 : fourth;
+    return { r: red, g: green, b: blue, a: alpha > 1 ? alpha / 255 : alpha };
+  }
+  function linear(channel: number): number {
+    const s = channel / 255;
+    if (s <= 0.03928) return s / 12.92;
+    return apply(native.pow, Math, [(s + 0.055) / 1.055, 2.4]);
+  }
+  function contrastOf(fg: { r: number; g: number; b: number }, bg: { r: number; g: number; b: number }): number {
+    const lum = (color: { r: number; g: number; b: number }) => 0.2126 * linear(color.r) + 0.7152 * linear(color.g) + 0.0722 * linear(color.b);
+    const hi = apply(native.max, Math, [lum(fg), lum(bg)]);
+    const lo = apply(native.min, Math, [lum(fg), lum(bg)]);
+    return (hi + 0.05) / (lo + 0.05);
+  }
+  /** Same ink as the page behind it, under 8 px, faded, off-screen, or clipped is not readable. */
+  function readable(node: Node): boolean {
+    const el = parentEl(node);
+    if (!el) return false;
+    const chain: Element[] = [];
+    let cursor: Element | null = el;
+    for (let depth = 0; depth < 24 && cursor; depth += 1) {
+      push(chain, cursor);
+      cursor = parentEl(cursor);
+    }
+    for (let i = 0; i < chain.length; i += 1) {
+      const item = chain[i];
+      if (!item) continue;
+      const style = cssOf(item);
+      const display = cssProp(style, "display");
+      const visibility = cssProp(style, "visibility");
+      if (display === "none" || visibility === "hidden" || visibility === "collapse") return false;
+    }
+    let opacity = 1;
+    for (let i = 0; i < chain.length; i += 1) {
+      const item = chain[i];
+      if (!item) continue;
+      const raw = cssProp(cssOf(item), "opacity");
+      const found = raw ? readFloatAt(raw, 0) : null;
+      if (found) opacity *= found.n;
+      if (opacity <= 0.1) return false;
+    }
+    const size = readFloatAt(cssProp(cssOf(el), "font-size"), 0);
+    if (size && size.n < 8) return false;
+    const color = parseColor(cssProp(cssOf(el), "color"));
+    if (color) {
+      if (color.a <= 0.1) return false;
+      let bgR = 255;
+      let bgG = 255;
+      let bgB = 255;
+      for (let i = chain.length - 1; i >= 0; i -= 1) {
+        const item = chain[i];
+        if (!item) continue;
+        const layer = parseColor(cssProp(cssOf(item), "background-color"));
+        if (!layer || layer.a <= 0) continue;
+        bgR = layer.r * layer.a + bgR * (1 - layer.a);
+        bgG = layer.g * layer.a + bgG * (1 - layer.a);
+        bgB = layer.b * layer.a + bgB * (1 - layer.a);
+      }
+      const fg = color.a >= 0.99 ? color : { r: color.r * color.a + bgR * (1 - color.a), g: color.g * color.a + bgG * (1 - color.a), b: color.b * color.a + bgB * (1 - color.a) };
+      if (contrastOf(fg, { r: bgR, g: bgG, b: bgB }) < 3) return false;
+    }
+    let box: { y: number; xEnd: number; yEnd: number; x: number; across: number; down: number } | null = null;
+    try {
+      if (native.createRange && native.selectNodeContents && native.rangeRect) {
+        const range = apply(native.createRange, document, []);
+        apply(native.selectNodeContents, range, [node]);
+        const rect = apply(native.rangeRect, range, []);
+        if (rect) box = edges(rect);
+      }
+    } catch {
+      box = null;
+    }
+    if (!box) {
+      try {
+        box = edges(boxOf(el));
+      } catch {
+        return false;
+      }
+    }
+    if (box.across < 1 || box.down < 1) return false;
+    const viewW = (native.innerWidth ? apply(native.innerWidth, window, []) : 0) || 800;
+    // Below the fold is still shown: the visitor can scroll. A box parked off to the side is not.
+    if (box.xEnd < 1 || box.yEnd < 1 || box.x > viewW) return false;
+    for (let i = 0; i < chain.length; i += 1) {
+      const item = chain[i];
+      if (!item) continue;
+      const style = cssOf(item);
+      const clip = lower(cssProp(style, "clip"));
+      if (clip && clip !== "auto" && startsWith(clip, "rect")) {
+        const nums: number[] = [];
+        let at = 0;
+        while (nums.length < 4) {
+          const found = readFloatAt(clip, at);
+          if (!found) break;
+          push(nums, found.n);
+          at = found.i;
+        }
+        const clipTop = nums[0];
+        const clipRight = nums[1];
+        const clipBottom = nums[2];
+        const clipLeft = nums[3];
+        if (clipTop !== undefined && clipRight !== undefined && clipBottom !== undefined && clipLeft !== undefined && (clipRight - clipLeft < 1 || clipBottom - clipTop < 1)) return false;
+      }
+      const path = lower(cssProp(style, "clip-path"));
+      if (path && path !== "none" && (includes(path, "circle(0") || startsWith(path, "inset(100"))) return false;
+      const ox = cssProp(style, "overflow-x");
+      const oy = cssProp(style, "overflow-y");
+      const clipX = ox === "hidden" || ox === "clip";
+      const clipY = oy === "hidden" || oy === "clip";
+      if (!clipX && !clipY) continue;
+      let host: { y: number; xEnd: number; yEnd: number; x: number; across: number; down: number };
+      try {
+        host = edges(boxOf(item));
+      } catch {
+        continue;
+      }
+      const left = clipX ? apply(native.max, Math, [box.x, host.x]) : box.x;
+      const right = clipX ? apply(native.min, Math, [box.xEnd, host.xEnd]) : box.xEnd;
+      const top = clipY ? apply(native.max, Math, [box.y, host.y]) : box.y;
+      const bottom = clipY ? apply(native.min, Math, [box.yEnd, host.yEnd]) : box.yEnd;
+      if (right - left < 1 || bottom - top < 1) return false;
+    }
+    return true;
+  }
+
   /**
-   * Same rule as weakCommandIsShown in clickfix.ts. innerText includes a visible
-   * pre/code and does not include a textarea's value. A hidden copy field is not "shown".
+   * Same whitespace rule as weakCommandIsShown in clickfix.ts. A textarea's value
+   * is not shown. Text that is on the page but not readable is not shown either:
+   * no area, under 8 px, opacity at or under 0.1, contrast under 3:1, off-screen, or clipped.
    */
   function commandIsShown(command: string): boolean {
     const needle = lower(trim(collapseSpaces(native.string(command), "[\\s\\u00A0]+")));
     if (needle.length < 12) return false;
-    let hay = "";
+    const shownByInnerText = (): boolean => {
+      try {
+        const hay = document.body ? innerTextOf(document.body) : "";
+        return includes(lower(collapseSpaces(hay, "[\\s\\u00A0]+")), needle);
+      } catch {
+        return false;
+      }
+    };
     try {
-      hay = document.body ? innerTextOf(document.body) : "";
+      if (!document.body || !native.createTreeWalker || !native.nextNode || native.showText === undefined) return shownByInnerText();
+      const deadline = clock() + 12;
+      const walker = apply(native.createTreeWalker, document, [document.body, native.showText]);
+      let node = apply(native.nextNode, walker, []) as Node | null;
+      let count = 0;
+      let rolling = "";
+      let sawUnreadable = false;
+      let unfinished = false;
+      while (node && count < 2000) {
+        if (clock() >= deadline) {
+          unfinished = true;
+          break;
+        }
+        count += 1;
+        const tag = tagOf(node);
+        const flat = lower(trim(collapseSpaces(textOf(node), "[\\s\\u00A0]+")));
+        if (!flat || tag === "SCRIPT" || tag === "STYLE" || tag === "TEXTAREA" || tag === "INPUT" || tag === "SELECT") {
+          node = apply(native.nextNode, walker, []) as Node | null;
+          continue;
+        }
+        let canRead = false;
+        try {
+          canRead = readable(node);
+        } catch {
+          canRead = false;
+        }
+        if (canRead) {
+          rolling = slice(rolling + " " + flat, -4000);
+          if (includes(flat, needle) || includes(lower(collapseSpaces(rolling, "[\\s\\u00A0]+")), needle)) return true;
+        } else if (includes(flat, needle)) sawUnreadable = true;
+        node = apply(native.nextNode, walker, []) as Node | null;
+      }
+      if (unfinished && !sawUnreadable) return shownByInnerText();
+      return false;
     } catch {
-      /* ignore */
+      return shownByInnerText();
     }
-    return includes(lower(collapseSpaces(hay, "[\\s\\u00A0]+")), needle);
   }
 
   /** "block" replaces the clipboard. "signal" reports the tier only and leaves the text. */
