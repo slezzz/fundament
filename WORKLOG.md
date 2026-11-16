@@ -2,6 +2,26 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-17 — Decision memos, no detectors
+
+- Hypothesis: ConsentFix, device-code phishing, an extension-id list, and an optional `contentSettings` permission are each ready to code.
+- Result: Three are not. ConsentFix ends in a paste this extension must not read, and a localhost `code=` URL is also a real loopback login (Push Security, 11 December 2025). Device-code phishing sends the visitor to Microsoft’s own device-login URL (Microsoft, 13 February 2025 and 6 April 2026); an opener hint would be one weak signal. An id blocklist has no licensed ids, and the permission diff already covers extension changes. `contentSettings` is the one yes: it defaults off, and its install warning describes a wider power than notification prompts. `privacy`, `scripting`, and `management` stay required. The manifest was not changed. Whether an update keeps an existing `contentSettings` grant is **nicht bestätigt**.
+- Evidence: `concepts/consentfix.md`, `concepts/device-code.md`, `concepts/extension-blocklist.md`, `concepts/content-settings-optional.md`. No engine change. Weights unchanged.
+- Open doubt: the update-grant behavior, and the current store-dashboard permission form. Neither was re-checked on 2026-11-17.
+
+### Self-check
+
+- Real user, real attack: A ConsentFix paste and a device-code login on Microsoft’s own page are not new warnings. An extension that gains a dangerous permission is still the existing local notice.
+- Five-minute bypass: Not applicable. No new check was added to bypass.
+- False alarm: The declined checks would have warned on loopback logins, device-login docs, and Microsoft’s own page. Those pages were not collected, which is why the checks stay unbuilt.
+- Simpler or more complicated: Four memos. The permission diff and the notification toggle stay as they are.
+- AGENTS.md: Nothing new is sent. No new permission. No id was added to a list.
+- Would I defend it: Yes, as “these three do not get a detector, and `contentSettings` waits for an update check.” Not as “the attacks are handled.”
+- Harmless on weird input: No new parser. The manifest test still expects `contentSettings` in `permissions`.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? ConsentFix’s finishing move is a paste. Device-code’s destination is a real Microsoft URL the attacker does not have to hide. An id list would depend on ids the project does not have a license to ship.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? No new check. The declined ConsentFix idea would have depended on a link the page controls, which is why a docs page sits in the same category.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? Azure CLI docs and real loopback logins. Microsoft’s device-login page and CLI docs that tell you to open it. Ordinary extensions that merely share a permission with a kit. None of those should get a new warning from this pass.
+
 ## 2026-11-16 — Read the visible lure before filler shadow roots
 
 - Hypothesis: the 12 ms walk reads every open shadow root before `::before` / `::after`, so filler roots can hide a lure the visitor can see.

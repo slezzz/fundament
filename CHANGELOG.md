@@ -6,6 +6,9 @@
 - False-positive corpora from Majestic Million: ranks 1–10,000 and 100,001–110,000, each checked as home page and as `/login` with a password form. Enforced in `tests/security/corpus.test.ts`: at most 0.1 % / 0.2 % warnings, zero red. Current result: 0 of 20,000.
 - Detection floor on a deterministic sample of real phishing hosts analyzed as if unlisted (URL only ≥ 4 %, with login form ≥ 28 %).
 
+### Decisions
+- Four concept memos, no code. ConsentFix, device-code phishing, and an extension-id list are not to be built. `contentSettings` may move to `optional_permissions` later, alone, after an update on Chrome and Edge shows whether an existing grant survives. `privacy`, `scripting`, and `management` stay required. Weights unchanged. Manifest unchanged.
+
 ### Fixed
 - A visible lure is read before shadow trees. The click target, its ancestors, and elements on screen are checked for `::before` / `::after` before open or closed shadow text is walked, so 2 000 filler shadow roots cannot use up the 12 ms first. The same whitespace rule decides “shown” in the bridge and in the engine, and the hosted-doc test uses that result. Weights unchanged.
 - A command printed on the page counts as shown only when a person could read it. Text in the background color, type under 8 px, opacity at or under 0.1, a box parked off-screen, or text clipped by overflow no longer makes a hosting-zone lure look like a documentation page. A readable command, including one split across spans in a code block, is still left alone. The 29 hosted-doc lines stay at 0 warnings. Weights unchanged.

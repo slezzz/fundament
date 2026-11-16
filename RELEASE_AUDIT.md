@@ -237,6 +237,21 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Decision memos, 2026-11-17
+
+No detector and no manifest change. The memos are the decision.
+
+| Memo | Answer |
+|------|--------|
+| `concepts/consentfix.md` | No. Push Security, 11 December 2025. The paste is off limits, and localhost `code=` is a real loopback login. |
+| `concepts/device-code.md` | No. Microsoft, 13 February 2025 and 6 April 2026. The device-login URL is the real page. An opener hint is one weak signal. |
+| `concepts/extension-blocklist.md` | No. No ids, no feed. The permission diff stays the coverage. A license is still required before any id is written down. |
+| `concepts/content-settings-optional.md` | Yes, `contentSettings` only, after a Chrome and Edge update shows whether an existing grant survives. `privacy`, `scripting`, and `management` stay required. |
+
+Weights unchanged. `tests/e2e/scenarios.spec.ts` still expects `contentSettings` in `permissions`.
+
+Same run: typecheck, lint, 289 tests, URL-corpus ceilings unchanged, Edge E2E 40. Docs only.
+
 ## Scan order, 2026-11-16
 
 The 12 ms walk read every open shadow root before `::before` / `::after`. Red first, on the build from `abda6a7`. A page put 2 000 open shadow roots of filler text in a zero-height box, then showed “Press Windows + R” in an on-screen `::before`, and copied a weak command. The page stayed up for 8 s.
