@@ -83,13 +83,26 @@
 
   /* ----------------------------------------------------------- ClickFix */
 
-  const shadowRoots: ShadowRoot[] = [];
+  // Weak refs only. A strong list would keep every removed component's tree alive.
+  // Disconnected roots are dropped when the list gets long, and again on each copy.
+  const shadowRefs: WeakRef<ShadowRoot>[] = [];
+  function rememberShadow(root: ShadowRoot): void {
+    if (shadowRefs.length >= 512) {
+      let write = 0;
+      for (const ref of shadowRefs) {
+        const live = ref.deref();
+        if (live && live.host.isConnected) shadowRefs[write++] = ref;
+      }
+      shadowRefs.length = write;
+    }
+    shadowRefs.push(new WeakRef(root));
+  }
   try {
     seal(Element.prototype, "attachShadow", (original) => {
       return function (this: Element, init?: ShadowRootInit) {
         const root = (original as (this: Element, init?: ShadowRootInit) => ShadowRoot).call(this, init);
         try {
-          shadowRoots.push(root);
+          rememberShadow(root);
         } catch {
           /* ignore */
         }
@@ -231,14 +244,21 @@
     } catch {
       /* ignore */
     }
-    for (const root of shadowRoots) {
-      if (!room() || seen.has(root)) continue;
-      try {
-        seen.add(root);
-        push(textNodes(root));
-      } catch {
-        /* detached */
+    {
+      let write = 0;
+      for (const ref of shadowRefs) {
+        const root = ref.deref();
+        if (!root || !root.host.isConnected) continue;
+        shadowRefs[write++] = ref;
+        if (!room() || seen.has(root)) continue;
+        try {
+          seen.add(root);
+          push(textNodes(root));
+        } catch {
+          /* detached */
+        }
       }
+      shadowRefs.length = write;
     }
     try {
       const hosts: Element[] = [];

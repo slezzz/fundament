@@ -6,6 +6,7 @@
 import { test, expect, chromium, type BrowserContext, type Worker } from "@playwright/test";
 import { hiddenLureBodies } from "./hidden-lures";
 import { hostedDocsPage } from "./hosted-docs";
+import { componentHookPage } from "./component-hook";
 import { DYNAMIC_RULE_ID_LIVE_START, REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -38,6 +39,7 @@ for (const [path, body] of Object.entries(hiddenLureBodies(step))) {
 }
 const docsCommand = (PAGES["/installer"] ?? "").match(/t\.value='([^']+)'/)?.[1] ?? "";
 PAGES["/hosted-docs"] = hostedDocsPage(docsCommand);
+PAGES["/components"] = componentHookPage();
 
 let server: Server;
 let port = 0;
@@ -247,6 +249,24 @@ for (const path of ["/late-300", "/late-3000", "/shadow-deep", "/iframe-seventh"
     await page.close();
   });
 }
+
+test("a closed-shadow lure still blocks after 10000 removed components", async () => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const page = await freshPage();
+  await page.goto(`http://tool-docs.example:${port}/shadow-churn`);
+  const started = Date.now();
+  await page.locator("#copy").click();
+  await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
+  expect(Date.now() - started).toBeLessThan(1000);
+  await page.close();
+});
+
+test("a sealed attachShadow still behaves on a page of custom elements", async () => {
+  const page = await freshPage();
+  await page.goto(`http://tool-docs.example:${port}/components`);
+  await expect(page.locator("#hook")).toHaveText("hook-ok");
+  await page.close();
+});
 
 for (const path of ["/shadow-open", "/shadow-closed", "/css-lure"]) {
   test(`a hidden instruction in the page tree cannot copy a shell command (${path})`, async () => {

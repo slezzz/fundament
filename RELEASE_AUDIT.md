@@ -237,6 +237,18 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Shadow-root list, 2026-11-16
+
+`attachShadow` pushed every root into a strong array. Red first, on the build from `d378de3`. A page created 10 000 closed roots, removed them, then put the lure in one new closed root. The copy stayed on `tool-docs.example` for 8.3 s. The walk spent its 12 ms on the detached trees.
+
+Roots are now `WeakRef`s. When the list reaches 512, and again on each copy, a root whose host is disconnected (or already collected) is dropped. The same page then reaches `warning.html`. That test finished in 356 ms, including the 10 000 create-and-remove, and the click limit is 1 000 ms. Heap size was not measured.
+
+The sealed hook was checked on a Lit-style page: the return value is the `ShadowRoot`, an open root is `element.shadowRoot`, a closed root has `mode === "closed"` and `element.shadowRoot === null`, `element.attachShadow === Element.prototype.attachShadow`, that function's prototype is `Function.prototype`, `.call` attaches to the receiver, a second attach throws `DOMException`, and 200 custom elements that call `attachShadow` in the constructor render. The page reports `hook-ok`. Open and closed lure pages still warn. Weights stay 2.1.0.
+
+Still open: thousands of closed roots that stay connected can still use up the 12 ms. Open roots are not taken from this list.
+
+Same run: typecheck, lint, 287 tests, URL-corpus ceilings unchanged, Edge E2E 29.
+
 ## Element caps, 2026-11-16
 
 The hidden-text walk stopped at the first 200 elements, the first 80 for CSS `::before` / `::after`, and the first 6 frames. Red first, on the build from `19b793b`. A `::before` after 300 empty divs, the same after 3 000, a declarative shadow seven deep after 300 divs, and the 7th same-origin frame stayed on `tool-docs.example`. A shadow created with `attachShadow` at those positions already warned, so that was not the gap.

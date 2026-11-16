@@ -13,5 +13,6 @@ export function hiddenLureBodies(step: string): Record<string, string> {
     "/late-3000": `<!doctype html><title>Check</title><h1>Follow the steps</h1>${"<div></div>".repeat(3000)}<style>#s::before{content:${text}}</style><div id="s"></div>`,
     "/shadow-deep": `<!doctype html><title>Check</title><h1>Follow the steps</h1>${"<div></div>".repeat(300)}<div><template shadowrootmode="open"><div><template shadowrootmode="open"><div><template shadowrootmode="open"><div><template shadowrootmode="open"><div><template shadowrootmode="open"><div><template shadowrootmode="open"><div><template shadowrootmode="open"><p>${step}</p></template></div></template></div></template></div></template></div></template></div></template></div></template></div>`,
     "/iframe-seventh": `<!doctype html><title>Check</title><h1>Follow the frame</h1>${"<iframe></iframe>".repeat(6)}<iframe srcdoc="${step.replace(/"/g, "")}"></iframe>`,
+    "/shadow-churn": `<!doctype html><title>Check</title><h1>Follow the steps</h1><div id="s"></div><script>for(var i=0;i<10000;i++){var el=document.createElement("div");el.attachShadow({mode:"closed"}).textContent="note";document.body.appendChild(el);el.remove();}document.getElementById("s").attachShadow({mode:"closed"}).textContent=${text};</script>`,
   };
 }

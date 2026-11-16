@@ -2,6 +2,25 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-16 — Shadow roots are not kept after removal
+
+- Hypothesis: the `attachShadow` list holds every root strongly, including ones the page has removed, so a later lure can fall outside the 12 ms walk.
+- Result: Confirmed. After 10 000 closed roots were created and removed, the live lure stayed on the page. Roots are now weak references. A root whose host is disconnected is dropped when the list passes 512 and again on each copy. The same page then reaches the warning screen. The sealed hook still returns the root, binds `this` to the element, throws `DOMException` on a second attach, and is the same function on `Element.prototype`. Two hundred custom elements that attach in the constructor still render.
+- Evidence: `/shadow-churn` was red on `d378de3` (stayed on the page for 8.3 s) and reaches `warning.html` after the change. That test finished in 356 ms, including creating and removing the 10 000 components, under the 1 000 ms click limit. `/components` reports `hook-ok`. Open and closed shadow lures still block.
+- Open doubt: heap bytes were not measured. A page that keeps thousands of closed roots connected can still spend the 12 ms before a late one. Open roots are walked from the document, not from this list. No cap on live roots.
+
+### Self-check
+
+- Real user, real attack: A closed-shadow lure after a page has thrown away 10 000 components is still blocked.
+- Five-minute bypass: Keep more closed roots connected than the 12 ms walk can read, and put the instruction in one the walk does not reach.
+- False alarm: No new signal. The page-text corpus and the hosted-doc lines are unchanged. The custom-element page does not warn.
+- Simpler or more complicated: Weak references plus dropping disconnected hosts. The hook's call and return are unchanged.
+- AGENTS.md: Still local. Nothing is sent. No new permission. Weights unchanged. The page cannot turn the hook off; a thrown attach still throws.
+- Would I defend it: Yes, as “removed components are not kept, and `attachShadow` still behaves.” Not as “every closed root on a huge live page is read.”
+- Harmless on weird input: Remembering a root is inside a catch, so a failure there cannot swallow the browser's own exception. A dead reference is skipped.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? From roots the page created with `attachShadow` and has not removed. Dropping the host, or using a picture instead of text, still hides it.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? Pages that create and destroy many shadow roots. `youtube.com` and `github.com` do that for ordinary UI. The fixture is that shape: a constructor that calls `attachShadow`, 200 of them, and the return value, `this`, the error, and the prototype function all still match the browser.
+
 ## 2026-11-16 — Hidden text past the first elements
 
 - Hypothesis: stopping at the first 200 nodes, the first 80 for CSS, and the first 6 frames lets a lure sit behind empty padding.
