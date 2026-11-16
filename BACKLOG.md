@@ -2,11 +2,18 @@
 
 Highest user benefit first. A row is done only after a test or a cited measurement in `RELEASE_AUDIT.md`.
 
-Paste lures now include `finger` / `ct.exe`, a `.search-ms` / `.lnk` / `.hta` name, and a fake crashed or outdated browser. “Open Terminal” on an install line stays quiet. A Terminal-only page that copies a rustup-shaped command is still open, on purpose.
+Paste lures now include `finger` / `ct.exe`, a `.search-ms` / `.lnk` / `.hta` name, and a fake crashed browser only when the page also tells the visitor to paste or run a fix. “reCAPTCHA” and “out of date” alone stay quiet. A Terminal-only page that copies a rustup-shaped command is still open, on purpose.
 
 ## Next
 
-1. **Wallet calls.** EIP-7702 delegation and EIP-5792 `wallet_sendCalls` in the bridge. Batches that hide `approve` / `setApprovalForAll` / Permit2. Address poisoning (same start and end). Primary sources: the EIPs and the wallet RPC docs. Counterexamples: static copies of real dapp flows.
+Review 2026-11-16. Item 1 is done. The URL corpus still does not see page text; the page-text excerpts do.
+
+1. **Page-text corpus.** Done 2026-11-16. 22 snapshots, 32 copy buttons, 0 warnings. `tests/security/page-text.test.ts`. The shell-link paragraph that mentions `.lnk` is still `strong` if that paragraph were copied. The page does not offer it as a button.
+2. **Context the page can hide.** Context is `document.body.innerText` only. An image, a canvas, an open or closed shadow root, a cross-origin iframe, or CSS `::before` / `::after` can carry the instruction while a weak command (`irm|iex`, `curl|sh`, `powershell -c`) is still copied. Five end-to-end fixtures, red first. Fix only after measuring. If a weak command is reported to the worker, send the tier, never the command text.
+3. **File and URI lures.** `search-ms:`, `search:`, `ms-search:`, `ms-settings:`, `ms-msdt:` on the clipboard. WebDAV and UNC (`\\host@SSL\`, `\\host@80\`, `DavWWWRoot`). An Explorer address-bar payload: a path, then a lot of spaces or a `#`, then a command. Primary source required (Microsoft, Huntress, or Proofpoint on FileFix / search-ms / WebDAV). If `.lnk` / `.hta` alone hits a real copy button in the page-text corpus, narrow it to UNC / WebDAV / URL. Keep the bridge and the engine in sync.
+4. **Decision memos, before any new feature.** `concepts/consentfix.md`, `concepts/device-code.md`, `concepts/extension-blocklist.md`, `concepts/content-settings-optional.md`. Each one: threat and primary source, what the browser can see, detection, data read, whether anything leaves the device, permissions, false-alarm risk and the counterexample corpus, store-policy note, effort, and a yes/no recommendation. These block the approvals, so they come before the next feature.
+
+5. **Wallet calls.** EIP-7702 delegation and EIP-5792 `wallet_sendCalls` in the bridge. Batches that hide `approve` / `setApprovalForAll` / Permit2. Address poisoning (same start and end). Primary sources: the EIPs and the wallet RPC docs. Counterexamples: static copies of real dapp flows.
 2. **Extension supply chain.** Dangerous permission combinations on install and on update, an `updateUrl` outside the store, new `externally_connectable`. Also against Fundament: another extension covering the warning page, forging a message, or overriding rules.
 3. **Hidden prompt injection** (invisible text, off-screen, zero width, `aria-hidden`). Rank it as a hint, not a solution. The length give-up on that detector is already closed.
 4. **Own supply chain** (after the May 2026 npm worm reports): pin Actions by SHA, least token rights, no `pull_request_target`, `FEED_SIGNING_KEY` only in its own workflow with a protected environment and no third-party actions, proof via a test PR, `npm ci` from the lockfile, `npm audit`, zip built twice with the same checksum. Provenance is not a security proof.

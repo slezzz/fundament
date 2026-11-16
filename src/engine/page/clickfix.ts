@@ -6,7 +6,8 @@
  *
  * "strong": only malware does this (hidden window, encoded payload, LOLBins, fake-captcha tail).
  * "weak":   real installers look like this too (irm …|iex, curl …|sh, powershell -c). The bridge
- *           blocks these only when the page shows ClickFix instructions (Win+R, captcha).
+ *           blocks these only when pasteLureContext is true (a key combination, or a claim
+ *           about this browser together with a paste or run instruction).
  */
 export function clickFixTier(text: string): "strong" | "weak" | null {
   // A length cutoff used to return "harmless". Padding (spaces, a # comment, newlines,
@@ -63,18 +64,28 @@ export function clickFixTier(text: string): "strong" | "weak" | null {
 }
 
 /**
- * The page is coaching a paste into an OS surface, or pretending the browser crashed
- * or is out of date. "Open Terminal" alone is not enough: install docs say that.
- * The real browser version stays in posture.ts. This does not read it and does not
- * decide whether Chrome is actually outdated.
+ * A lure is a call to an OS surface (a key combination or the Run dialog), or a claim
+ * that THIS browser crashed or is out of date together with an instruction to paste
+ * or run a fix. One word is not a lure: "reCAPTCHA", "captcha", "I'm not a robot",
+ * and "Your browser is out of date" on their own are ordinary page text.
+ * "Paste this into Terminal" without that claim is how install docs are written.
+ * The real browser version stays in posture.ts. This does not read it.
  */
-const PASTE_LURE_RE =
-  /(?:windows\s*(?:key|taste)?\s*\+\s*r\b|win\s*\+\s*r\b|⊞\s*\+?\s*r\b|run dialog|ausführen-dialog|i'?m not a robot|i am not a robot|ich bin kein roboter|verify (?:that )?you are (?:a )?human|human verification|captcha|press\s+(?:ctrl|strg)\s*\+\s*v|cmd\s*\+\s*space|(?:chrome|edge|firefox|browser|ihr browser).{0,40}(?:crashed|abgestürzt)|aw,\s*snap|(?:chrome|edge|browser).{0,40}(?:out of date|veraltet|outdated))/i;
+const KEY_ACTION_RE =
+  /(?:windows\s*(?:key|taste)?\s*\+\s*r\b|win\s*\+\s*r\b|⊞\s*\+?\s*r\b|run dialog|ausführen-dialog|press\s+(?:ctrl|strg|control)\s*\+\s*v|(?:ctrl|strg|control)\s*\+\s*v\b|cmd\s*\+\s*space)/i;
+
+const BROWSER_CLAIM_RE =
+  /(?:your|ihr|dein|deinen)\s+browser\b.{0,48}(?:out of date|veraltet|outdated|crashed|abgestürzt)|(?:chrome|edge|firefox|browser).{0,48}(?:has crashed|ist abgestürzt|is out of date|ist veraltet)|aw,\s*snap|(?:chrome|edge|browser).{0,40}(?:out of date|veraltet|outdated|crashed|abgestürzt)/i;
+
+const FIX_INSTRUCTION_RE =
+  /(?:\bpaste\b|\beinfügen\b|\beinfuegen\b|\bfüge\b|\bfuege\b|\bkopiere\b).{0,48}\b(?:fix|command|befehl|this|diesen|den|code|it)\b|(?:press|drücke|druecke|hit)\b.{0,40}(?:ctrl|strg|windows|win\b)|(?:\brun\b|ausführen|ausfuehren|execute|führe).{0,40}\b(?:this|diesen|the command|den befehl|fix)\b/i;
 
 export function pasteLureContext(text: string): boolean {
   const raw = String(text);
   const parts = raw.length <= 20000 ? [raw] : [raw.slice(0, 20000), raw.slice(-20000)];
-  return parts.some((part) => PASTE_LURE_RE.test(part));
+  return parts.some(
+    (part) => KEY_ACTION_RE.test(part) || (BROWSER_CLAIM_RE.test(part) && FIX_INSTRUCTION_RE.test(part)),
+  );
 }
 
 /** `pageShowsClickFixInstructions` = pasteLureContext(page text). */

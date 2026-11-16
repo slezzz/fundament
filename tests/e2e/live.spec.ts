@@ -109,24 +109,29 @@ test("a false-alarm report shows the host and not the address, then opens a publ
   await expect(preview).toContainText("imp-keyword");
   await expect(preview).not.toContainText(token);
   await expect(preview).not.toContainText("signin");
-  const hits: string[] = [];
-  const onRequest = (request: { url: () => string }) => {
-    const target = request.url();
-    if (target.startsWith("https://github.com/")) hits.push(target);
-  };
-  context.on("request", onRequest);
+  // Every host is mapped to 127.0.0.1, so the GitHub tab dies as chrome-error and
+  // Edge does not emit a Playwright request. webNavigation still sees the URL
+  // the extension asked to open.
+  await worker.evaluate(() => {
+    const g = globalThis as unknown as { __reportNav?: string[] };
+    g.__reportNav = [];
+    chrome.webNavigation.onBeforeNavigate.addListener((details) => {
+      if (details.url.startsWith("https://github.com/")) g.__reportNav?.push(details.url);
+    });
+  });
   const opened = context.waitForEvent("page");
   await page.getByRole("button", { name: /github/i }).click();
   const reportPage = await opened;
   await expect
-    .poll(() => hits.some((target) => target.startsWith(`https://github.com/${REPORT_GITHUB_REPO}/issues/new`)))
-    .toBe(true);
+    .poll(() => worker.evaluate(() => (globalThis as unknown as { __reportNav?: string[] }).__reportNav ?? []))
+    .not.toEqual([]);
+  const hits = await worker.evaluate(() => (globalThis as unknown as { __reportNav?: string[] }).__reportNav ?? []);
   const hit = hits.find((target) => target.startsWith(`https://github.com/${REPORT_GITHUB_REPO}/issues/new`)) ?? "";
+  expect(hit.startsWith(`https://github.com/${REPORT_GITHUB_REPO}/issues/new`)).toBe(true);
   expect(decodeURIComponent(hit)).not.toContain(token);
   expect(decodeURIComponent(hit)).not.toContain("signin");
   expect(new URL(hit).pathname).toBe(`/${REPORT_GITHUB_REPO}/issues/new`);
   await reportPage.close();
-  context.off("request", onRequest);
   await page.close();
 });
 

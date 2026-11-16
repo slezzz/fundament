@@ -2,6 +2,24 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-16 — Page-text corpus
+
+- Hypothesis: “reCAPTCHA” and “Your browser is out of date” set the paste-lure context with no instruction to paste or run anything, and there is no count of that on real pages.
+- Result: Confirmed. Both sentences matched before the change (the new assertions failed). Context is now a key combination or the Run dialog, or a claim about this browser together with a paste or run instruction. The two sentences are false. “Your browser is out of date. Paste the fix.” and “Press Windows + R” stay true. Install lines under “paste this into PowerShell” stay false.
+- Evidence: `tests/unit/clickfix.test.ts`. `tests/security/page-text.test.ts`: 22 snapshots, 32 copy buttons, 0 blocks, 0 prompt-injection matches, 0 tech-support text matches. The shell-link paragraph is `strong` because it contains `.lnk`; its copy button is not. typecheck, lint, 284 tests, URL-corpus ceilings held, Edge E2E 14. The false-alarm report test now reads `webNavigation`: under `MAP * 127.0.0.1` Edge shows `chrome-error` and no Playwright request, so the old listener never saw the GitHub URL. The assertions on that URL are unchanged.
+- Open doubt: the context the bridge reads is `document.body.innerText`. A page can put the instruction in an image, a canvas, a shadow root, an iframe, or CSS `::before` / `::after`, and a weak command still copies. Not fixed here.
+
+### Self-check
+
+- Real user, real attack: The false alarm is real (a captcha badge, an update banner). The attack that remains is a weak command next to a lure the bridge cannot see.
+- Five-minute bypass: Say “I’m not a robot” and copy `powershell -c` with no Win+R and no “paste the fix”. That no longer blocks. The e2e captcha page still has Win+R and Ctrl+V.
+- False alarm: 22 real excerpts, 32 copy buttons, 0 warnings. Homebrew’s “Paste that in the Terminal” does not set context, so `curl | sh` stays unblocked.
+- Simpler or more complicated: Three expressions instead of one word list. The sync test compares all three with the bridge.
+- AGENTS.md: No new permission, no network, no reading of the user’s clipboard. Excerpts are short quotations with a source and a date.
+- Would I defend it: Yes, as “these pages do not warn, and a word is not a lure.” Not as “page signals have a 0 false-alarm rate on the web.”
+- Harmless on weird input: A crash sentence buried after a long prefix does not match unless a key combination or a paste instruction is there too.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? From `document.body.innerText`, the first 20 000 characters and the last 20 000. Yes. An image, a canvas, an open or closed shadow root, a cross-origin iframe, or `::before` / `::after` is invisible to this check. The page-text corpus does not cover that. Next pass.
+
 ## 2026-11-15 — Paste-lure class
 
 - Hypothesis: A page can copy `finger` at a host, `start finger.exe` / `ct.exe`, or a `.search-ms` / `.lnk` / `.hta` name, or can call a normal `curl | sh` a browser-crash fix, and the old patterns miss it. Install docs that say “Terminal” must stay unblocked.

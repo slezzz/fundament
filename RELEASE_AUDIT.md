@@ -10,7 +10,7 @@ A row is done only when a test name or a command output from this date is cited.
 |-----|------|-------------------------|
 | P1 | Permission review | Written 2026-11-15. No permission moves. Applying the optional-permission candidates still needs a yes. See “Permission proposal”. |
 | P1 | `THREAT_MODEL.md` matched the code | Updated 2026-11-15. See “Threat model alignment”. |
-| P2 | Current attack variants | AiTM, device-code and OAuth-consent phishing, passkey downgrade, FileFix and later ClickFix variants, current wallet delegation types, prompt injection against browser agents. Some older shapes have tests (`tests/unit/clickfix.test.ts`, `tests/unit/depth-layers.test.ts` “AI prompt injection and quishing”). No fresh corpus and no false-positive measurement for the variants named in the release plan. |
+| P2 | Current attack variants | AiTM, device-code and OAuth-consent phishing, passkey downgrade, FileFix and later ClickFix variants, current wallet delegation types, prompt injection against browser agents. Page text for install docs, captcha notices, an out-of-date banner, Win+R help, and a ClickFix write-up is measured: 22 snapshots, 32 copy buttons, 0 warnings (`tests/security/page-text.test.ts`, 2026-11-16). The other variants still have no corpus. |
 | P2 | Password reuse, logo hash, card skimmers | Not started. Each needs a written plan before code, because the first changes the privacy promise and the third needs a checkout corpus. |
 | P3 | No performance budget test | No assertion on milliseconds per navigation, service-worker start, or content-script cost. A comment in git history mentions an impersonation cache (4.5 ms → 1.6 ms). That number was not remeasured on 2026-11-15. |
 | P3 | Accessibility of popup, warning page, and dashboard | Not measured (keyboard, names, contrast, dark mode). |
@@ -236,6 +236,24 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 ## Out of scope for an extension
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
+
+## Page-text corpus, 2026-11-16
+
+`tests/security/corpus.test.ts` still checks URLs and hosts only. Page signals are measured on `tests/fixtures/page-text/snapshots.json`: 22 excerpts, 32 copy buttons, fetched 2026-11-16.
+
+| Check | Result |
+|-------|--------|
+| `clickFixTier` + `pasteLureContext` blocks a copy button | 0 |
+| Visible text matches the prompt-injection pattern | 0 |
+| Tech-support text (scam phrase, a call to action, and a phone number) | 0. A warning also needs fullscreen, which these snapshots are not. |
+
+Before the fix, `pasteLureContext` was true for “This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.” and for “Your browser is out of date. Please update your browser.” Confirmed by a failing assertion, then fixed. A word is not a lure. A key combination is. A claim that this browser crashed or is out of date counts only together with a paste or run instruction.
+
+The Windows shell-link excerpt mentions `.lnk`. `clickFixTier` of that paragraph is `strong`. The snapshot’s copy button is “Create Shortcut”, which is not. That gap stays for the file-lure pass.
+
+Context is still `document.body.innerText`. An image, canvas, shadow root, iframe, or CSS `::before` / `::after` is not in this corpus.
+
+Same run: typecheck pass, lint pass, 284 tests, URL-corpus ceilings held, Edge E2E 14. The report test reads the opened URL from `webNavigation`, because Edge turns the GitHub tab into `chrome-error` when every host is mapped to 127.0.0.1 and does not emit a request.
 
 ## Paste-lure class, 2026-11-15
 

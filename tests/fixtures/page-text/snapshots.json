@@ -1,0 +1,210 @@
+[
+  {
+    "id": "homebrew",
+    "url": "https://brew.sh/",
+    "fetched": "2026-11-16",
+    "text": "Install Homebrew. Paste that in the macOS Terminal, a Linux shell or WSL. The script explains what it will do and then pauses before it does it. If you're on macOS, try our .pkg installer for interactive or unattended MDM installs.",
+    "copyButtons": [
+      "/bin/bash -c \"$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)\""
+    ]
+  },
+  {
+    "id": "rustup",
+    "url": "https://rustup.rs/",
+    "fetched": "2026-11-16",
+    "text": "Run the following in your terminal, then follow the onscreen instructions. To install Rust, download and run rustup-init.exe then follow the onscreen instructions. You may also need the Visual Studio prerequisites.",
+    "copyButtons": [
+      "curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh"
+    ]
+  },
+  {
+    "id": "nvm",
+    "url": "https://github.com/nvm-sh/nvm/blob/v0.40.3/README.md",
+    "fetched": "2026-11-16",
+    "text": "Node Version Manager. The install script from the README at tag v0.40.3.",
+    "copyButtons": [
+      "curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash",
+      "wget -qO- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.3/install.sh | bash"
+    ]
+  },
+  {
+    "id": "docker",
+    "url": "https://docs.docker.com/engine/install/ubuntu/",
+    "fetched": "2026-11-16",
+    "text": "Install using the convenience script. Docker provides a convenience script at https://get.docker.com/ to install Docker into development environments. Always examine scripts downloaded from the internet before running them locally. Preview script steps before running. This example downloads the script and runs it. When using the script to update an existing installation, dependencies may not be updated to the expected version, resulting in outdated versions.",
+    "copyButtons": [
+      "curl -fsSL https://get.docker.com -o get-docker.sh",
+      "sudo sh ./get-docker.sh --dry-run",
+      "sudo sh get-docker.sh"
+    ]
+  },
+  {
+    "id": "deno",
+    "url": "https://docs.deno.com/runtime/getting_started/installation/",
+    "fetched": "2026-11-16",
+    "text": "Deno is a single binary executable with no external dependencies. deno_install provides convenience scripts to download and install the binary. Using Shell. Using PowerShell (Windows). The startup time of the Deno command gets affected if it's installed via npm. Last updated on July 9, 2026.",
+    "copyButtons": [
+      "curl -fsSL https://deno.land/install.sh | sh",
+      "irm https://deno.land/install.ps1 | iex",
+      "npm install -g deno",
+      "winget install DenoLand.Deno"
+    ]
+  },
+  {
+    "id": "bun",
+    "url": "https://bun.sh/",
+    "fetched": "2026-11-16",
+    "text": "Bun is a fast JavaScript runtime and toolkit. Copy install command. Install Bun, open the project you were already working on, and run bun install.",
+    "copyButtons": [
+      "curl -fsSL https://bun.sh/install | bash",
+      "powershell -c \"irm bun.sh/install.ps1|iex\""
+    ]
+  },
+  {
+    "id": "oh-my-zsh",
+    "url": "https://ohmyz.sh/",
+    "fetched": "2026-11-16",
+    "text": "Install oh-my-zsh now. Oh My Zsh is installed by running one of the following commands in your terminal. You can install this via the command-line with either curl or wget. Oh My Zsh works best on macOS or Linux.",
+    "copyButtons": [
+      "sh -c \"$(curl -fsSL https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh)\"",
+      "sh -c \"$(wget https://raw.githubusercontent.com/ohmyzsh/ohmyzsh/master/tools/install.sh -O -)\""
+    ]
+  },
+  {
+    "id": "winget",
+    "url": "https://learn.microsoft.com/en-us/windows/package-manager/winget/",
+    "fetched": "2026-11-16",
+    "text": "Use WinGet to install and manage applications. If you have recently logged in as a user for the first time and find that WinGet is not yet available, you can open PowerShell and enter the following command to request this WinGet registration. To install the stable release of WinGet on Windows Sandbox, follow these steps from a Windows PowerShell command prompt.",
+    "copyButtons": [
+      "Add-AppxPackage -RegisterByFamilyName -MainPackage Microsoft.DesktopAppInstaller_8wekyb3d8bbwe",
+      "winget install --id Git.Git -e"
+    ]
+  },
+  {
+    "id": "chocolatey",
+    "url": "https://chocolatey.org/install",
+    "fetched": "2026-11-16",
+    "text": "Installing Chocolatey. Please inspect https://community.chocolatey.org/install.ps1 prior to running any of these scripts to ensure safety. All of these scripts download a remote PowerShell script and execute it on your machine. Paste the copied text into your shell and press Enter. Wait a few seconds for the command to complete.",
+    "copyButtons": [
+      "Set-ExecutionPolicy Bypass -Scope Process -Force; iex ((New-Object System.Net.WebClient).DownloadString('INTERNAL REPO URL/ChocolateyInstall.ps1'))"
+    ],
+    "note": "The individual-use button did not appear in the extracted text. This is the command the same page shows for an internal repository."
+  },
+  {
+    "id": "scoop",
+    "url": "https://scoop.sh/",
+    "fetched": "2026-11-16",
+    "text": "Scoop. A command-line installer for Windows. Open a PowerShell terminal (version 5.1 or later) and from the PS C:\\> prompt, run:",
+    "copyButtons": [
+      "Set-ExecutionPolicy -ExecutionPolicy RemoteSigned -Scope CurrentUser",
+      "Invoke-RestMethod -Uri https://get.scoop.sh | Invoke-Expression"
+    ]
+  },
+  {
+    "id": "uv",
+    "url": "https://docs.astral.sh/uv/getting-started/installation/",
+    "fetched": "2026-11-16",
+    "text": "Installing uv. Use curl to download the script and execute it with sh. Use irm to download the script and execute it with iex. Changing the execution policy allows running a script from the internet. The installation script may be inspected before use.",
+    "copyButtons": [
+      "curl -LsSf https://astral.sh/uv/install.sh | sh",
+      "powershell -ExecutionPolicy ByPass -c \"irm https://astral.sh/uv/install.ps1 | iex\""
+    ]
+  },
+  {
+    "id": "pip",
+    "url": "https://docs.astral.sh/uv/getting-started/installation/",
+    "fetched": "2026-11-16",
+    "text": "For convenience, uv is published to PyPI. If installing from PyPI, we recommend installing uv into an isolated environment, for example with pipx. However, pip can also be used.",
+    "copyButtons": [
+      "pipx install uv",
+      "pip install uv"
+    ]
+  },
+  {
+    "id": "npm",
+    "url": "https://docs.npmjs.com/downloading-and-installing-node-js-and-npm",
+    "fetched": "2026-11-16",
+    "text": "Downloading and installing Node.js and npm. To publish and install packages to and from the public npm registry, you must install Node.js and the npm command line interface. Note: to download the latest version of npm, on the command line, run the following command.",
+    "copyButtons": [
+      "npm install -g npm"
+    ]
+  },
+  {
+    "id": "ollama",
+    "url": "https://ollama.com/download",
+    "fetched": "2026-11-16",
+    "text": "Download Ollama. Get started by installing Ollama, or have your agent install it for you. On macOS or Linux, run the install script. On Windows, run in PowerShell: irm https://ollama.com/install.ps1 | iex. Do not sign in, create an API key, or use an API key for me.",
+    "copyButtons": [
+      "curl -fsSL https://ollama.com/install.sh | sh",
+      "irm https://ollama.com/install.ps1 | iex"
+    ]
+  },
+  {
+    "id": "recaptcha-demo",
+    "url": "https://www.google.com/recaptcha/api2/demo",
+    "fetched": "2026-11-16",
+    "text": "ReCAPTCHA demo. First Name Jane. Last Name Smith. Email. Recaptcha requires verification. I'm not a robot. reCAPTCHA. Submit. This site is protected by reCAPTCHA and the Google Privacy Policy and Terms of Service apply.",
+    "copyButtons": [],
+    "note": "The demo page fetched this day shows the checkbox label. The disclosure sentence is the badge string the review measured; it was not in the extracted demo text."
+  },
+  {
+    "id": "hcaptcha",
+    "url": "https://www.hcaptcha.com/",
+    "fetched": "2026-11-16",
+    "text": "hCaptcha: Real-Time Bot Detection and Fraud Prevention. Switch from reCAPTCHA with two lines of code. Friction-free No CAPTCHA and 99.9% passive modes. Unlike reCAPTCHA, we work in every country.",
+    "copyButtons": []
+  },
+  {
+    "id": "turnstile",
+    "url": "https://developers.cloudflare.com/turnstile/",
+    "fetched": "2026-11-16",
+    "text": "Cloudflare Turnstile. Cloudflare's smart CAPTCHA alternative. Turnstile can be embedded into any website without sending traffic through Cloudflare and works without showing visitors a CAPTCHA. Turnstile does not access, store, or transmit user communications, form entries, or other page inputs. Last updated Aug 14, 2026.",
+    "copyButtons": []
+  },
+  {
+    "id": "browser-out-of-date",
+    "url": "https://browser-update.org/",
+    "fetched": "2026-11-16",
+    "text": "Notifies visitors to update their browser. Your web browser (Internet Explorer 10) is out of date. Update your browser for more security, speed and the best experience on this site. Update browser. Ignore. Visitors with an out-dated browser will be informed by a small message box.",
+    "copyButtons": [
+      "Update browser"
+    ]
+  },
+  {
+    "id": "chrome-update-help",
+    "url": "https://support.google.com/chrome/answer/95414",
+    "fetched": "2026-11-16",
+    "text": "Update Google Chrome. To make sure you're protected by the latest security updates, Google Chrome can automatically update when a new version of the browser is available on your device. On your computer, open Chrome. At the top right, select More, Help, About Google Chrome. Select Relaunch. If you can't find the Relaunch option, you're on the latest version.",
+    "copyButtons": []
+  },
+  {
+    "id": "win32-shell-links",
+    "url": "https://learn.microsoft.com/en-us/windows/win32/shell/links",
+    "fetched": "2026-11-16",
+    "text": "A Shell link is a data object that contains information used to access another object in the Shell's namespace, that is, any object visible through Windows Explorer. When the user creates a shortcut by choosing the Create Shortcut command, Windows stores the information in a link file, a binary file that has the .lnk file name extension.",
+    "copyButtons": [
+      "Create Shortcut"
+    ],
+    "note": "The paragraph mentions .lnk. This page does not offer that paragraph as a copy button. Copying the paragraph would be a separate check."
+  },
+  {
+    "id": "win-r-help",
+    "url": "https://support.microsoft.com/en-us/windows/keyboard-shortcuts-in-windows-dcc61a57-8ff0-cffe-9796-cb9706c75eec",
+    "fetched": "2026-11-16",
+    "text": "Keyboard shortcuts in Windows. Windows key+R. Open the Run dialog box.",
+    "copyButtons": [
+      "Windows key+R",
+      "Open the Run dialog box."
+    ]
+  },
+  {
+    "id": "clickfix-blog",
+    "url": "https://www.microsoft.com/en-us/security/blog/2025/08/21/think-before-you-clickfix-analyzing-the-clickfix-social-engineering-technique/",
+    "fetched": "2026-11-16",
+    "text": "Think before you Click(Fix): Analyzing the ClickFix social engineering technique. Microsoft Threat Intelligence, 21 August 2025. The ClickFix technique attempts to trick users into running malicious commands by taking advantage of human verification and CAPTCHA checks. It typically gives instructions that involve clicking prompts and copying, pasting, and running commands directly in the Windows Run dialog box, Windows Terminal, or Windows PowerShell. Because ClickFix relies on human intervention, organizations can reduce the impact by educating users and by hardening device configuration, for example disallowing the Run dialog when it is not needed.",
+    "copyButtons": [
+      "Think before you Click(Fix)"
+    ],
+    "note": "Command samples in that post are figures, not text on the fetched page. They are not copy buttons in this snapshot."
+  }
+]

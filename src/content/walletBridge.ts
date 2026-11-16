@@ -137,13 +137,24 @@
     return null;
   }
 
-  /** Captcha / Win+R, or a fake crashed-or-outdated browser. Not the word Terminal. */
+  /**
+   * A key combination or the Run dialog, or a claim that this browser crashed or is
+   * out of date together with a paste/run instruction. A word alone (captcha, reCAPTCHA,
+   * "out of date") is not a lure. Same expressions as pasteLureContext in clickfix.ts.
+   */
   function clickFixContext(): boolean {
     try {
       const text = document.body?.innerText ?? "";
       const parts = text.length <= 20000 ? [text] : [text.slice(0, 20000), text.slice(-20000)];
-      const re = /(?:windows\s*(?:key|taste)?\s*\+\s*r\b|win\s*\+\s*r\b|⊞\s*\+?\s*r\b|run dialog|ausführen-dialog|i'?m not a robot|i am not a robot|ich bin kein roboter|verify (?:that )?you are (?:a )?human|human verification|captcha|press\s+(?:ctrl|strg)\s*\+\s*v|cmd\s*\+\s*space|(?:chrome|edge|firefox|browser|ihr browser).{0,40}(?:crashed|abgestürzt)|aw,\s*snap|(?:chrome|edge|browser).{0,40}(?:out of date|veraltet|outdated))/i;
-      return parts.some((part) => re.test(part));
+      const KEY_ACTION_RE =
+        /(?:windows\s*(?:key|taste)?\s*\+\s*r\b|win\s*\+\s*r\b|⊞\s*\+?\s*r\b|run dialog|ausführen-dialog|press\s+(?:ctrl|strg|control)\s*\+\s*v|(?:ctrl|strg|control)\s*\+\s*v\b|cmd\s*\+\s*space)/i;
+      const BROWSER_CLAIM_RE =
+        /(?:your|ihr|dein|deinen)\s+browser\b.{0,48}(?:out of date|veraltet|outdated|crashed|abgestürzt)|(?:chrome|edge|firefox|browser).{0,48}(?:has crashed|ist abgestürzt|is out of date|ist veraltet)|aw,\s*snap|(?:chrome|edge|browser).{0,40}(?:out of date|veraltet|outdated|crashed|abgestürzt)/i;
+      const FIX_INSTRUCTION_RE =
+        /(?:\bpaste\b|\beinfügen\b|\beinfuegen\b|\bfüge\b|\bfuege\b|\bkopiere\b).{0,48}\b(?:fix|command|befehl|this|diesen|den|code|it)\b|(?:press|drücke|druecke|hit)\b.{0,40}(?:ctrl|strg|windows|win\b)|(?:\brun\b|ausführen|ausfuehren|execute|führe).{0,40}\b(?:this|diesen|the command|den befehl|fix)\b/i;
+      return parts.some(
+        (part) => KEY_ACTION_RE.test(part) || (BROWSER_CLAIM_RE.test(part) && FIX_INSTRUCTION_RE.test(part)),
+      );
     } catch {
       return false;
     }

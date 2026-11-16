@@ -230,11 +230,15 @@ describe("ClickFix tiers", () => {
     expect(markers("src/content/walletBridge.ts", "commandTier")).toBe(engineMarkers);
     expect(readFileSync(resolve(__dirname, "../../src/engine/page/clickfix.ts"), "utf8")).not.toContain("length > 12_000");
     expect(readFileSync(resolve(__dirname, "../../src/content/walletBridge.ts"), "utf8")).not.toContain("length > 12000) return null");
-    const lure = (file: string): string | undefined => {
+    const lures = (file: string): string[] => {
       const text = readFileSync(resolve(__dirname, "../..", file), "utf8");
-      return text.match(/\/(?:windows\\s\*\(\?:key\|taste\)[\s\S]*?outdated)\)\/i/)?.[0];
+      return ["KEY_ACTION_RE", "BROWSER_CLAIM_RE", "FIX_INSTRUCTION_RE"].map((name) => {
+        const found = text.match(new RegExp(`const ${name} =\\s*\\n?\\s*(/[\\s\\S]*?/i);`));
+        if (!found?.[1]) throw new Error(`${name} missing in ${file}`);
+        return found[1];
+      });
     };
-    expect(lure("src/engine/page/clickfix.ts")).toBe(lure("src/content/walletBridge.ts"));
+    expect(lures("src/content/walletBridge.ts")).toEqual(lures("src/engine/page/clickfix.ts"));
   });
 });
 
