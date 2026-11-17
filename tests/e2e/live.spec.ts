@@ -10,6 +10,7 @@ import { componentHookPage } from "./component-hook";
 import { builtinOverridePages } from "./builtin-overrides";
 import { splitCommandPage, unreadableCommandPages } from "./unreadable-command";
 import { shadowFillerPage } from "./shadow-filler";
+import { sectionCopyPage } from "./section-copy";
 import { DYNAMIC_RULE_ID_LIVE_START, REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -48,6 +49,8 @@ for (const [path, body] of Object.entries(builtinOverridePages(strongCommand, do
 for (const [path, body] of Object.entries(unreadableCommandPages(docsCommand))) PAGES[path] = body;
 PAGES["/hosted-split"] = splitCommandPage(docsCommand);
 PAGES["/shadow-filler"] = `${shadowFillerPage(step)}${copiedButton}`;
+PAGES["/section-copy"] = sectionCopyPage(docsCommand, true);
+PAGES["/section-hidden"] = sectionCopyPage(docsCommand, false);
 
 let server: Server;
 let port = 0;
@@ -233,6 +236,23 @@ test("a visible install command split across spans on a github.io doc is left al
   await page.locator("#copy").click();
   await page.waitForTimeout(1200);
   expect(page.url()).toContain("/hosted-split");
+  await page.close();
+});
+
+test("a github.io page that copies a visible command inside a longer block is left alone", async () => {
+  const page = await freshPage();
+  await page.goto(`http://project-docs.github.io:${port}/section-copy`);
+  await page.locator("#copy").click();
+  await page.waitForTimeout(1200);
+  expect(page.url()).toContain("/section-copy");
+  await page.close();
+});
+
+test("a longer block still warns when its command is not on the page", async () => {
+  const page = await freshPage();
+  await page.goto(`http://project-docs.github.io:${port}/section-hidden`);
+  await page.locator("#copy").click();
+  await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
   await page.close();
 });
 

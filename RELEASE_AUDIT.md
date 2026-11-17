@@ -250,7 +250,7 @@ Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnl
 | Warnings | 1 |
 | Copy buttons clicked | 32, of which 1 warned |
 
-The warning is `clickfix-unseen` on `berkeley-humanoid-lite.gitbook.io`. The click was a button whose name is only “Copy”. The stored excerpt of that page already contains the install command, and the excerpt test does not warn. The live page did. Cause not changed in this commit.
+The warning is `clickfix-unseen` on `berkeley-humanoid-lite.gitbook.io`. The click was a button whose name is only “Copy”. The stored excerpt of that page already contains the install command, and the excerpt test does not warn. The live page did. These 629 pages were not opened again. The cause is under “GitBook copy, 2026-11-17”.
 
 Page signals that can replace the page, on the 536 measured pages:
 
@@ -284,6 +284,18 @@ A dedicated profile, not the daily one, installed a copy of `dist/` at 1.1.0 wit
 `privacy`, `scripting`, and `management` stay required. `tests/e2e/scenarios.spec.ts` still expects `contentSettings` in `permissions`.
 
 Same run: typecheck, lint, 293 tests, URL-corpus ceilings unchanged, Edge E2E 40. Docs only.
+
+## GitBook copy, 2026-11-17
+
+The copy button on `berkeley-humanoid-lite.gitbook.io` wrote 48 lines (2 877 characters). 18 of those lines are in the page text. The install line is one of them, in a readable light-DOM span below the fold. It is not in a shadow root. The other lines are not in the page text. The excerpt stored only the install line, so the excerpt test treated it as shown. The bridge asked whether the whole clipboard string was shown, so it reported `clickfix-weak`, and the worker turned that into `clickfix-unseen` on a user site on a hosting zone.
+
+A weak clipboard is now shown when every weak line is readable. Lines that are not commands do not have to be on the page. A strong command is still judged on the whole string first. A weak line the page does not show still warns. The host is not special-cased. The 629 pages were not opened again, so the README still must not call page-signal false alarms measured.
+
+Red first, on the build from `2b783fd`: a `github.io` page that shows the install line and copies it inside two extra lines went to `warning.html`. The same longer copy with the line absent also went to `warning.html`. After the change the first page stays up and the second still warns.
+
+Weights unchanged. No new signal.
+
+Same run: typecheck, lint, 293 tests, URL-corpus ceilings unchanged, Edge E2E 42.
 
 ## Decision memos, 2026-11-17
 

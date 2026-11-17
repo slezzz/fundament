@@ -2,6 +2,35 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-17 — A visible install line inside a longer copy
+
+- Hypothesis: the GitBook warning is a readability miss (shadow, contrast, or overflow), so the excerpt and the live page disagree about the same string.
+- Result: They disagree about different strings. The copy button wrote 48 lines. 18 are in the page text. The install line is one of them, in a readable light-DOM span below the fold, not in a shadow root. The excerpt stored only that line, so the excerpt test stays quiet. The bridge asked whether the whole clipboard was shown, reported `clickfix-weak`, and the worker turned that into `clickfix-unseen` on a user site on a hosting zone. A weak clipboard is now shown when every weak line is readable. Other lines do not have to be on the page. If no line is weak on its own, the whole string is still checked. A strong command is still judged on the whole string first.
+- Evidence: red first, on the build from `2b783fd`. A `github.io` page that shows the install line and copies it between two plain lines went to `warning.html`. The same longer copy with the line absent also went to `warning.html`. After the change the first page stays up and the second still warns. The host is not special-cased. The 629 pages were not opened again. Weights unchanged.
+- Open doubt: a weak line longer than the 4 000-character window, or one the walk does not reach before 12 ms, can still be missed. Text under 3:1 contrast is still hidden. Branded Chrome’s `contentSettings` grant is still not measured.
+
+### Self-check
+
+- Real user, real attack: A doc whose Copy button copies a visible install line plus source the page does not render stays up. A longer copy that hides a weak line still reaches the warning screen.
+- Five-minute bypass: Put a second weak line in the copied text and leave it off the page. Tested: the hidden page still warns. Named, not given its own page: a strong command inside the same longer copy. That still blocks, because the whole string is judged first.
+- False alarm: The GitBook page is the legitimate page in this category. A hosting-zone doc that shows the line and copies extra notes is the same shape. A page that only hides the line is not.
+- Simpler or more complicated: The decision got smaller. One weak line is the unit, not the whole clipboard. The walk is shared. No new signal.
+- AGENTS.md: Nothing new is sent. No permission, no network request, no weight change. The page still cannot turn the check off.
+- Would I defend it: Yes, as “a visible install line is shown even when the copy has other lines.” Not as “the 629-page run is now clean.”
+- Harmless on weird input: A weak line shorter than 12 characters is not treated as shown. An empty copy is unchanged. The textarea that holds the copy is still skipped.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The context is whether each weak line is readable text. The attacker owns the copy and the page, and can hide a line. That hidden line still warns. The attacker cannot make an unread line count as shown by padding the copy with other text.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? The Copy button’s string belongs to the page. The readable text belongs to the page. The check compares those two, one weak line at a time.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? A GitBook (or any hosting-zone doc) whose Copy button copies a section: the visible install line plus source the rendered page does not show.
+- Richtig: Gemessen auf der echten Seite (Licht-DOM, lesbar, 48 Zeilen, die Installationszeile steht im Text). Der Test war rot, bevor die Prüfung geändert wurde, und danach grün. Die versteckte Zeile warnt weiter.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die Seite und der Test dieselbe Form haben. Die Erweiterung warnt eine echte Doku-Seite weniger, ohne eine versteckte Zeile durchzulassen. Sie ist an dieser Stelle kleiner in der Entscheidung, nicht in der Zeilenzahl.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Eine zweite schwache Zeile, die nicht auf der Seite steht. Getestet. Ein starker Befehl in demselben langen Text blockt weiter, weil der ganze Text zuerst geprüft wird. Das ist der bestehende Pfad, nicht eine neue Seite.
+
+Urteil: BEHALTEN
+
+### Rückblick, Durchgänge 1–3
+
+Messung, `contentSettings`-Protokoll, diese Zeilenprüfung. Die Messung hat eine echte Fehlwarnung gefunden, statt eine Rate zu behaupten. Das Protokoll hat eine Manifest-Änderung gestoppt, die nur zur Hälfte belegt war. Diese Prüfung macht die Entscheidung kleiner: eine schwache Zeile, nicht die ganze Zwischenablage. Die Erkennung ist nicht um einen Detektor gewachsen. Die 93 nicht geladenen Seiten und die Brücke mit 1 252 Zeilen sind die nächsten Vereinfachungen, nicht neue Signale.
+
 ## 2026-11-17 — contentSettings grant after an update
 
 - Hypothesis: moving `contentSettings` from required to optional keeps an existing grant on Chrome and on Edge, so the manifest can change.

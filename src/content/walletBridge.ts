@@ -781,15 +781,26 @@
     return true;
   }
 
+  function linesOf(value: string): string[] {
+    const raw = native.string(value);
+    const out: string[] = [];
+    let start = 0;
+    for (let i = 0; i <= raw.length; i += 1) {
+      if (i !== raw.length && slice(raw, i, i + 1) !== "\n") continue;
+      const line = slice(raw, start, i);
+      push(out, slice(line, -1) === "\r" ? slice(line, 0, -1) : line);
+      start = i + 1;
+    }
+    return out;
+  }
+
   /**
-   * Same whitespace rule as weakCommandIsShown in clickfix.ts. A textarea's value
-   * is not shown. Text that is on the page but not readable is not shown either:
-   * no area, under 8 px, opacity at or under 0.1, contrast under 3:1, off-screen, or clipped.
+   * One walk for every needle. A needle in unreadable text stays unseen.
+   * innerText is only a fallback when the walk runs out of time first.
    */
-  function commandIsShown(command: string): boolean {
-    const needle = lower(trim(collapseSpaces(native.string(command), "[\\s\\u00A0]+")));
-    if (needle.length < 12) return false;
-    const shownByInnerText = (): boolean => {
+  function commandsAreShown(needles: readonly string[]): boolean {
+    if (needles.length === 0) return false;
+    const shownByInnerText = (needle: string): boolean => {
       try {
         const hay = document.body ? innerTextOf(document.body) : "";
         return includes(lower(collapseSpaces(hay, "[\\s\\u00A0]+")), needle);
@@ -797,14 +808,26 @@
         return false;
       }
     };
+    const everyInner = (): boolean => {
+      for (let i = 0; i < needles.length; i += 1) {
+        const needle = needles[i];
+        if (!needle || !shownByInnerText(needle)) return false;
+      }
+      return true;
+    };
     try {
-      if (!document.body || !native.createTreeWalker || !native.nextNode || native.showText === undefined) return shownByInnerText();
+      if (!document.body || !native.createTreeWalker || !native.nextNode || native.showText === undefined) return everyInner();
+      const found: boolean[] = [];
+      const blocked: boolean[] = [];
+      for (let i = 0; i < needles.length; i += 1) {
+        push(found, false);
+        push(blocked, false);
+      }
       const deadline = clock() + 12;
       const walker = apply(native.createTreeWalker, document, [document.body, native.showText]);
       let node = apply(native.nextNode, walker, []) as Node | null;
       let count = 0;
       let rolling = "";
-      let sawUnreadable = false;
       let unfinished = false;
       while (node && count < 2000) {
         if (clock() >= deadline) {
@@ -824,24 +847,63 @@
         } catch {
           canRead = false;
         }
-        if (canRead) {
-          rolling = slice(rolling + " " + flat, -4000);
-          if (includes(flat, needle) || includes(lower(collapseSpaces(rolling, "[\\s\\u00A0]+")), needle)) return true;
-        } else if (includes(flat, needle)) sawUnreadable = true;
+        if (canRead) rolling = slice(rolling + " " + flat, -4000);
+        const window = canRead ? lower(collapseSpaces(rolling, "[\\s\\u00A0]+")) : "";
+        let pending = false;
+        for (let i = 0; i < needles.length; i += 1) {
+          if (found[i]) continue;
+          const needle = needles[i];
+          if (!needle) continue;
+          if (canRead && (includes(flat, needle) || includes(window, needle))) found[i] = true;
+          else if (!canRead && includes(flat, needle)) blocked[i] = true;
+          if (!found[i]) pending = true;
+        }
+        if (!pending) return true;
         node = apply(native.nextNode, walker, []) as Node | null;
       }
-      if (unfinished && !sawUnreadable) return shownByInnerText();
-      return false;
+      for (let i = 0; i < needles.length; i += 1) {
+        if (found[i]) continue;
+        const needle = needles[i];
+        if (unfinished && !blocked[i] && needle && shownByInnerText(needle)) continue;
+        return false;
+      }
+      return true;
     } catch {
-      return shownByInnerText();
+      return everyInner();
     }
+  }
+
+  /**
+   * Same whitespace rule as weakCommandIsShown in clickfix.ts. A textarea's value
+   * is not shown. Text that is on the page but not readable is not shown either:
+   * no area, under 8 px, opacity at or under 0.1, contrast under 3:1, off-screen, or clipped.
+   */
+  function commandIsShown(command: string): boolean {
+    const needle = lower(trim(collapseSpaces(native.string(command), "[\\s\\u00A0]+")));
+    if (needle.length < 12) return false;
+    return commandsAreShown([needle]);
+  }
+
+  /** A weak clipboard is shown when every weak line is readable. Other lines do not count. */
+  function weakPartsAreShown(text: string): boolean {
+    const parts = linesOf(text);
+    const needles: string[] = [];
+    for (let i = 0; i < parts.length; i += 1) {
+      const part = parts[i];
+      if (!part || commandTier(part) !== "weak") continue;
+      const needle = lower(trim(collapseSpaces(part, "[\\s\\u00A0]+")));
+      if (needle.length < 12) return false;
+      push(needles, needle);
+    }
+    if (needles.length === 0) return commandIsShown(text);
+    return commandsAreShown(needles);
   }
 
   /** "block" replaces the clipboard. "signal" reports the tier only and leaves the text. */
   function commandVerdict(text: string): "block" | "signal" | "allow" {
     const tier = commandTier(text);
     if (tier === "strong" || (tier === "weak" && clickFixContext())) return "block";
-    if (tier === "weak" && !commandIsShown(text)) return "signal";
+    if (tier === "weak" && !weakPartsAreShown(text)) return "signal";
     return "allow";
   }
 
