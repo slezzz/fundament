@@ -237,6 +237,39 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Whole-page measurement, 2026-11-17
+
+`scripts/measure-page-signals.mjs` loads `dist/` in Edge and opens public pages on the real network. It is not in CI. The raw file is `measure-output/page-signals.json` and is gitignored. This summary has counts, signal names, and hostnames only.
+
+| | |
+|---|---|
+| Date | 2026-11-17 |
+| Pages | 629 (22 corpus, 107 install and support, 500 homepages) |
+| Measured | 536 |
+| Not measured | 93 (55 no tab record, 26 network errors, 12 timeout or a closed browser). Not counted as clean. |
+| Warnings | 1 |
+| Copy buttons clicked | 32, of which 1 warned |
+
+The warning is `clickfix-unseen` on `berkeley-humanoid-lite.gitbook.io`. The click was a button whose name is only “Copy”. The stored excerpt of that page already contains the install command, and the excerpt test does not warn. The live page did. Cause not changed in this commit.
+
+Page signals that can replace the page, on the 536 measured pages:
+
+| Signal | Seen | Warned |
+|---|---|---|
+| clickfix-clipboard | 0 | 0 |
+| clickfix-unseen | 1 | 1 |
+| tech-support-scam | 0 | 0 |
+| prompt-injection | 0 | 0 |
+| browser-in-browser | 0 | 0 |
+| keyboard-lock | 0 | 0 |
+| clipboard-hijack | 0 | 0 |
+
+Other page signals were present and did not warn: `fingerprint-canvas` 55, `permission-bait` 20, `fingerprint-audio` 10, `malvertising-chain` 8, `dom-xss` 5, `prototype-pollution` 4, `login-form` 4, `cookie-flags` 4, `obfuscated-js` 1, `miner-wasm` 1, `weak-csp` 1. `shortener` (URL signal) was seen 4 times and did not warn.
+
+The README does not describe this as a measured false-alarm rate for page signals. Weights unchanged. No new permission and no new network request from the extension.
+
+Same run: typecheck, lint, 293 tests, URL-corpus ceilings unchanged, Edge E2E 40.
+
 ## Decision memos, 2026-11-17
 
 No detector and no manifest change. The memos are the decision.

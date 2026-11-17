@@ -31,3 +31,6 @@ live-feed/
 
 # Generated store screenshots
 store-assets/
+
+# Local page-signal measurement (hostnames and signal names). Never commit.
+measure-output/

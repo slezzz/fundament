@@ -26,7 +26,8 @@
     "release": "node scripts/release-check.mjs && npm run build",
     "pack": "node scripts/pack-store.mjs",
     "feeds": "node scripts/fetch-threat-feeds.mjs",
-    "domain-data": "node scripts/build-domain-data.mjs"
+    "domain-data": "node scripts/build-domain-data.mjs",
+    "measure:pages": "node scripts/measure-page-signals.mjs"
   },
   "dependencies": {
     "punycode": "^2.3.1",

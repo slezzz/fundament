@@ -2,6 +2,31 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-17 — Measure page signals on whole pages
+
+- Hypothesis: counts from 22 text excerpts describe page signals on real pages.
+- Result: They do not. Edge opened 629 public pages with the built extension (22 corpus URLs, 107 install and support pages, 500 homepages). 536 loaded. 93 did not, and those are not counted as clean. One page warned: `berkeley-humanoid-lite.gitbook.io`, signal `clickfix-unseen`, after a button named only “Copy”. The excerpt of that page already contains the command, and the excerpt test stays quiet. ClickFix context, tech-support, prompt injection, browser-in-the-browser, and keyboard lock did not fire. 32 copy buttons were clicked. The other 31 did not warn.
+- Evidence: the sanitizer test failed while the script was missing, then passed. A first Edge run died after ~50 pages and was not kept. The run that was kept recycled the browser and capped each page. `RELEASE_AUDIT.md` has the counts. The raw file is gitignored. Weights unchanged.
+- Open doubt: why the live GitBook command was not “shown” when the excerpt contains it. Not fixed here. A picture lure and a shadow lure behind enough on-screen elements remain open from earlier passes.
+
+### Self-check
+
+- Real user, real attack: No new block. The run found one real doc page that already warns.
+- Five-minute bypass: A page that never finishes loading is counted as not measured, which is the bypass of a false “0”. Those 93 are listed apart from the 536. Tested, not only named.
+- False alarm: `berkeley-humanoid-lite.gitbook.io` is one. Popular homepages that loaded did not warn.
+- Simpler or more complicated: A local script and a summary. The engine did not grow.
+- AGENTS.md: Nothing new is sent. The script does not remap DNS. It is not in CI. Page text stays out of the repo.
+- Would I defend it: Yes, as “536 real pages, 1 warning, 93 unknown.” Not as “page signals are clean.”
+- Harmless on weird input: A path, a query, or a title cannot land in the stored record. The test checks that.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The measurement reads the extension’s own tab record (signal ids and band). A page can fail to load, and that is counted as not measured. It cannot mark itself clean.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? The copy button and whether the command is readable text. Both belong to the page. The GitBook warning is that disagreement.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? The GitBook page that documents a Windows install command, and the other hosting-zone docs in the same run that stayed up.
+- Richtig: Gemessen. Der Test war rot, bevor das Skript existierte, und die Edge-Läufe haben die Zahlen erzeugt. Der erste Lauf mit dem toten Browser zählt nicht.
+- Gut für das Vorhaben: Ein Prüfer kann den Commit verteidigen, weil er eine echte Seite nennt und die 93 Ausfälle nicht als sauber verbucht. Er macht die Erweiterung nicht größer. Er macht die Behauptung ehrlicher.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Eine Seite, die nicht lädt, darf nicht als „0 Warnungen“ gelten. Getestet: 93 Seiten stehen getrennt. Ein Köder, den der lesbare Walk für gezeigt hält, obwohl niemand ihn lesen kann, ist der ältere Bypass und war nicht dieser Durchgang.
+
+Urteil: BEHALTEN
+
 ## 2026-11-17 — Decision memos, no detectors
 
 - Hypothesis: ConsentFix, device-code phishing, an extension-id list, and an optional `contentSettings` permission are each ready to code.
