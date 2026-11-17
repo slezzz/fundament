@@ -14,7 +14,7 @@ Newest first. One entry per pass.
 ### Self-check
 
 - Real user, real attack: A page that says Cmd+Space and copies `bash -c "$(curl …)"` reaches the warning screen. Homebrew’s own button does not.
-- Five-minute bypass: `zsh -c "$(curl …)"` and `wget | bash` are the same patterns and are tested. A second shell after `sudo nohup` is named, not tested. `curl | python` was checked and left unrated because no report quotes it as the pasted command.
+- Five-minute bypass: `zsh -c "$(curl …)"` and `wget | bash` are the same patterns and are tested. `curl | sudo nohup bash` is two prefixes and stays unrated. Tested. `curl | python` was checked and left unrated because no report quotes it as the pasted command.
 - False alarm: Homebrew, oh-my-zsh, nvm, and rustup are the legitimate pages in this category. Their buttons are weak and their page text is not a lure, so the corpus stays at 0 warnings. Docker’s `curl -o get-docker.sh` has no `chmod +x` and stays unrated.
 - Simpler or more complicated: Four lines on the existing weak tier, copied into the bridge. No new signal. The bridge is longer again.
 - AGENTS.md: Nothing new is sent. No permission, no weight change. The page still cannot turn the check off.
@@ -25,7 +25,7 @@ Newest first. One entry per pass.
 - Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? brew.sh, ohmyz.sh, the nvm README, and rustup.rs. They copy these shapes and do not ask for Cmd+Space.
 - Richtig: Die Formen waren null, danach weak. Der E2E-Köder war erst still, weil das Anführungszeichen den Knopf zerlegt hat, und danach auf der Warnseite. Die Korpora bleiben bei 0. Die 107 Installationsseiten: 105 geladen, 2 ohne Tab-Eintrag, 23 Kopierknöpfe, 0 Warnungen.
 - Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil Homebrew dieselbe Form hat und nur der Köder mit Cmd+Space blockt. Die Stufe bleibt schwach.
-- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? `zsh -c` und `wget | bash` sind getestet. `curl | python` ist geprüft und bleibt ohne Beleg unbewertet. `sudo nohup` hintereinander ist nur benannt.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? `zsh -c` und `wget | bash` sind getestet. `curl | python` ist geprüft und bleibt ohne Beleg unbewertet. `curl | sudo nohup bash` ist getestet und bleibt ohne Stufe.
 
 Urteil: BEHALTEN
 

