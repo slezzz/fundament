@@ -2,6 +2,33 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-17 — Unix shell forms that skipped the weak tier
+
+- Hypothesis: `curl | sh` is the only download-and-run shape, so `bash -c "$(curl …)"` and `wget | bash` are harmless.
+- Result: They are the same shape. A shell `-c` whose command substitution is `curl` or `wget`, a pipe from `curl` or `wget` into a shell (including `sudo` or `nohup`), process substitution `bash <(curl …)`, and `curl`/`wget` with `-o` followed by `chmod +x` are weak. They are not strong, because Homebrew’s own install line is `bash -c "$(curl …)"`. A weak line is blocked only when the page shows a key combination or a browser-fix claim. A visible install line with no such lure stays up.
+- Evidence: the new assertions were null, then weak. The Cmd+Space page reached `warning.html` only after the copy button actually carried the command (the first button was split by a quote). Page-text corpus and hosted-doc corpus stay at 0 warnings. Edge then opened the 107 install and support pages with the new build: 105 loaded, 2 did not (`ddev.readthedocs.io`, `turbo.build`, no tab record), 23 copy clicks, 0 warnings. `berkeley-humanoid-lite.gitbook.io` and `docs.brew.sh` stayed up. Weights unchanged.
+- Sources, quoted as text: CloudSEK quotes the clipboard `/bin/bash -c "$(curl -fsSL …/install.sh)"` and the line itself says Cloudflare 2025. ThreatDown quotes the same shape. Garrett Stimpson, 1 June 2026, quotes `bash <(curl -sSfL $(echo … | base64 --decode))`. Forcepoint and Emsisoft quote `curl … | nohup bash`. BadByte quotes the clipboard as base64 of the `bash -c "$(curl …)"` form, and quotes `curl -o /tmp/update && xattr -c && chmod +x && /tmp/update` as the script that form downloads.
+- Not confirmed as a pasted line, so not a new claim: `zsh -c "$(curl …)"` (the pattern is the quoted bash form with the other shell). `wget -qO- … | bash` as a campaign clipboard (it is the published nvm install line, and the same pipe). The chmod chain as the clipboard rather than the downloaded script. `curl | python` or `curl | perl`. `osascript` without `-e`. A bare `iwr -OutFile` plus `Start-Process`. The reports that paste the PowerShell download use `powershell -c` (already weak) or `-WindowStyle Hidden` (already strong).
+- Open doubt: "Terminal öffnen und einfügen" alone is still not a lure, on purpose, because install docs are written that way. `sudo` and `nohup` together in one pipe are not covered.
+
+### Self-check
+
+- Real user, real attack: A page that says Cmd+Space and copies `bash -c "$(curl …)"` reaches the warning screen. Homebrew’s own button does not.
+- Five-minute bypass: `zsh -c "$(curl …)"` and `wget | bash` are the same patterns and are tested. A second shell after `sudo nohup` is named, not tested. `curl | python` was checked and left unrated because no report quotes it as the pasted command.
+- False alarm: Homebrew, oh-my-zsh, nvm, and rustup are the legitimate pages in this category. Their buttons are weak and their page text is not a lure, so the corpus stays at 0 warnings. Docker’s `curl -o get-docker.sh` has no `chmod +x` and stays unrated.
+- Simpler or more complicated: Four lines on the existing weak tier, copied into the bridge. No new signal. The bridge is longer again.
+- AGENTS.md: Nothing new is sent. No permission, no weight change. The page still cannot turn the check off.
+- Would I defend it: Yes, as “these are the same installer shape as `curl | sh`, and docs without a key combination stay up.” Not as “every Unix form is covered.”
+- Harmless on weird input: A download with `-o` and no `chmod +x` stays unrated. `osascript` of a file stays unrated. The length windows are bounded.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The tier is the command text. The block still needs a key combination or a browser-fix claim, which the page writes and can omit. Omitting it leaves a weak command allowed when the page also shows the line. A hidden line on a user site on a hosting zone still warns.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? The copied command and the words Cmd+Space. Both belong to the page. The page can drop the key combination. That is the documented installer case, and the corpus holds it.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? brew.sh, ohmyz.sh, the nvm README, and rustup.rs. They copy these shapes and do not ask for Cmd+Space.
+- Richtig: Die Formen waren null, danach weak. Der E2E-Köder war erst still, weil das Anführungszeichen den Knopf zerlegt hat, und danach auf der Warnseite. Die Korpora bleiben bei 0. Die 107 Installationsseiten: 105 geladen, 2 ohne Tab-Eintrag, 23 Kopierknöpfe, 0 Warnungen.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil Homebrew dieselbe Form hat und nur der Köder mit Cmd+Space blockt. Die Stufe bleibt schwach.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? `zsh -c` und `wget | bash` sind getestet. `curl | python` ist geprüft und bleibt ohne Beleg unbewertet. `sudo nohup` hintereinander ist nur benannt.
+
+Urteil: BEHALTEN
+
 ## 2026-11-17 — A visible install line inside a longer copy
 
 - Hypothesis: the GitBook warning is a readability miss (shadow, contrast, or overflow), so the excerpt and the live page disagree about the same string.

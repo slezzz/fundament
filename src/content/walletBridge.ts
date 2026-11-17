@@ -380,7 +380,7 @@
 
   /**
    * "strong": only malware does this (hidden window, encoded payload, LOLBins, fake-captcha tail).
-   * "weak":   also how real installers look (irm …|iex, curl …|sh, powershell -c). Blocked only
+   * "weak":   also how real installers look (irm …|iex, curl|wget …|sh, bash -c "$(curl …)"). Blocked only
    *           when the page shows a key combination or a browser-fix instruction.
    */
   function commandTier(text: string): "strong" | "weak" | null {
@@ -431,7 +431,10 @@
       if (matches(/powershell(?:\.exe)?\s+-/i, n) && matches(/-(?:nop|noprofile|exec(?:utionpolicy)?|c|command)\b/i, n)) return "weak";
       if (matches(/\b(?:iex|invoke-expression)\b\s*\(?\s*\(?\s*(?:irm|iwr|invoke-restmethod|invoke-webrequest|new-object)/i, n)) return "weak";
       if (matches(/(curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod).{0,160}\|\s*(iex|invoke-expression)/i, n)) return "weak";
-      if (matches(/\bcurl\b[^|;]{0,240}\|\s*(?:sudo\s+)?(?:ba|z|k)?sh\b/i, n)) return "weak";
+      if (matches(/\b(?:curl|wget)\b[^|;]{0,240}\|\s*(?:(?:sudo|nohup)\s+)?(?:ba|z|k)?sh\b/i, n)) return "weak";
+      if (matches(/(?:^|[^\w])(?:\/bin\/)?(?:ba|z|k)?sh\b[^|]{0,48}-c\b[^|]{0,120}\$\(\s*(?:curl|wget)\b/i, n)) return "weak";
+      if (matches(/\b(?:ba|z|k)?sh\s+<\(\s*(?:curl|wget)\b/i, n)) return "weak";
+      if (matches(/\b(?:curl|wget)\b[^|]{0,240}(?:-o|--output)\s+\S+.{0,120}\bchmod\s+\+x\b/i, n)) return "weak";
     }
     return null;
   }

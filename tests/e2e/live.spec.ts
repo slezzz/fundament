@@ -11,6 +11,7 @@ import { builtinOverridePages } from "./builtin-overrides";
 import { splitCommandPage, unreadableCommandPages } from "./unreadable-command";
 import { shadowFillerPage } from "./shadow-filler";
 import { sectionCopyPage } from "./section-copy";
+import { macosLurePage } from "./macos-lure";
 import { DYNAMIC_RULE_ID_LIVE_START, REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -51,6 +52,7 @@ PAGES["/hosted-split"] = splitCommandPage(docsCommand);
 PAGES["/shadow-filler"] = `${shadowFillerPage(step)}${copiedButton}`;
 PAGES["/section-copy"] = sectionCopyPage(docsCommand, true);
 PAGES["/section-hidden"] = sectionCopyPage(docsCommand, false);
+PAGES["/macos-lure"] = macosLurePage();
 
 let server: Server;
 let port = 0;
@@ -164,6 +166,15 @@ test("a page that claims to be Microsoft and asks for a password is stopped", as
   await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
   await page.locator("button.ghost", { hasText: /why|warum/i }).click();
   await expect(page.locator(".why")).toContainText(/brand-content/);
+  await page.close();
+});
+
+test("a macOS lure that says Cmd+Space cannot copy a substituted curl", async () => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"]);
+  const page = await freshPage();
+  await page.goto(`http://cdn-check.example:${port}/macos-lure`);
+  await page.locator("#copy").click();
+  await expect.poll(() => page.url(), { timeout: 8000 }).toContain("warning.html");
   await page.close();
 });
 

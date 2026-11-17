@@ -6,7 +6,8 @@
  *
  * "strong": only malware does this (hidden window, encoded payload, LOLBins, fake-captcha tail,
  * a search-ms / ms-msdt / ms-settings URI, a WebDAV UNC, or a path padded away from a command).
- * "weak":   real installers look like this too (irm …|iex, curl …|sh, powershell -c). The bridge
+ * "weak":   real installers look like this too (irm …|iex, curl|wget …|sh,
+ *           bash -c "$(curl …)", bash <(curl …), curl -o … && chmod +x). The bridge
  *           blocks these only when pasteLureContext is true (a key combination, or a claim
  *           about this browser together with a paste or run instruction).
  */
@@ -70,7 +71,10 @@ export function clickFixTier(text: string): "strong" | "weak" | null {
     if (/powershell(?:\.exe)?\s+-/i.test(n) && /-(?:nop|noprofile|exec(?:utionpolicy)?|c|command)\b/i.test(n)) return "weak";
     if (/\b(?:iex|invoke-expression)\b\s*\(?\s*\(?\s*(?:irm|iwr|invoke-restmethod|invoke-webrequest|new-object)/i.test(n)) return "weak";
     if (/(curl|wget|iwr|irm|invoke-webrequest|invoke-restmethod).{0,160}\|\s*(iex|invoke-expression)/i.test(n)) return "weak";
-    if (/\bcurl\b[^|;]{0,240}\|\s*(?:sudo\s+)?(?:ba|z|k)?sh\b/i.test(n)) return "weak";
+    if (/\b(?:curl|wget)\b[^|;]{0,240}\|\s*(?:(?:sudo|nohup)\s+)?(?:ba|z|k)?sh\b/i.test(n)) return "weak";
+    if (/(?:^|[^\w])(?:\/bin\/)?(?:ba|z|k)?sh\b[^|]{0,48}-c\b[^|]{0,120}\$\(\s*(?:curl|wget)\b/i.test(n)) return "weak";
+    if (/\b(?:ba|z|k)?sh\s+<\(\s*(?:curl|wget)\b/i.test(n)) return "weak";
+    if (/\b(?:curl|wget)\b[^|]{0,240}(?:-o|--output)\s+\S+.{0,120}\bchmod\s+\+x\b/i.test(n)) return "weak";
   }
   return null;
 }

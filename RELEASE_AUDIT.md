@@ -297,6 +297,22 @@ Weights unchanged. No new signal.
 
 Same run: typecheck, lint, 293 tests, URL-corpus ceilings unchanged, Edge E2E 42.
 
+## Shell forms, 2026-11-17
+
+`clickFixTier` returned null for `/bin/bash -c "$(curl …)"`, `zsh -c "$(curl …)"`, `wget … | bash`, and `curl -o … && chmod +x … && /tmp/…`. `curl … | bash` was already weak. With no tier, the bridge does not block, including on a page that says Cmd+Space.
+
+Quoted as text: CloudSEK’s clipboard line is `/bin/bash -c "$(curl -fsSL …/install.sh)"` and the line says Cloudflare 2025. ThreatDown quotes the same shape. Garrett Stimpson, 1 June 2026, quotes `bash <(curl …)`. Forcepoint and Emsisoft quote `curl … | nohup bash`. BadByte quotes the clipboard as base64 of the bash form, and quotes the `chmod +x` chain as the script that form downloads.
+
+Those shapes are weak, not strong. Homebrew’s install button is the bash form, nvm’s is `wget … | bash`, and oh-my-zsh’s is `sh -c "$(curl …)"` and `sh -c "$(wget …)"`. The page-text corpus and the hosted-doc corpus stay at 0 warnings. A page that says Cmd+Space and copies the substituted curl reaches `warning.html`.
+
+Not confirmed as the pasted command, and left unrated: `curl | python`, `osascript` without `-e`, and a bare `iwr -OutFile` plus `Start-Process`. The quoted PowerShell downloads are already `powershell -c` (weak) or a hidden window (strong). `zsh -c "$(curl …)"` is not a separate quoted campaign line. It matches the quoted bash form. The exact `wget -qO- | bash` campaign clipboard was not found as text. It is the same pipe, and it is the published nvm line.
+
+Weights unchanged. No new signal. The sync test compares every tier regex in `clickFixTier` and `commandTier`.
+
+Edge opened these 107 install and support pages again with the new build, on 2026-11-17. 105 loaded. 2 did not and are not counted as clean: `ddev.readthedocs.io` and `turbo.build`, both with no tab record. 23 copy clicks, 0 warnings. `berkeley-humanoid-lite.gitbook.io` stayed up. This is not the 2 000-page run.
+
+Same run: typecheck, lint, 293 tests, URL-corpus ceilings unchanged, Edge E2E 43.
+
 ## Decision memos, 2026-11-17
 
 No detector and no manifest change. The memos are the decision.
