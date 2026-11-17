@@ -8,7 +8,7 @@
 - Page signals on whole public pages, local only, not in CI. 629 pages opened in Edge with the built extension (22 corpus URLs, 107 install and support pages, 500 homepages). 536 measured, 93 did not load and are not counted as clean, 1 warning. The warning is `clickfix-unseen` on `berkeley-humanoid-lite.gitbook.io` after a copy click. ClickFix context, tech-support, prompt injection, browser-in-the-browser, and keyboard lock were 0. The README does not call this a measured false-alarm rate. Weights unchanged.
 
 ### Decisions
-- Four concept memos, no code. ConsentFix, device-code phishing, and an extension-id list are not to be built. `contentSettings` may move to `optional_permissions` later, alone, after an update on Chrome and Edge shows whether an existing grant survives. `privacy`, `scripting`, and `management` stay required. Weights unchanged. Manifest unchanged.
+- Four concept memos, no code. ConsentFix, device-code phishing, and an extension-id list are not to be built. Confirmed 2026-11-17. `contentSettings` may move to `optional_permissions` later, alone. On Edge 157 an update from required to optional kept the grant, the API, and an on toggle. Branded Chrome 158 could not load the unpacked build, so that half is not measured and the manifest is unchanged. `privacy`, `scripting`, and `management` stay required. Weights unchanged.
 
 ### Fixed
 - A visible lure is read before shadow trees. The click target, its ancestors, and elements on screen are checked for `::before` / `::after` before open or closed shadow text is walked, so 2 000 filler shadow roots cannot use up the 12 ms first. The same whitespace rule decides “shown” in the bridge and in the engine, and the hosted-doc test uses that result. Weights unchanged.

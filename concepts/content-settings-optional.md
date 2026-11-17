@@ -1,6 +1,6 @@
 # Move `contentSettings` to optional permissions
 
-**Recommendation: Yes, for this permission only.** `privacy`, `scripting`, and `management` stay required. Do not change the manifest until an update on Chrome and on Edge has shown whether a user who already granted `contentSettings` keeps that grant. That update behavior is **nicht bestätigt**.
+**Recommendation: Yes, for this permission only, after Chrome is measured too.** Edge 157 kept the grant. Branded Chrome 158 could not be measured on this machine. `privacy`, `scripting`, and `management` stay required. The manifest was not changed.
 
 ## Threat and primary source
 
@@ -44,7 +44,16 @@ No. No new request.
 
 One move: `contentSettings` becomes optional. The other permissions in `src/manifest.json` stay where they are. `optional_permissions` is empty today.
 
-Before release, install an older build, turn the notification toggle on, then update to the build that lists `contentSettings` as optional. Record whether Chrome and Edge keep the grant, drop it, or prompt. Do this on a real profile, not only a fresh one. The 2026-11-15 review left this **nicht bestätigt** on purpose. If the grant is dropped and the toggle still reads as on, the patch is wrong and must keep the toggle off when the permission is absent.
+Before release, install an older build, turn the notification toggle on, then update to the build that lists `contentSettings` as optional. Record whether Chrome and Edge keep the grant, drop it, or prompt.
+
+Measured 2026-11-17 on a dedicated profile, not the daily profile. A copy of `dist/` at 1.1.0 had `contentSettings` required. The notification toggle was turned on, and `chrome.contentSettings.notifications.set` ran. The same folder was then written as 1.1.1 with `contentSettings` only under `optional_permissions`, and the same profile was opened again.
+
+| Browser | Result |
+|---|---|
+| Edge 157.0.4341.60 | Kept. Same unpacked id, still enabled, `permissions.contains` true, `chrome.contentSettings` still an object, toggle still on. No prompt was required. |
+| Chrome 158.0.8127.37 | **Nicht bestätigt.** Branded Chrome ignores `--load-extension` (removed in Chrome 137; the feature-flag workaround is gone since Chrome 142). `Extensions.loadUnpacked` returned an id, then the only targets were the browser UI and a page. No service worker started, and the id was not stored in the profile. |
+
+The manifest stays as it is until branded Chrome, or Chrome for Testing, is measured the same way. If that run drops the grant, the toggle must read off when the permission is absent.
 
 ## False alarms and the counterexample corpus
 
@@ -60,4 +69,4 @@ Small, once the update grant is known: manifest, options click, the e2e assertio
 
 ## Recommendation
 
-**Yes. `contentSettings` only. Not in this commit.** `privacy`, `scripting`, and `management` stay required. Ship the manifest change only after the Chrome and Edge update check above is written down.
+**Yes, once branded Chrome is measured the same way. Not in this commit.** Edge kept an existing `contentSettings` grant across the update. Chrome 158 did not complete the test. `privacy`, `scripting`, and `management` stay required.

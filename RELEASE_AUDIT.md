@@ -162,7 +162,7 @@ Install warnings from that list, for the permissions this extension declares:
 
 Recommendation, still not applied: leave every current permission required. The only names that are both optional-capable and unused at boot are `contentSettings` and `scripting`. `contentSettings` is the only one of those that removes an install warning. `scripting` does not. `privacy` and `management` stay required because the features they back are on without an extra click.
 
-If a later yes moves `contentSettings`: request it from the options toggle’s click, leave the toggle off when `permissions.request` returns false, and do not treat a missing API as “prompts blocked”. Whether an update that removes a required permission and re-adds the same name as optional keeps the old grant is **nicht bestätigt**.
+If a later yes moves `contentSettings`: request it from the options toggle’s click, leave the toggle off when `permissions.request` returns false, and do not treat a missing API as “prompts blocked”. Edge 157 kept the grant; branded Chrome 158 is still **nicht bestätigt**. See “contentSettings update, 2026-11-17”.
 
 Commands after that review: typecheck pass, lint pass, `npm test` 35 files / **279 tests** pass (corpus ceilings unchanged), Edge E2E **11** pass. Manifest permissions unchanged.
 
@@ -270,6 +270,21 @@ The README does not describe this as a measured false-alarm rate for page signal
 
 Same run: typecheck, lint, 293 tests, URL-corpus ceilings unchanged, Edge E2E 40.
 
+## contentSettings update, 2026-11-17
+
+The three declined detectors stay declined. `contentSettings` is still the only permission that may become optional. The manifest was not changed, because branded Chrome did not finish the same test.
+
+A dedicated profile, not the daily one, installed a copy of `dist/` at 1.1.0 with `contentSettings` required. The notification toggle was stored on, and the notifications setting was set to block. The same folder was then written as 1.1.1 with that name only in `optional_permissions`, and the profile was opened again.
+
+| Browser | What happened |
+|---|---|
+| Edge 157.0.4341.60 | The unpacked id stayed, the extension stayed enabled, `permissions.contains(["contentSettings"])` stayed true, `chrome.contentSettings` stayed an object, and the toggle stayed on. No prompt was required. |
+| Chrome 158.0.8127.37 | `--load-extension` is ignored on branded Chrome (removed in Chrome 137; the feature-flag workaround has been gone since Chrome 142). `Extensions.loadUnpacked` returned an id. The only targets were the browser UI and a page. No service worker started, and the id was not written into the profile. The grant was not measured. |
+
+`privacy`, `scripting`, and `management` stay required. `tests/e2e/scenarios.spec.ts` still expects `contentSettings` in `permissions`.
+
+Same run: typecheck, lint, 293 tests, URL-corpus ceilings unchanged, Edge E2E 40. Docs only.
+
 ## Decision memos, 2026-11-17
 
 No detector and no manifest change. The memos are the decision.
@@ -279,7 +294,7 @@ No detector and no manifest change. The memos are the decision.
 | `concepts/consentfix.md` | No. Push Security, 11 December 2025. The paste is off limits, and localhost `code=` is a real loopback login. |
 | `concepts/device-code.md` | No. Microsoft, 13 February 2025 and 6 April 2026. The device-login URL is the real page. An opener hint is one weak signal. |
 | `concepts/extension-blocklist.md` | No. No ids, no feed. The permission diff stays the coverage. A license is still required before any id is written down. |
-| `concepts/content-settings-optional.md` | Yes, `contentSettings` only, after a Chrome and Edge update shows whether an existing grant survives. `privacy`, `scripting`, and `management` stay required. |
+| `concepts/content-settings-optional.md` | Yes, not built. Edge 157 kept the grant. Branded Chrome 158 did not complete the test. Manifest unchanged. |
 
 Weights unchanged. `tests/e2e/scenarios.spec.ts` still expects `contentSettings` in `permissions`.
 

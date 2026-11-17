@@ -2,6 +2,31 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-17 — contentSettings grant after an update
+
+- Hypothesis: moving `contentSettings` from required to optional keeps an existing grant on Chrome and on Edge, so the manifest can change.
+- Result: Edge 157 kept it. A dedicated profile installed 1.1.0 with the permission required, the notification toggle was turned on, then the same folder was updated to 1.1.1 with the permission only optional. The extension stayed enabled, `permissions.contains` stayed true, `chrome.contentSettings` stayed present, and the toggle stayed on. Branded Chrome 158 never started the extension: `--load-extension` is ignored, and `Extensions.loadUnpacked` returned an id with no service worker and nothing stored in the profile. The manifest was not changed. The three declined detectors stay declined.
+- Evidence: Edge probe before and after the version bump. Chrome probe stopped at “no service worker”. Weights unchanged. No permission moved.
+- Open doubt: branded Chrome’s update grant. Chrome for Testing was not on this machine, and Playwright’s Chromium has no `chrome.exe` (the file is gone). Until one of those is measured, the move stays unbuilt.
+
+### Self-check
+
+- Real user, real attack: No new warning. An Edge user who already allowed notification blocking would still have that API after this kind of update. A Chrome user was not measured.
+- Five-minute bypass: Not a detector. The way to miss the Chrome half is to call a Chromium result “Chrome”. That was not done.
+- False alarm: None. The manifest still requires `contentSettings`.
+- Simpler or more complicated: A measurement and a no. The options toggle was not rewritten.
+- AGENTS.md: Nothing new is sent. No permission was added or removed. `privacy`, `scripting`, and `management` stay required.
+- Would I defend it: Yes, as “Edge keeps the grant; Chrome was not loaded, so the manifest stays.” Not as “both browsers are done.”
+- Harmless on weird input: The test extension was a copy in a temp profile. The repo manifest was not edited.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The result is the browser’s own `permissions.contains` and the presence of `chrome.contentSettings` after a restart. A page cannot set that.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None. The grant belongs to the browser profile.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? WhatsApp Web and a calendar site, which keep their notification prompts while the toggle is off. This pass did not block them.
+- Richtig: Gemessen auf Edge, vor und nach dem Versionswechsel. Chrome ist als nicht gemessen hingeschrieben, nicht als bestanden.
+- Gut für das Vorhaben: Ein Prüfer kann den Stopp verteidigen. Die Erweiterung ist nicht größer geworden.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Den Chromium-Lauf als Chrome ausgeben. Nicht getan. Der echte Chrome-Lauf ist erst belegt, wenn ein Build die Erweiterung startet.
+
+Urteil: BEHALTEN
+
 ## 2026-11-17 — Measure page signals on whole pages
 
 - Hypothesis: counts from 22 text excerpts describe page signals on real pages.
