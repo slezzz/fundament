@@ -133,6 +133,23 @@ describe("MAIN-world bridge", () => {
     await expect(bridge.ethereum.request({ method: "eth_sign", params: ["0xabc"] })).rejects.toThrow(/Fundament/);
     expect(reached).toBe(false);
   });
+
+  it("confirms a hidden approval inside wallet_sendCalls and lets a plain call through", async () => {
+    const bridge = loadBridge();
+    const approval = `0xa22cb465${"0".repeat(64)}1`;
+    await expect(
+      bridge.ethereum.request({
+        method: "wallet_sendCalls",
+        params: [{ from: "0x1111111111111111111111111111111111111111", calls: [{ to: "0x2222222222222222222222222222222222222222", data: approval }] }],
+      }),
+    ).rejects.toThrow(/Fundament/);
+    await expect(
+      bridge.ethereum.request({
+        method: "wallet_sendCalls",
+        params: [{ calls: [{ to: "0x2222222222222222222222222222222222222222", data: "0x" }] }],
+      }),
+    ).resolves.toBe("signed");
+  });
 });
 
 describe("isolated page checks", () => {

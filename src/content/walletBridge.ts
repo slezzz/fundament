@@ -11,7 +11,8 @@
  * - Clipboard hijack: if you copied a wallet address and the page swaps in another one
  *   within a second, your original address is kept.
  * - Wallet drainers: unlimited approvals, setApprovalForAll, Permit/Permit2 signatures,
- *   Seaport listings and blind eth_sign need a native confirm() before they reach the wallet.
+ *   Seaport listings, blind eth_sign, and the same calldata selectors hidden inside
+ *   wallet_sendCalls need a native confirm() before they reach the wallet.
  *   The request itself is never modified.
  * - Signals only (kinds, no content): wallet on HTTP, miner WASM, keyboard lock,
  *   canvas/audio fingerprint probes, hidden AI prompt in copied text.
@@ -1160,25 +1161,38 @@
     }
     if (method === "eth_sendTransaction") {
       const tx = (params[0] ?? {}) as { data?: unknown; input?: unknown };
-      const data = lower(native.string(tx.data ?? tx.input ?? ""));
-      if (startsWith(data, "0xa22cb465") && matches(/1$/, hexWord(data, 1))) {
-        return {
-          what: german
-            ? "setApprovalForAll: Zugriff auf ALLE NFTs dieser Sammlung"
-            : "setApprovalForAll: access to ALL your NFTs in this collection",
-        };
+      return calldataDanger(lower(native.string(tx.data ?? tx.input ?? "")));
+    }
+    if (method === "wallet_sendCalls") {
+      const batch = (params[0] ?? {}) as { calls?: unknown };
+      const calls = native.isArray(batch.calls) ? batch.calls : [];
+      for (const call of calls) {
+        const tx = (call ?? {}) as { data?: unknown; input?: unknown };
+        const danger = calldataDanger(lower(native.string(tx.data ?? tx.input ?? "")));
+        if (danger) return danger;
       }
-      if (startsWith(data, "0x095ea7b3") || startsWith(data, "0x39509351")) {
-        try {
-          const amount = native.bigInt(`0x${hexWord(data, 1) || "0"}`);
-          if (amount >= MAX_HALF) {
-            return {
-              what: german ? "eine unbegrenzte Token-Freigabe (approve)" : "an unlimited token approval (approve)",
-            };
-          }
-        } catch {
-          /* malformed */
+    }
+    return null;
+  }
+
+  function calldataDanger(data: string): Danger {
+    if (startsWith(data, "0xa22cb465") && matches(/1$/, hexWord(data, 1))) {
+      return {
+        what: german
+          ? "setApprovalForAll: Zugriff auf ALLE NFTs dieser Sammlung"
+          : "setApprovalForAll: access to ALL your NFTs in this collection",
+      };
+    }
+    if (startsWith(data, "0x095ea7b3") || startsWith(data, "0x39509351")) {
+      try {
+        const amount = native.bigInt(`0x${hexWord(data, 1) || "0"}`);
+        if (amount >= MAX_HALF) {
+          return {
+            what: german ? "eine unbegrenzte Token-Freigabe (approve)" : "an unlimited token approval (approve)",
+          };
         }
+      } catch {
+        /* malformed */
       }
     }
     return null;
