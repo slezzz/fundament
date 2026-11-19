@@ -2,6 +2,37 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-19 — Bridge inventory, then one shared copy decision
+
+- Hypothesis: `walletBridge.ts` is long because the same decision is written twice, so folding those copies makes the file much shorter and the script smaller.
+- Inventory before the edit, 1 331 lines. The built script was 28.41 kB, gzip 10.16 kB.
+  - Captured natives, about lines 24–136. The builtin test reads this region. A call that is not on `native` uses the page's prototype.
+  - Helpers for strings, DOM, and events, about 138–276.
+  - ClickFix tier, the lure walk, and readability, about 280–920. This is most of the file. `hiddenInstructionText` and `commandsAreShown` each have their own 12 ms deadline.
+  - Clipboard, wallet, miner, and fingerprint probes, the rest.
+- What was merged: the head-and-tail cut of a long string (`bothEnds`, used at 12 000, 20 000, and 8 000). The ping for a blocked or weak copy (`announced`, used by `writeText` and by the `copy` event). The two scans that pick a typed-data parameter, now one loop that still prefers a JSON string over an object.
+- What was not merged: the two 12 ms walks. One shared walk would change which text is seen when the clock runs out. The tier expressions were not turned into a table. Each expression is already one line, so a table does not remove a check. The file was not split. `content-isolation.test.ts` compiles this one source, and the built `content-bridge.js` must not contain an import.
+- After: 1 324 lines. Built script 28.34 kB (28 351 bytes), gzip 10.14 kB. Port 5174 was empty for both copy timings. Three fixtures, 200 `writeText` calls, median of five rounds, milliseconds per call. Before: strong `powershell -w hidden …` 0.0113, weak `bash -c "$(curl …)"` 0.0299, plain release-note sentence 0.0141. After: 0.0119, 0.0334, 0.0146. Same band. Not a speedup.
+- 295 unit tests and 43 Edge end-to-end tests passed. Weights unchanged.
+
+### Self-check
+
+- Real user, real attack: A hidden PowerShell copy is still replaced. A visible install line on a github.io doc is still left alone. Both are in the end-to-end run.
+- Five-minute bypass: Not a new rule. The same tier function runs once instead of being inlined twice.
+- False alarm: No new match. The typed-data loop still prefers a `{` string over an object parameter.
+- Simpler or more complicated: Three call sites share the head-and-tail cut. The copy ping is one function. The file is seven lines shorter, not a different design.
+- AGENTS.md: Nothing new is sent. No permission, no weight change. The page still cannot turn a check off. The request bytes are still not rewritten.
+- Would I defend it: Yes, as “the copy decision is written once.” Not as “the bridge is now small.”
+- Harmless on weird input: A string that does not start with `{` is still not parsed as typed data. An empty `calls` array is still no danger.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? Unchanged. The command text and the readable page still belong to the page. The 12 ms walks were not combined, so the attacker does not get a new way to spend the budget.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? The clipboard write and the page text. Both still belong to the page.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? The same installer docs as before. The end-to-end github.io cases stayed up.
+- Richtig: 1 331 auf 1 324 Zeilen, 28,41 kB auf 28,34 kB. Die drei Kopierzeiten bleiben in demselben Band. 295 und 43 Tests grün.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die große Länge die zwei 12-ms-Läufe und die Tier-Ausdrücke sind, und die nicht zusammengelegt wurden.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Kein neuer Pfad. Ein Walk mit einem gemeinsamen Zeitlimit wäre ein Verhaltenswechsel. Benannt und nicht gebaut.
+
+Urteil: BEHALTEN
+
 ## 2026-11-19 — Budget follows a calibration, not 118 ms
 
 - Hypothesis: an absolute 118 ms will stay green on GitHub Actions because it was three times the median here.

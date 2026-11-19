@@ -149,6 +149,9 @@
   function slice(value: string, start: number, end?: number): string {
     return apply(native.slice, value, end === undefined ? [start] : [start, end]);
   }
+  function bothEnds(value: string, limit: number): string[] {
+    return value.length <= limit ? [value] : [slice(value, 0, limit), slice(value, -limit)];
+  }
   function lower(value: string): string {
     return apply(native.toLowerCase, value, []);
   }
@@ -390,7 +393,7 @@
     if (matches(/\b(?:powershell|pwsh|cmd|conhost|mshta|curl|wget|bitsadmin|certutil|rundll32|regsvr32|wscript|cscript|msiexec|finger)\b[^\n]{0,80}(?:[ \t\u00A0\u1680\u2000-\u200A\u202F\u205F\u3000]{20,}|#).{0,240}(?:[a-z]:\\|\\\\)/i, raw)) return "strong";
     const flat = trim(collapseSpaces(stripMarks(native.string(text))));
     const markers = ["powershell", "mshta", "bitsadmin", "certutil", "regsvr32", "rundll32", "msiexec", "wscript", "cscript", "conhost", "finger", "curl", "wget", "iex", "invoke-expression", "invoke-webrequest", "invoke-restmethod", "osascript", "frombase64string", "add-mppreference", "set-mppreference", "base64", "cmd", "captcha", "robot", "search-ms", "ms-search", "ms-msdt", "ms-settings", "davwwwroot"];
-    const windows: string[] = flat.length <= 12000 ? [flat] : [slice(flat, 0, 12000), slice(flat, -12000)];
+    const windows = bothEnds(flat, 12000);
     if (flat.length > 12000) {
       const folded = lower(flat);
       for (const marker of markers) {
@@ -567,7 +570,7 @@
   function clickFixContext(): boolean {
     try {
       const text = `${document.body ? innerTextOf(document.body) : ""}\n${hiddenInstructionText()}`;
-      const parts = text.length <= 20000 ? [text] : [slice(text, 0, 20000), slice(text, -20000)];
+      const parts = bothEnds(text, 20000);
       const KEY_ACTION_RE =
         /(?:windows\s*(?:key|taste)?\s*\+\s*r\b|win\s*\+\s*r\b|⊞\s*\+?\s*r\b|run dialog|ausführen-dialog|press\s+(?:ctrl|strg|control)\s*\+\s*v|(?:ctrl|strg|control)\s*\+\s*v\b|cmd\s*\+\s*space)/i;
       const BROWSER_CLAIM_RE =
@@ -911,6 +914,13 @@
     return "allow";
   }
 
+  function announced(text: string): "block" | "signal" | "allow" {
+    const verdict = commandVerdict(text);
+    if (verdict === "block") ping("clickfix-clipboard");
+    else if (verdict === "signal") ping("clickfix-weak");
+    return verdict;
+  }
+
   /** Ctrl/Cmd+C, Ctrl+Insert, or the context menu: the user is copying on purpose. */
   let lastCopyGesture = 0;
   listen(
@@ -950,7 +960,7 @@
   function looksPromptInject(text: string): boolean {
     const n = trim(collapseSpaces(native.string(text), "\\s+"));
     if (n.length < 24) return false;
-    const parts = n.length <= 8000 ? [n] : [slice(n, 0, 8000), slice(n, -8000)];
+    const parts = bothEnds(n, 8000);
     const re = /ignore (?:all )?(?:previous|prior|above) instructions|you are (?:now )?(?:a |an )?(?:helpful )?(?:browser )?(?:assistant|agent)|system prompt:|exfiltrat(?:e|ion)|send (?:me )?(?:all )?(?:cookies|credentials|api keys)/i;
     for (const part of parts) {
       if (part.length >= 24 && matches(re, part)) return true;
@@ -975,12 +985,7 @@
   /** Returns the text that should actually reach the clipboard. */
   function vet(text: string): string {
     const value = native.string(text);
-    const verdict = commandVerdict(value);
-    if (verdict === "block") {
-      ping("clickfix-clipboard");
-      return SAFE_TEXT;
-    }
-    if (verdict === "signal") ping("clickfix-weak");
+    if (announced(value) === "block") return SAFE_TEXT;
     if (looksPromptInject(value)) ping("prompt-injection");
     if (lastUserCopy && dateNow() - lastUserCopy.at < 1500 && isAddress(value) && trim(value) !== lastUserCopy.text) {
       ping("clipboard-hijack");
@@ -1032,14 +1037,10 @@
         // execCommand("copy") on a hidden textarea is how many ClickFix kits copy.
         // A copy the user made with Ctrl+C or the context menu is never touched.
         const userCopy = dateNow() - lastCopyGesture < 2000;
-        if (copied && !userCopy) {
-          const verdict = commandVerdict(copied);
-          if (verdict === "block") {
-            prevent(event);
-            const data = native.clipboardData ? apply(native.clipboardData, event, []) : null;
-            if (data && native.setData) apply(native.setData, data, ["text/plain", SAFE_TEXT]);
-            ping("clickfix-clipboard");
-          } else if (verdict === "signal") ping("clickfix-weak");
+        if (copied && !userCopy && announced(copied) === "block") {
+          prevent(event);
+          const data = native.clipboardData ? apply(native.clipboardData, event, []) : null;
+          if (data && native.setData) apply(native.setData, data, ["text/plain", SAFE_TEXT]);
         }
       } catch {
         /* ignore */
@@ -1125,20 +1126,12 @@
     }
     if (matches(/^eth_signTypedData/, method)) {
       let raw: unknown = null;
+      let objectParam: unknown = null;
       for (const param of params) {
-        if (typeof param === "string" && startsWith(trim(param), "{")) {
-          raw = param;
-          break;
-        }
+        if (raw == null && typeof param === "string" && startsWith(trim(param), "{")) raw = param;
+        else if (objectParam == null && typeof param === "object" && param !== null) objectParam = param;
       }
-      if (raw == null) {
-        for (const param of params) {
-          if (typeof param === "object" && param !== null) {
-            raw = param;
-            break;
-          }
-        }
-      }
+      if (raw == null) raw = objectParam;
       type Typed = { primaryType?: unknown; message?: Record<string, unknown> } | null;
       let typed: Typed = null;
       try {
