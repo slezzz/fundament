@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Measured, not guessed
+- One hundred mixed page analyses stay under 118 ms (`tests/unit/budget.test.ts`). Five runs on 2026-11-19, with nothing listening on port 5174, took 38.5, 39.2, 39.2, 42.1 and 49.5 ms. The median is 39.2 ms. The bound is three times that median, rounded up. Service-worker start and content-script cost are still unmeasured. Weights unchanged.
 - False-positive corpora from Majestic Million: ranks 1–10,000 and 100,001–110,000, each checked as home page and as `/login` with a password form. Enforced in `tests/security/corpus.test.ts`: at most 0.1 % / 0.2 % warnings, zero red. Current result: 0 of 20,000.
 - Detection floor on a deterministic sample of real phishing hosts analyzed as if unlisted (URL only ≥ 4 %, with login form ≥ 28 %).
 - Page signals on whole public pages, local only, not in CI. 629 pages opened in Edge with the built extension (22 corpus URLs, 107 install and support pages, 500 homepages). 536 measured, 93 did not load and are not counted as clean, 1 warning. The warning is `clickfix-unseen` on `berkeley-humanoid-lite.gitbook.io` after a copy click. ClickFix context, tech-support, prompt injection, browser-in-the-browser, and keyboard lock were 0. The README does not call this a measured false-alarm rate. Weights unchanged.

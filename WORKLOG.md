@@ -2,6 +2,14 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-19 — Engine budget, five runs
+
+- Hypothesis: 500 ms is a useful ceiling for 100 `analyzeUrl` calls because one run took about 41 ms.
+- Result: It is not. A slowdown of several times would still pass. Five runs, one after another, with no other test process: 49.5, 39.2, 39.2, 38.5, 42.1 ms. Sorted, the median is 39.2 ms. The assertion is now under 118 ms, three times that median rounded up to the next millisecond.
+- Port 5174: nothing was listening (`Get-NetTCPConnection -LocalPort 5174` returned no row) before the five runs. The runs were not started while the city dev server or another Vitest process was running.
+- Not loosened. The first of the five was the slowest, 49.5 ms, and still sits under 118 ms. A later red run gets its cause measured. The number does not move up to make it pass.
+- Still unmeasured: service-worker start and content-script cost.
+
 ## 2026-11-17 — Unix shell forms that skipped the weak tier
 
 - Hypothesis: `curl | sh` is the only download-and-run shape, so `bash -c "$(curl …)"` and `wget | bash` are harmless.
