@@ -10,6 +10,12 @@ Newest first. One entry per pass.
 - Not loosened. The first of the five was the slowest, 49.5 ms, and still sits under 118 ms. A later red run gets its cause measured. The number does not move up to make it pass.
 - Still unmeasured: service-worker start and content-script cost.
 
+## 2026-11-19 — EIP-7702 and lookalike addresses left out
+
+- Hypothesis: an authorization list, and a destination that shares the sender’s first and last four hex digits, are bypasses of the approval check.
+- Result: They are not. The approval check looks at calldata selectors. An `authorizationList` is a different field. Address poisoning, as MetaMask and Etherscan describe it, puts a vanity address that matches an earlier recipient into the history. The later payment is from the real account to that lookalike. Comparing `from` with `to` on one request does not see that pair.
+- The draft was removed before commit. The memo is `concepts/wallet-delegation.md`. The backlog row is Nach 1.2.
+
 ## 2026-11-17 — Unix shell forms that skipped the weak tier
 
 - Hypothesis: `curl | sh` is the only download-and-run shape, so `bash -c "$(curl …)"` and `wget | bash` are harmless.

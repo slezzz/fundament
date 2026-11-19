@@ -14,11 +14,18 @@ Review 2026-11-17. The Unix shell forms that skipped the weak tier are in that t
 4. **Decision memos.** Done 2026-11-17, confirmed the same day. `concepts/consentfix.md` **No**. `concepts/device-code.md` **No**. `concepts/extension-blocklist.md` **No**. `concepts/content-settings-optional.md` **Yes, not built**: Edge 157 kept the grant, branded Chrome 158 did not complete the update, manifest unchanged. `privacy`, `scripting`, and `management` stay required.
 
 5. **Whole-page measurement.** Run 2026-11-17. `scripts/measure-page-signals.mjs` loaded the built extension in Edge and opened the 22 corpus URLs, 107 install and support pages, and the first 500 Majestic home pages. 536 measured, 93 not measured, 1 warning. Raw rows stay in gitignored `measure-output/`. The summary is in `RELEASE_AUDIT.md`. Not in CI. The one warning was a visible install line inside a 48-line copy. That form is fixed: each weak line is judged on its own, and a line the page does not show still warns. Those 629 pages were not opened again. The README still must not call page-signal false alarms measured until a new run. Next: classify the 93 failures, keep failures at or under 5 %, then at least 2 000 pages including docs on hosting zones.
-6. **Wallet calls.** EIP-7702 delegation and EIP-5792 `wallet_sendCalls` in the bridge. Batches that hide `approve` / `setApprovalForAll` / Permit2. Address poisoning (same start and end). Primary sources: the EIPs and the wallet RPC docs. Counterexamples: static copies of real dapp flows.
+6. **Wallet batch.** The calldata check now walks `wallet_sendCalls` the same way as `eth_sendTransaction`: unlimited `approve` and `setApprovalForAll`. A plain call is unchanged. EIP-7702 and lookalike addresses are not this row. They are under Nach 1.2.
 2. **Extension supply chain.** Dangerous permission combinations on install and on update, an `updateUrl` outside the store, new `externally_connectable`. Also against Fundament: another extension covering the warning page, forging a message, or overriding rules.
 3. **Hidden prompt injection** (invisible text, off-screen, zero width, `aria-hidden`). Rank it as a hint, not a solution. The length give-up on that detector is already closed.
 4. **Own supply chain** (after the May 2026 npm worm reports): pin Actions by SHA, least token rights, no `pull_request_target`, `FEED_SIGNING_KEY` only in its own workflow with a protected environment and no third-party actions, proof via a test PR, `npm ci` from the lockfile, `npm audit`, zip built twice with the same checksum. Provenance is not a security proof.
 5. **Budgets and store text.** A test for milliseconds per navigation, service-worker start, and content-script cost on a large page. Keyboard, names, contrast, dark mode. Store listing against behavior. Chrome Web Store policy as of 1 July 2026: data only when strictly necessary for the single purpose, and changes disclosed.
+
+## Nach 1.2
+
+Detection stays frozen through 1.2. These are not built. The exception would be a primary source that shows an existing check is bypassed. Neither item is that exception.
+
+- **EIP-7702.** An `authorizationList` is a new transaction field. It does not hide the `approve` or `setApprovalForAll` selectors the bridge already confirms. Memo: `concepts/wallet-delegation.md`. Recommendation: no.
+- **Lookalike address.** Address poisoning imitates an earlier recipient, or the account as it appears in history. MetaMask compares the destination with addresses the account has used before. Comparing `from` with `to` on the same request misses that send and warns on a different, rare case. Memo: `concepts/wallet-delegation.md`. Recommendation: no.
 
 ## Wartet auf Freigabe
 
@@ -28,6 +35,7 @@ Code waits for a yes. The concept file comes first and does not wait.
 - `concepts/device-code.md` — **No.** Confirmed 2026-11-17. The device-login URL is Microsoft’s real page. An opener hint would be a single weak signal.
 - `concepts/extension-blocklist.md` — **No.** Confirmed 2026-11-17. No ids and no feed until a license exists. The permission diff stays the coverage.
 - `concepts/content-settings-optional.md` — **Yes, not built.** Edge 157 kept the grant. Branded Chrome 158 did not complete the same update, so the manifest stays. `privacy`, `scripting`, and `management` stay required.
+- `concepts/wallet-delegation.md` — **No.** EIP-7702 and a same-transaction lookalike check. See Nach 1.2. The `wallet_sendCalls` calldata walk is a bypass of the existing approval check and is not waiting.
 - After those: `concepts/passkey-downgrade.md`, `concepts/password-reuse.md`. Password reuse changes the privacy promise. Do not implement either without a yes.
 - A public “Probier es aus” page with harmless simulated attacks. A new hosted page needs a yes.
 - Downloading Chrome for Testing, to finish the `contentSettings` update check on Chrome. Not downloaded.

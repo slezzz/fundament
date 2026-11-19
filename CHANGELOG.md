@@ -11,6 +11,7 @@
 
 ### Decisions
 - Four concept memos, no code. ConsentFix, device-code phishing, and an extension-id list are not to be built. Confirmed 2026-11-17. `contentSettings` may move to `optional_permissions` later, alone. On Edge 157 an update from required to optional kept the grant, the API, and an on toggle. Branded Chrome 158 could not load the unpacked build, so that half is not measured and the manifest is unchanged. `privacy`, `scripting`, and `management` stay required. Weights unchanged.
+- EIP-7702 and a lookalike address are not built. `concepts/wallet-delegation.md`. An authorization list does not hide the existing approval selectors. Address poisoning imitates an earlier recipient; comparing `from` with `to` on the same request misses that. Weights unchanged.
 
 ### Fixed
 - A `wallet_sendCalls` batch can no longer hide the calldata that `eth_sendTransaction` already confirms: unlimited `approve` and `setApprovalForAll`. A plain call still reaches the wallet. The request is not rewritten. Weights unchanged.
