@@ -2,6 +2,33 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-19 — Budget follows a calibration, not 118 ms
+
+- Hypothesis: an absolute 118 ms will stay green on GitHub Actions because it was three times the median here.
+- Result: That number is this machine. The test now measures a fixed loop, 38 500 000 `Math.imul` steps, five times, and requires the 100 analyses to finish under three times that median. The multiple did not move. Report-only in CI was the other option. It was not taken: the `check` job is the run that happens on every push, and a report would let a real slowdown pass there.
+- Choice of the loop: five quiet `node` runs of 38 500 000 steps took 35.9, 46.7, 38.2, 36.0, 36.0 ms (median 36.0), next to the 39.2 ms analysis median from `8b73007`. Port 5174 was empty before those runs and again before the Vitest runs.
+- Vitest, same quiet machine, five times: analysis / calibration median / bound = 52.1 / 42.7 / 128.1, 42.0 / 38.4 / 115.3, 38.7 / 36.5 / 109.4, 39.1 / 41.4 / 124.3, 38.8 / 36.2 / 108.5. The largest ratio is 1.22. Three is the same headroom as before.
+- GitHub Actions was not measured. Docker is not installed. WSL Ubuntu has no Node. The budget test runs in the `check` job (`npm test` on ubuntu-24.04, Node 24), not in the Chromium e2e job. Nothing here executed that runner, so this does not say the job is green.
+- Not loosened. A red run still gets its cause measured. The multiple stays 3.
+
+### Self-check
+
+- Real user, real attack: Not a detector. A slower `analyzeUrl` on the same CPU still fails, because the calibration loop does not call it.
+- Five-minute bypass: Not applicable.
+- False alarm: A runner where `analyzeUrl` is slower relative to a tight `Math.imul` loop, without an engine change. That ratio was not measured on ubuntu-24.04.
+- Simpler or more complicated: The assertion is a ratio. The iteration count is fixed. No production code.
+- AGENTS.md: Nothing is sent. No permission, no weight change.
+- Would I defend it: Yes, as “three times a fixed loop on the same machine.” Not as “GitHub Actions was timed.”
+- Harmless on weird input: A collapsed hash throws. A zero calibration makes the bound zero and the test fails.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? No page. The clock and the loop are the machine’s.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None.
+- Richtig: Fünf ruhige Vitest-Läufe, größte Quote 1,22, Vielfaches 3. Port 5174 leer. ubuntu-24.04 nicht gelaufen.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil 118 ms eine Eigenschaft dieses Rechners war und das Vielfache gleich geblieben ist.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Kalibrierung selbst verlangsamen, damit die Grenze mitwächst. Das wäre ein Fehler der Prüfung. Benannt. Der Loop ruft `analyzeUrl` nicht auf.
+
+Urteil: BEHALTEN
+
 ## 2026-11-19 — Worklog entries for 8b73007, 84e8d6b, and c964639
 
 - Hypothesis: the measurement notes already in this file were enough of a record for those three commits.
