@@ -2,19 +2,97 @@
 
 Newest first. One entry per pass.
 
-## 2026-11-19 — Engine budget, five runs
+## 2026-11-19 — Worklog entries for 8b73007, 84e8d6b, and c964639
 
-- Hypothesis: 500 ms is a useful ceiling for 100 `analyzeUrl` calls because one run took about 41 ms.
-- Result: It is not. A slowdown of several times would still pass. Five runs, one after another, with no other test process: 49.5, 39.2, 39.2, 38.5, 42.1 ms. Sorted, the median is 39.2 ms. The assertion is now under 118 ms, three times that median rounded up to the next millisecond.
-- Port 5174: nothing was listening (`Get-NetTCPConnection -LocalPort 5174` returned no row) before the five runs. The runs were not started while the city dev server or another Vitest process was running.
-- Not loosened. The first of the five was the slowest, 49.5 ms, and still sits under 118 ms. A later red run gets its cause measured. The number does not move up to make it pass.
-- Still unmeasured: service-worker start and content-script cost.
+- Hypothesis: the measurement notes already in this file were enough of a record for those three commits.
+- Result: They were not. Each commit now has its own entry, with the self-check and a verdict. No engine change.
 
-## 2026-11-19 — EIP-7702 and lookalike addresses left out
+### Self-check
 
-- Hypothesis: an authorization list, and a destination that shares the sender’s first and last four hex digits, are bypasses of the approval check.
-- Result: They are not. The approval check looks at calldata selectors. An `authorizationList` is a different field. Address poisoning, as MetaMask and Etherscan describe it, puts a vanity address that matches an earlier recipient into the history. The later payment is from the real account to that lookalike. Comparing `from` with `to` on one request does not see that pair.
-- The draft was removed before commit. The memo is `concepts/wallet-delegation.md`. The backlog row is Nach 1.2.
+- Real user, real attack: No change to what the extension does.
+- Five-minute bypass: Not applicable.
+- False alarm: Not applicable.
+- Simpler or more complicated: Three entries. The two notes they replace are gone, not duplicated.
+- AGENTS.md: No data flow, no permission, no weight change.
+- Would I defend it: Yes, as “a commit without a self-check is not recorded.” Not as “the bridge is shorter.”
+- Harmless on weird input: The file is prose.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? No recognition was added.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None.
+- Richtig: Die drei Commits stehen mit Urteil im Log. Der Code dazu ist unverändert.
+- Gut für das Vorhaben: Ein Prüfer kann jeden der drei Sätze ohne die Chat-Notiz wiederholen.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Einen späteren Commit wieder ohne Eintrag lassen. Benannt, und dieser Eintrag ist die Gegenregel.
+
+Urteil: BEHALTEN
+
+## 2026-11-19 — c964639 EIP-7702 and lookalike addresses left unbuilt
+
+- Hypothesis: an authorization list, and a destination that shares the sender’s first and last four hex digits, are bypasses of the approval check, so they can ship while detection is frozen.
+- Result: They are not bypasses. The approval check looks at calldata selectors. An `authorizationList` is a different field. Address poisoning, as MetaMask and Etherscan describe it, imitates an earlier recipient. The later payment is from the real account to that lookalike. Comparing `from` with `to` on one request does not see that pair. The draft was removed. The memo is `concepts/wallet-delegation.md`. The backlog row is Nach 1.2. Weights unchanged.
+
+### Self-check
+
+- Real user, real attack: A dust transfer from a vanity address that matches a previous recipient, then a send to that copy. The refused check stays quiet on that send.
+- Five-minute bypass: Not applicable. Nothing was added to the bridge.
+- False alarm: A real EIP-7702 delegation the user meant to sign. No corpus of those transactions exists, which is one reason it stays unbuilt.
+- Simpler or more complicated: The bridge lost the two checks. The memo is the record.
+- AGENTS.md: Nothing new is sent. No permission, no weight change.
+- Would I defend it: Yes, as “these are new detectors, and the lookalike draft does not match the published attack.” Not as “delegation and poisoning are covered.”
+- Harmless on weird input: No new parser. A batch that hides `approve` is still the previous commit.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? There is no new recognition. A lookalike check that matched the attack would need the wallet’s earlier recipients. This extension does not have that list.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None was added. The page already supplies `from`, `to`, and calldata. `from` is the wrong context for this attack.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? A wallet the user asked to delegate (EIP-7702), and a payment to an address the user chose that happens to share the sender’s prefix and suffix.
+- Richtig: Der Entwurf ist vor dem Commit aus der Brücke und aus dem Test. Die Quellen stehen im Memo.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die veröffentlichte Attacke den früheren Empfänger nachahmt, nicht `from` mit `to`.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Es gibt keinen neuen Pfad. Die Lücke ist benannt: ein Ziel, das einem früheren Empfänger ähnelt, bleibt ohne Historie unsichtbar.
+
+Urteil: NICHT BAUEN
+
+## 2026-11-19 — 84e8d6b hidden approval inside wallet_sendCalls
+
+- Hypothesis: `wallet_sendCalls` is only a new method name, so the existing `eth_sendTransaction` check is enough.
+- Result: The batch is a bypass. The same calldata sits in `calls[].data` instead of the top-level transaction, so the old check never sees it. The bridge now walks each call with the same `approve` and `setApprovalForAll` rules. A plain call still resolves. The request is not rewritten. The unit test rejects `0xa22cb465` ending in 1 and accepts `0x`. Weights unchanged. EIP-7702 and lookalike addresses are not in this commit.
+
+### Self-check
+
+- Real user, real attack: A page asks for `wallet_sendCalls` whose only call is `setApprovalForAll` ending in 1. The native confirm runs. Cancel keeps the request away from the wallet.
+- Five-minute bypass: Put the same selector in `input` instead of `data`. The walk reads `data` then `input`, same as `eth_sendTransaction`. Tested for the batch’s `data`. The `input` field on a batch call is the same function, not a separate fixture.
+- False alarm: A batch whose call data is `0x`. Tested: it reaches the wallet.
+- Simpler or more complicated: One helper, two call sites. No new selector.
+- AGENTS.md: Nothing new is sent. No permission, no weight change. The page still cannot turn the check off. The request bytes are unchanged.
+- Would I defend it: Yes, as “the batch was a way around the approval check that already exists.” Not as “every wallet method is covered.”
+- Harmless on weird input: A missing `calls` array is no danger. A malformed amount still does not confirm.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The context is the calldata the page sends. The attacker writes it. Hiding it in a batch used to skip the check. That hole is the one this commit closes. A different method name still would.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? `wallet_sendCalls` and the call data. Both belong to the page.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? A dapp that batches a real unlimited approval. It gets the same confirm as `eth_sendTransaction`, which is the existing behavior for that calldata.
+- Richtig: Der Test lehnt die versteckte `setApprovalForAll` ab und lässt `0x` durch. 295 Unit-Tests und 43 Edge-E2E-Tests waren grün. Die E2E-Seiten rufen `wallet_sendCalls` nicht auf.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die Selektoren dieselben sind und nur der Weg neu ist.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Dieselbe Freigabe unter einem anderen Methodennamen als `wallet_sendCalls`. Benannt, nicht als neuer Detektor gebaut.
+
+Urteil: BEHALTEN
+
+## 2026-11-19 — 8b73007 one hundred analyses under 118 ms
+
+- Hypothesis: 500 ms is a useful ceiling because one run of 100 `analyzeUrl` calls took about 41 ms.
+- Result: It is not. Five runs, nothing else running: 49.5, 39.2, 39.2, 38.5, 42.1 ms. Median 39.2 ms. The assertion is under 118 ms, three times that median, rounded up. Port 5174 had no listener. The full suite still passed the assertion (the file reported 60 ms, then 83 ms). Service-worker start and content-script cost stay unmeasured. Weights unchanged.
+
+### Self-check
+
+- Real user, real attack: Not a detector. A navigation that used to be cheap stays under the measured multiple.
+- Five-minute bypass: Not applicable. The number is a ceiling, not a recognition rule.
+- False alarm: A slow machine fails the absolute millisecond number without the engine having changed. That is the open CI question, not a reason to raise 118.
+- Simpler or more complicated: One loop, ten URLs, ten times. No production code.
+- AGENTS.md: The test does not send anything. No permission, no weight change.
+- Would I defend it: Yes, as “three times the quiet median on this machine.” Not as “118 ms is true on every runner.”
+- Harmless on weird input: The ten URLs are fixed. A throw fails the test.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? There is no page context. The clock is the machine’s.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None. The samples include `google.com` and `github.com` as ordinary analyses, not as warnings.
+- Richtig: Fünf Läufe, Port 5174 leer, Median 39,2 ms, Grenze 118 ms. Die Grenze ist nicht angehoben worden.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil eine Verdreifachung auf diesem Rechner rot wird und 500 ms das nicht tat.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Prüfung auf einem langsameren Rechner rot werden lassen, ohne dass die Engine langsamer wurde. Benannt. Die Kalibrierung dagegen ist der nächste Eintrag, nicht dieser Commit.
+
+Urteil: BEHALTEN
 
 ## 2026-11-17 — Unix shell forms that skipped the weak tier
 
