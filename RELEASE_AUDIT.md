@@ -237,6 +237,18 @@ Typed values, cookie values, and the user’s own clipboard are not in these rec
 
 Chrome does not give an extension TLS certificates, live DNS answers, or HttpOnly cookie flags. OS malware, infostealers, and kernel bugs are outside this product. The UI must not say those are covered. `THREAT_MODEL.md` already says the residual risk; that paragraph still matches the code.
 
+## Homepage probe, 2026-11-23
+
+`scripts/measure-page-signals.mjs` again, Edge, the first 40 Majestic home pages only. Not CI. Port 5174 was empty. A redirect is measured on the host the extension stored (`youtu.be` opened `www.youtube.com`, `bit.ly` opened `bitly.com`, `wa.me` opened `api.whatsapp.com`, `t.me` opened `telegram.org`).
+
+| | |
+|---|---|
+| Measured | 35 |
+| Not measured | 5. `twitter.com` and `x.com` returned an HTTP error. `w2rt6byl5nf1opmc-a.com` does not resolve. `europa.eu` and `reddit.com` closed the browser. Not counted as clean. |
+| Warnings | 0 |
+
+5 of 40 is 12.5 %. The 2 000-page run was not started. The 629-page result from 2026-11-17 is unchanged. Weights unchanged.
+
 ## Whole-page measurement, 2026-11-17
 
 `scripts/measure-page-signals.mjs` loads `dist/` in Edge and opens public pages on the real network. It is not in CI. The raw file is `measure-output/page-signals.json` and is gitignored. This summary has counts, signal names, and hostnames only.

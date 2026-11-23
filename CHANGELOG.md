@@ -3,6 +3,7 @@
 ## Unreleased
 
 ### Measured, not guessed
+- A 40-page homepage probe on 2026-11-23, Edge, local, not CI. 35 measured, 5 not measured, 0 warnings. The measurer now follows a redirect to the host the extension actually recorded (`youtu.be` to `www.youtube.com`, `bit.ly` to `bitly.com`). The five misses are `twitter.com` and `x.com` (HTTP error), `w2rt6byl5nf1opmc-a.com` (name does not resolve), and `europa.eu` and `reddit.com` (browser closed). They are not counted as clean. This is not the 2 000-page run. Weights unchanged.
 - One hundred mixed page analyses stay under three times a fixed calibration (`tests/unit/budget.test.ts`). The calibration is 38 500 000 `Math.imul` steps. On this machine, with nothing listening on port 5174, five of those loops took 35.9, 46.7, 38.2, 36.0 and 36.0 ms (median 36.0). The earlier analysis median on the same machine was 39.2 ms, and three times that was 118 ms. The multiple is still three. An absolute 118 ms is not the assertion, because that number is this machine. GitHub Actions on ubuntu-24.04 was not run. Service-worker start and content-script cost are still unmeasured. Weights unchanged.
 - False-positive corpora from Majestic Million: ranks 1–10,000 and 100,001–110,000, each checked as home page and as `/login` with a password form. Enforced in `tests/security/corpus.test.ts`: at most 0.1 % / 0.2 % warnings, zero red. Current result: 0 of 20,000.
 - Detection floor on a deterministic sample of real phishing hosts analyzed as if unlisted (URL only ≥ 4 %, with login form ≥ 28 %).

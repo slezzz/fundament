@@ -9,6 +9,7 @@
  * FUNDAMENT_E2E_BROWSER  Edge (or Chromium) executable
  * FUNDAMENT_MEASURE_GROUPS  corpus,docs,majestic (default all)
  * FUNDAMENT_MEASURE_LIMIT   max pages per group (default 0 = all)
+ * FUNDAMENT_MEASURE_MAJESTIC  home pages to load (default 500, at most 10 000)
  */
 import { execFile } from "node:child_process";
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
@@ -19,6 +20,13 @@ import { fileURLToPath } from "node:url";
 const SIGNAL_ID = /^[a-z][a-z0-9-]{0,48}$/;
 const GROUPS = ["corpus", "docs", "majestic"];
 const COPY_LABELS = new Set(["copy", "kopieren", "copy to clipboard", "in die zwischenablage kopieren"]);
+
+export function hostsMatch(expected, found) {
+  const left = hostnameOnly(expected);
+  const right = hostnameOnly(found);
+  if (!left || !right) return false;
+  return left === right || right.endsWith(`.${left}`) || left.endsWith(`.${right}`);
+}
 
 export function hostnameOnly(value) {
   const raw = String(value ?? "").trim();
@@ -143,7 +151,8 @@ function uniqueTargets(targets) {
   return out;
 }
 
-export function loadTargets(root) {
+export function loadTargets(root, majesticCap = 500) {
+  const cap = clamp(majesticCap, 1, 10000);
   const corpus = urlsFromJson(resolve(root, "tests/fixtures/page-text/snapshots.json"));
   const docs = uniqueTargets([
     ...urlsFromJson(resolve(root, "tests/fixtures/page-text/hosted-docs.json")),
@@ -157,7 +166,7 @@ export function loadTargets(root) {
     const host = hostnameOnly(line);
     if (!host) continue;
     majestic.push({ host, url: `https://${host}/` });
-    if (majestic.length === 500) break;
+    if (majestic.length === cap) break;
   }
   return { corpus, docs, majestic };
 }
@@ -185,9 +194,11 @@ function writeRows(file, rows) {
 }
 
 async function readHits(worker, host) {
+  // The callback runs in the service worker and cannot call hostsMatch.
   return worker.evaluate(async (expected) => {
     const stored = await chrome.storage.session.get(null);
     const hits = [];
+    const same = (left, right) => left === right || right.endsWith(`.${left}`) || left.endsWith(`.${right}`);
     for (const [key, value] of Object.entries(stored)) {
       if (!key.startsWith("tab:") || !value || typeof value !== "object") continue;
       let found = "";
@@ -196,7 +207,7 @@ async function readHits(worker, host) {
       } catch {
         found = "";
       }
-      if (!found || (found !== expected && !found.endsWith(`.${expected}`) && !expected.endsWith(`.${found}`))) continue;
+      if (!found || !same(String(expected || ""), found)) continue;
       const signals = [];
       const list = value.analysis?.signals;
       if (Array.isArray(list)) {
@@ -281,13 +292,29 @@ async function visit(page, worker, job) {
   if (state === "closed") return { row: blank, reason: "closed" };
   await page.waitForLoadState("load", { timeout: 4000 }).catch(() => undefined);
   await page.waitForTimeout(1200);
+  const warnedByPage = state === "warning" || page.url().includes("warning.html");
   let hits = [];
   try {
     hits = await readHits(worker, job.host);
+    if (hits.length === 0 && !warnedByPage) {
+      await page.waitForTimeout(800);
+      hits = await readHits(worker, job.host);
+    }
   } catch {
     return { row: blank, reason: "worker" };
   }
-  const warnedByPage = state === "warning" || page.url().includes("warning.html");
+  let host = job.host;
+  if (hits.length === 0 && !warnedByPage) {
+    const finalHost = hostnameOnly(page.url());
+    if (finalHost && !hostsMatch(job.host, finalHost)) {
+      try {
+        hits = await readHits(worker, finalHost);
+      } catch {
+        return { row: blank, reason: "worker" };
+      }
+      if (hits.length > 0) host = finalHost;
+    }
+  }
   if (hits.length === 0 && !warnedByPage) return { row: blank, reason: "no-record" };
   const hit = hits.find((row) => row.warned) ?? hits[0] ?? { signals: [], warned: false };
   let warned = hit.warned === true || warnedByPage;
@@ -299,7 +326,7 @@ async function visit(page, worker, job) {
       await page.waitForTimeout(1000);
       let after = [];
       try {
-        after = await readHits(worker, job.host);
+        after = await readHits(worker, host);
       } catch {
         after = [];
       }
@@ -315,7 +342,7 @@ async function visit(page, worker, job) {
     row: {
       group: job.group,
       index: job.index,
-      host: job.host,
+      host,
       signals: hit.signals,
       warned,
       status: "measured",
@@ -342,7 +369,8 @@ async function main() {
   }
   const selected = new Set((process.env.FUNDAMENT_MEASURE_GROUPS || GROUPS.join(",")).split(",").map((item) => item.trim()));
   const limit = clamp(process.env.FUNDAMENT_MEASURE_LIMIT || "0", 0, 100000);
-  const targets = loadTargets(root);
+  const majesticCap = clamp(process.env.FUNDAMENT_MEASURE_MAJESTIC || "500", 1, 10000);
+  const targets = loadTargets(root, majesticCap);
   const jobs = [];
   for (const group of GROUPS) {
     if (!selected.has(group)) continue;

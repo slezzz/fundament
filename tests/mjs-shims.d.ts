@@ -30,6 +30,7 @@ declare module "*.mjs" {
   export function keepHost(host: string): boolean;
   export function registrableOf(host: string): string | null;
   export function hostnameOnly(value: unknown): string;
+  export function hostsMatch(expected: unknown, found: unknown): boolean;
   export function publicRecord(input: {
     group?: string;
     index?: number;
@@ -64,7 +65,7 @@ declare module "*.mjs" {
     bySignal: Record<string, { seen: number; warned: number }>;
     warningHosts: string[];
   };
-  export function loadTargets(root: string): {
+  export function loadTargets(root: string, majesticCap?: number): {
     corpus: { host: string; url: string }[];
     docs: { host: string; url: string }[];
     majestic: { host: string; url: string }[];

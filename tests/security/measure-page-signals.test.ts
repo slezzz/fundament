@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import { describe, expect, it } from "vitest";
-import { hostnameOnly, loadTargets, publicRecord, summary } from "../../scripts/measure-page-signals.mjs";
+import { hostnameOnly, hostsMatch, loadTargets, publicRecord, summary } from "../../scripts/measure-page-signals.mjs";
 
 const root = resolve(import.meta.dirname, "../..");
 
@@ -90,5 +90,8 @@ describe("page-signal measurement", () => {
       expect(hostnameOnly(target.url)).not.toBe("");
     }
     expect(targets.majestic[0]?.host).toBe("google.com");
+    expect(hostsMatch("google.com", "www.google.com")).toBe(true);
+    expect(hostsMatch("google.com", "www.google.de")).toBe(false);
+    expect(loadTargets(root, 2000).majestic).toHaveLength(2000);
   });
 });

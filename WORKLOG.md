@@ -2,6 +2,29 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-23 — Measure the host the extension actually opened
+
+- Hypothesis: the 55 “no tab record” misses are pages that never got an analysis, so a 2 000-page run cannot stay under 5 % failures.
+- Result: Many of those pages redirect. `youtu.be` commits `www.youtube.com`. The old comparison looked only at the host we asked for, found no tab, and skipped a page the extension had analyzed. The measurer now reads the final host when the asked host has no record. The comparison inside the service worker is inlined. Calling the Node helper there throws, and the first 40-page probe was 40 `worker` skips for that reason. After the inline, the same 40: 35 measured, 5 not, 0 warnings. The five are `twitter.com` and `x.com` (HTTP error), `w2rt6byl5nf1opmc-a.com` (does not resolve), `europa.eu` and `reddit.com` (browser closed). 12.5 %. The 2 000-page run was not started. Port 5174 was empty. Weights unchanged. `FUNDAMENT_MEASURE_MAJESTIC` can raise the home-page list. The default stays 500.
+
+### Self-check
+
+- Real user, real attack: No new detection. A redirected homepage is no longer dropped before its signals are read.
+- Five-minute bypass: Not a recognition rule. A page that never commits still stays not measured. Tested on the dead name.
+- False alarm: The probe warned on 0 of 35. A redirect is recorded as the final host, not as the short link we typed.
+- Simpler or more complicated: One host comparison, used outside the worker. The worker keeps its own copy because it cannot see the Node function.
+- AGENTS.md: Nothing new is sent. No permission, no weight change. The output is still hostnames and signal names, local, gitignored.
+- Would I defend it: Yes, as “a redirect is the page we measured.” Not as “failures are under 5 %” and not as “2 000 pages were opened.”
+- Harmless on weird input: A host that does not resolve stays not measured. An HTTP error stays not measured. Neither is counted clean.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The record is the extension’s own tab entry. The page cannot mark itself measured. A different host is used only when that entry exists.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? The redirect target. It belongs to the site. We store the host the extension already stored.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None new. `google.com`, `github.com`, and `wikipedia.org` stayed up with no warning.
+- Richtig: Der erste Lauf war 40 Worker-Fehler, weil der Vergleich die Node-Funktion rief. Danach 35 gemessen, 5 nicht, 0 Warnungen.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil `youtu.be` als `www.youtube.com` gemessen wurde und die fünf Ausfälle benannt sind. Die 5-%-Grenze ist nicht erreicht.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Eine Seite, die nicht lädt, als sauber zu zählen. Nicht gebaut. Der tote Name bleibt `not measured`.
+
+Urteil: BEHALTEN
+
 ## 2026-11-19 — Bridge inventory, then one shared copy decision
 
 - Hypothesis: `walletBridge.ts` is long because the same decision is written twice, so folding those copies makes the file much shorter and the script smaller.
