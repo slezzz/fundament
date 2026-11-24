@@ -2,6 +2,31 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-24 — Two content scripts, one world
+
+- Hypothesis: the Google page error `s is not a function` is a page bug.
+- Red first: `content.js` and `content-search.js` are classic scripts in one isolated world. The minifier used the same top-level name in both. On Google both run, so the second script replaced a function the first one calls, and the scan stopped. `tests/e2e/scenarios.spec.ts` requires both built files to start with `(function(){`. Before the wrap, they did not.
+- The build wraps those two files. `content-bridge.js` and `content-shield.js` were already functions. The manifest and the checks are unchanged. Four visits to Google after the wrap had no page error. GitHub’s earlier hit was the same class when another script shared the world. Weights unchanged.
+- The store zip changes because those two files change. Two packs after the wrap are both `ab86f12a909e4b7b1d51b859d2b7eaeece04eb9474e6efaf92dc58fb77dd683c`. The earlier `cf1f1cf3…` was the same writer before the wrap.
+
+### Self-check
+
+- Real user, real attack: On Google the scan did not finish, so a phishing signal on that page would not be sent. The two scripts no longer share a name.
+- Five-minute bypass: Remove the wrap. The built-file test fails. Renaming one function by hand does not survive the next minify.
+- False alarm: A page that is not Google still runs one of the scripts. The wrap does not change what it detects.
+- Simpler or more complicated: One wrapper in the build. No second bundle, no manifest change.
+- AGENTS.md: Nothing is sent. No weight change. The sandbox log is still Chrome refusing a script. The manifest was not changed to hide it.
+- Would I defend it: Yes, as “the two scripts cannot replace each other’s functions.” Not as “Google was broken for another reason.”
+- Harmless on weird input: A build that does not emit either file still throws, as it did before.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The scan still reads the page. The name collision was our own second script, not the page.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None of the colliding names. They were ours.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? Google. Both scripts are meant to run there. The wrap lets them.
+- Richtig: Der Build ohne Hülle startet nicht mit `(function(){`. Mit Hülle besteht der Test. Die Erkennung ist unverändert.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil der Test die gebauten Dateien liest und nicht die Quelle.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Hülle weglassen. Der Test wird rot. Benannt am roten Zustand vor der Hülle, festgehalten am grünen Zustand danach.
+
+Urteil: BEHALTEN
+
 ## 2026-11-23 — Free release check, Pro screen still waiting
 
 - Hypothesis: `release:check` can treat this tree as a paid release, and the loopback string in `remoteConfig.ts` is only a default.

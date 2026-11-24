@@ -21,6 +21,9 @@ function chromeMv3(): Plugin {
             `${file} cannot use ES imports. Chrome injects it as a classic script.`,
           );
         }
+        if (file === "content.js" || file === "content-search.js") {
+          chunk.code = `(function(){\n${chunk.code}\n})();\n`;
+        }
       }
     },
     closeBundle() {

@@ -29,6 +29,8 @@ test("built extension is MV3-complete", () => {
   const contentJs = readFileSync(resolve(dist, "content.js"), "utf8");
   const bridgeJs = readFileSync(resolve(dist, "content-bridge.js"), "utf8");
   const searchJs = readFileSync(resolve(dist, "content-search.js"), "utf8");
+  expect(contentJs.startsWith("(function(){\n")).toBe(true);
+  expect(searchJs.startsWith("(function(){\n")).toBe(true);
   expect(contentJs).not.toMatch(/\bimport\b/);
   expect(contentJs).not.toMatch(/\bexport\b/);
   expect(bridgeJs).not.toMatch(/\bimport\b/);

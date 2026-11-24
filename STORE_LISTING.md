@@ -126,4 +126,4 @@ Do not use: “100% protection”, “unhackable”, “military-grade”, “AI
 
 ## Release notes
 
-SHA-256 of `fundament-store.zip`: `cf1f1cf3fdd1a42aefb488ac221d54933a1b5def4acd6d4f1c0328ea04e3a8f0`
+SHA-256 of `fundament-store.zip`: `ab86f12a909e4b7b1d51b859d2b7eaeece04eb9474e6efaf92dc58fb77dd683c`
