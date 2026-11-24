@@ -50,11 +50,11 @@ node scripts/feed-keygen.mjs
 ```
 
 1. Put the printed `VITE_LIVE_FEED_PUBKEY=…` into `.env` / the release build environment.
-2. GitHub → Settings → Secrets and variables → Actions → new secret `FEED_SIGNING_KEY` = contents of `.feed-signing-key` (gitignored; keep an offline backup).
+2. Put `FEED_SIGNING_KEY` on the `live-feed-signing` environment, not on the job that runs `npm ci`. The clicks are in `GO_LIVE.md`, “Live feed signing key”.
 3. GitHub → Settings → Pages → Source: "GitHub Actions".
 4. Set `VITE_LIVE_FEED_URL=https://<user>.github.io/<repo>/live-feed.json` and build the release.
 
-`.github/workflows/live-feed.yml` then runs every 6 hours: it downloads the sources, applies the same filter as `npm run feeds`, keeps only hosts that are not in the shipped `phishing-hosts.txt`, signs the result, verifies its own signature, and publishes it. If the difference grows beyond 100,000 hosts the workflow fails on purpose — ship a release instead.
+`.github/workflows/live-feed.yml` then runs every 6 hours. The build job downloads the sources, applies the same filter as `npm run feeds`, and keeps only hosts that are not in the shipped `phishing-hosts.txt`. A second job, with no `npm ci`, signs that file and checks its own signature. A third job publishes it. If the difference grows beyond 100,000 hosts the workflow fails on purpose — ship a release instead.
 
 If the private key leaks, anyone can push a list (still limited by the client-side filter). Generate a new pair, ship a release with the new public key, and replace the secret.
 

@@ -3,6 +3,7 @@ import { canonicalLivePayload, clientSafeHosts, parseLiveFeed, verifyLiveFeed } 
 import { buildDynamicRules } from "@network/dnr";
 import { DYNAMIC_RULE_ID_LIVE_START } from "@shared/constants";
 import { canonical } from "../../scripts/build-live-feed.mjs";
+import { canonical as signCanonical } from "../../scripts/sign-live-feed.mjs";
 import { keepHost } from "../../scripts/fetch-threat-feeds.mjs";
 
 const pair = generateKeyPairSync("ed25519");
@@ -27,6 +28,7 @@ async function check(raw: unknown, lastVersion = 0) {
 describe("live feed trust", () => {
   it("uses the same canonical payload in the publisher script and the extension", () => {
     expect(canonical(1, "x", ["a.example", "b.example"])).toBe(canonicalLivePayload(1, "x", ["a.example", "b.example"]));
+    expect(signCanonical(1, "x", ["a.example", "b.example"])).toBe(canonical(1, "x", ["a.example", "b.example"]));
   });
 
   it("accepts a correctly signed, fresh, newer list", async () => {

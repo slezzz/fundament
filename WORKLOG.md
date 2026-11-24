@@ -2,6 +2,35 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-23 — Pin the workflows and drop the high advisories
+
+- Hypothesis: the signing key is safe if it stays a repository secret next to `npm ci`, and the current dev tree is fine because the runtime audit is already 0.
+- Red first: `tests/security/workflows.test.ts` failed on the old files. Ten `uses:` lines had a tag instead of a 40-character commit. `ci.yml` had no `permissions` block. The live-feed job that ran `npm ci` also read `secrets.FEED_SIGNING_KEY`.
+- Actions, resolved from the tag to the commit on 2026-11-23: checkout `3d3c42e5aac5ba805825da76410c181273ba90b1` (v7.0.1), setup-node `949feb2413d6458794dcd2491c4babbbce0c15c1` (v7.1.0), upload-artifact `cf430e030ddbb5b0abf93d22962f4752f3646cd9` (v7.0.2), download-artifact `37930b1c2abaa49bbe596cd826c3c89aef350131` (v7.0.0), configure-pages `45bfe0192ca1faeb007ade9deae92b16b8254a0d` (v6.0.0), upload-pages-artifact `fc324d3547104276b827a68afc52ff2a11cc49c9` (v5.0.0), deploy-pages `368f82528645a54fb793d4d04e342629a3f51346` (v5.0.1). `ci.yml` now defaults to `contents: read`. The deploy job restates that and adds `pages: write` and `id-token: write`, because a job’s permissions replace the workflow default.
+- The live feed is three jobs. `build` runs `npm ci` and writes an unsigned artifact. `sign` checks out only `scripts/sign-live-feed.mjs`, downloads that artifact, and signs it. The script imports `node:crypto`, `node:fs`, and `node:path`. It reads `FEED_SIGNING_KEY` and does not open `.feed-signing-key`. `deploy` publishes the signed file. The environment is `live-feed-signing`. `GO_LIVE.md` lists the GitHub clicks: selected branch `main`, no required reviewers, delete a repository secret of the same name, do not put the key on `github-pages`. Those clicks are not done from here.
+- Audit before the bump, this machine: runtime 0. Dev dependencies 16: 10 moderate, 4 high, 2 critical. The critical pair was `tinypool` and `vitest`. The high set included `vite` through 6.4.3. After Vite 8.3.8, Vitest 5.1.1, and `@vitejs/plugin-react` 6.3.0, `npm audit fix` reported 0. Typecheck then failed: `tests/unit/content-isolation.test.ts` imports `esbuild`, and Vite 8 no longer installs it. `esbuild` 0.28.2 is now a direct dev dependency. Audit after that: 0 info, low, moderate, high, and critical.
+- `vitest.config.ts` and `vite.config.ts` use `import.meta.dirname`. A `.ts` suffix on the connectable import makes `tsc` fail unless `allowImportingTsExtensions` is on for the whole project, so that import stays without a suffix. Vite 8 still warns that the native config loader will reject it later.
+- Port 5174 was empty before the typecheck that failed on `esbuild`. It was not checked again before the suite that followed. Definition of done after the fix: typecheck, lint with the `autonomous-world` ignore, 299 unit tests, 43 Edge end-to-end tests. The three new tests are the workflow pins, the permissions block, and the secret-next-to-`npm ci` rule, plus the signer’s `node:` imports. Corpora were not edited. Weights unchanged.
+
+### Self-check
+
+- Real user, real attack: A compromised Action tag or a dependency in the signing job could sign a list the user then trusts. The job that installs packages no longer sees the key.
+- Five-minute bypass: Point `uses:` at a tag, drop the permissions block, or pass `secrets.` into the `npm ci` job. The workflow test fails on each. Importing an npm package from the signer fails the same file.
+- False alarm: A job that needs `pages: write` must restate `contents: read`. That is written on the deploy job, not left to a merge that GitHub does not do.
+- Simpler or more complicated: Three jobs instead of one. The signer is one file and the standard library.
+- AGENTS.md: The signature, the freshness window, the expiry, and the rule that a popular, official, or public-suffix host is never blocked are unchanged. Nothing new leaves the browser. The private key stays out of the repo.
+- Would I defend it: Yes, as “the key is not in the install job, and every action is a commit.” Not as “the environment already exists on GitHub.” The clicks are still the user’s.
+- Harmless on weird input: An unsigned file with the wrong format throws before a signature is written. A missing key throws. The signer checks the signature with the public key it derives.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The list is still the file the build job wrote. The signer does not fetch feeds. A package install in that job cannot read the key, because the key is not in the job.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None. `node:crypto` signs bytes the build already produced.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None. No detection change.
+- Richtig: Der Workflow-Test war rot (Tags, kein `permissions`, Secret neben `npm ci`) und ist grün. Audit davor 2 kritisch und 4 hoch, danach 0. 299 Unit-Tests und 43 Edge-Tests grün. Gewichte unverändert.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil der Signierjob das Artefakt und ein Skript ohne Abhängigkeiten bekommt und der Schlüssel ein Environment-Secret ist, dessen Klicks in `GO_LIVE.md` stehen.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Ein `uses:` ohne Commit, ein Workflow ohne `permissions`, ein Secret in einem Job mit `npm ci`, oder ein Import, der nicht `node:` ist. Getestet. Die Klicks in der GitHub-Oberfläche sind benannt und nicht ausgeführt.
+
+Urteil: BEHALTEN
+
+
 ## 2026-11-23 — Measure the host the extension actually opened
 
 - Hypothesis: the 55 “no tab record” misses are pages that never got an analysis, so a 2 000-page run cannot stay under 5 % failures.

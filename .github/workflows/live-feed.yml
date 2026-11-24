@@ -1,11 +1,12 @@
 name: live-feed
 
-# Builds the signed phishing list update (hosts active now but not in the shipped release
-# list) and publishes it to GitHub Pages. The extension fetches it every 6 hours and only
-# accepts it if the Ed25519 signature matches the public key compiled into the build.
+# Builds the unsigned phishing-list update, signs it in a separate job that does
+# not run npm ci, and publishes the signed files to GitHub Pages. The extension
+# fetches the list every 6 hours and accepts it only when the Ed25519 signature
+# matches the public key compiled into the build.
 #
-# Setup (once): node scripts/feed-keygen.mjs, add FEED_SIGNING_KEY as a repository secret,
-# enable Pages with "GitHub Actions" as source. See FILTERS.md.
+# The private key is an environment secret on `live-feed-signing`, not a secret
+# of the job that installs dependencies. Setup: GO_LIVE.md, "Live feed signing key".
 
 on:
   schedule:
@@ -14,33 +15,69 @@ on:
 
 permissions:
   contents: read
-  pages: write
-  id-token: write
 
 concurrency:
   group: live-feed
   cancel-in-progress: true
 
 jobs:
-  publish:
+  build:
     runs-on: ubuntu-24.04
-    environment:
-      name: github-pages
-      url: ${{ steps.deploy.outputs.page_url }}
     steps:
-      - uses: actions/checkout@v7
-      - uses: actions/setup-node@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: "24"
           cache: npm
       - run: npm ci
-      - name: Build and sign
+      - run: node scripts/build-live-feed.mjs live-feed --unsigned
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: live-feed-unsigned
+          path: live-feed
+          retention-days: 1
+
+  sign:
+    needs: build
+    runs-on: ubuntu-24.04
+    environment: live-feed-signing
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          sparse-checkout: scripts/sign-live-feed.mjs
+          sparse-checkout-cone-mode: false
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: live-feed-unsigned
+          path: live-feed
+      - name: Sign the unsigned feed
         env:
           FEED_SIGNING_KEY: ${{ secrets.FEED_SIGNING_KEY }}
-        run: node scripts/build-live-feed.mjs live-feed
-      - uses: actions/configure-pages@v6
-      - uses: actions/upload-pages-artifact@v5
+        run: node scripts/sign-live-feed.mjs live-feed/live-feed.json
+      - uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
+        with:
+          name: live-feed-signed
+          path: live-feed
+          retention-days: 1
+
+  deploy:
+    needs: sign
+    runs-on: ubuntu-24.04
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    steps:
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7.0.0
+        with:
+          name: live-feed-signed
+          path: live-feed
+      - uses: actions/configure-pages@45bfe0192ca1faeb007ade9deae92b16b8254a0d # v6.0.0
+      - uses: actions/upload-pages-artifact@fc324d3547104276b827a68afc52ff2a11cc49c9 # v5.0.0
         with:
           path: live-feed
       - id: deploy
-        uses: actions/deploy-pages@v5
+        uses: actions/deploy-pages@368f82528645a54fb793d4d04e342629a3f51346 # v5.0.1

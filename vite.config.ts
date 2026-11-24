@@ -24,10 +24,10 @@ function chromeMv3(): Plugin {
       }
     },
     closeBundle() {
-      const dist = resolve(__dirname, "dist");
+      const dist = resolve(import.meta.dirname, "dist");
       mkdirSync(dist, { recursive: true });
       const manifest = JSON.parse(
-        readFileSync(resolve(__dirname, "src/manifest.json"), "utf8"),
+        readFileSync(resolve(import.meta.dirname, "src/manifest.json"), "utf8"),
       ) as { externally_connectable?: { matches: string[] } };
       const storePack = process.env.VITE_STORE_PACK === "1";
       const pay = process.env.VITE_PAY_ORIGIN?.trim() ?? "";
@@ -42,7 +42,7 @@ function chromeMv3(): Plugin {
         manifest.externally_connectable.matches = next;
       }
       writeFileSync(resolve(dist, "manifest.json"), JSON.stringify(manifest, null, 2));
-      cpSync(resolve(__dirname, "public"), dist, { recursive: true });
+      cpSync(resolve(import.meta.dirname, "public"), dist, { recursive: true });
     },
   };
 }
@@ -52,12 +52,12 @@ export default defineConfig({
   plugins: [react(), chromeMv3()],
   resolve: {
     alias: {
-      "@engine": resolve(__dirname, "src/engine"),
-      "@privacy": resolve(__dirname, "src/privacy"),
-      "@shared": resolve(__dirname, "src/shared"),
-      "@storage": resolve(__dirname, "src/storage"),
-      "@network": resolve(__dirname, "src/network"),
-      "@billing": resolve(__dirname, "src/billing"),
+      "@engine": resolve(import.meta.dirname, "src/engine"),
+      "@privacy": resolve(import.meta.dirname, "src/privacy"),
+      "@shared": resolve(import.meta.dirname, "src/shared"),
+      "@storage": resolve(import.meta.dirname, "src/storage"),
+      "@network": resolve(import.meta.dirname, "src/network"),
+      "@billing": resolve(import.meta.dirname, "src/billing"),
     },
   },
   build: {
@@ -67,15 +67,15 @@ export default defineConfig({
     modulePreload: false,
     rollupOptions: {
       input: {
-        popup: resolve(__dirname, "popup.html"),
-        warning: resolve(__dirname, "warning.html"),
-        onboarding: resolve(__dirname, "onboarding.html"),
-        options: resolve(__dirname, "options.html"),
-        background: resolve(__dirname, "src/background/index.ts"),
-        content: resolve(__dirname, "src/content/pageChecks.ts"),
-        contentBridge: resolve(__dirname, "src/content/walletBridge.ts"),
-        contentSearch: resolve(__dirname, "src/content/searchMarks.ts"),
-        contentShield: resolve(__dirname, "src/content/fingerprintShield.ts"),
+        popup: resolve(import.meta.dirname, "popup.html"),
+        warning: resolve(import.meta.dirname, "warning.html"),
+        onboarding: resolve(import.meta.dirname, "onboarding.html"),
+        options: resolve(import.meta.dirname, "options.html"),
+        background: resolve(import.meta.dirname, "src/background/index.ts"),
+        content: resolve(import.meta.dirname, "src/content/pageChecks.ts"),
+        contentBridge: resolve(import.meta.dirname, "src/content/walletBridge.ts"),
+        contentSearch: resolve(import.meta.dirname, "src/content/searchMarks.ts"),
+        contentShield: resolve(import.meta.dirname, "src/content/fingerprintShield.ts"),
       },
       output: {
         entryFileNames: (chunk) => {

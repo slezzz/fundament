@@ -3,8 +3,10 @@
  * list shipped with the current release (filters/feeds/phishing-hosts.txt).
  *
  *   FEED_SIGNING_KEY=<pkcs8 base64> node scripts/build-live-feed.mjs [outDir]
+ *   node scripts/build-live-feed.mjs live-feed --unsigned
  *
- * Runs in .github/workflows/live-feed.yml every 6 hours and publishes to GitHub Pages.
+ * The workflow builds with --unsigned in the job that runs npm ci, then signs in a
+ * separate job with scripts/sign-live-feed.mjs. A local run without --unsigned still signs.
  * The same safety filter as the shipped list applies (platforms, shorteners, popular
  * domains, official brand hosts are never listed); the extension re-checks on its side.
  */
@@ -36,8 +38,10 @@ function loadKey() {
 }
 
 async function main() {
-  const outDir = resolve(root, process.argv[2] ?? "live-feed");
-  const key = loadKey();
+  const unsigned = process.argv.includes("--unsigned");
+  const outArg = process.argv.slice(2).find((arg) => arg !== "--unsigned");
+  const outDir = resolve(root, outArg ?? "live-feed");
+  const key = unsigned ? null : loadKey();
   const shipped = new Set(
     readFileSync(resolve(root, "filters/feeds/phishing-hosts.txt"), "utf8")
       .split(/\r?\n/)
@@ -51,13 +55,16 @@ async function main() {
   const now = new Date();
   const version = versionFromDate(now);
   const generated = now.toISOString();
-  const payload = Buffer.from(canonical(version, generated, fresh), "utf8");
-  const sig = sign(null, payload, key).toString("base64");
-  // Self-check with the derived public key before publishing anything.
-  if (!verify(null, payload, createPublicKey(key), Buffer.from(sig, "base64"))) throw new Error("self-verification failed");
+  let sig = "";
+  if (key) {
+    const payload = Buffer.from(canonical(version, generated, fresh), "utf8");
+    sig = sign(null, payload, key).toString("base64");
+    if (!verify(null, payload, createPublicKey(key), Buffer.from(sig, "base64"))) throw new Error("self-verification failed");
+  }
 
   mkdirSync(outDir, { recursive: true });
-  writeFileSync(resolve(outDir, "live-feed.json"), JSON.stringify({ format: FORMAT, version, generated, hosts: fresh, sig }));
+  const body = { format: FORMAT, version, generated, hosts: fresh };
+  writeFileSync(resolve(outDir, "live-feed.json"), JSON.stringify(sig ? { ...body, sig } : body));
   writeFileSync(
     resolve(outDir, "index.html"),
     `<!doctype html><meta charset="utf-8"><title>Fundament live feed</title><p>Signed phishing list update for the Fundament browser extension. Version ${version}, ${fresh.length} hosts, generated ${generated}. Source: Phishing.Database (MIT).</p>\n`,

@@ -90,6 +90,20 @@ Paste privacy / permission justifications from those files. Single purpose: safe
 - Refund the test charge; within ~6 hours (or restart Chrome) Pro should drop.
 - Ship filter-pack URL + pin only after the JSON is on HTTPS with a known SHA-256.
 
+## Live feed signing key
+
+The private key signs the phishing list that GitHub Pages serves. It must not sit in the job that runs `npm ci`. The workflow reads it from the environment `live-feed-signing`.
+
+1. GitHub → the repository → Settings → Environments → New environment.
+2. Name it `live-feed-signing`. The workflow file uses that name.
+3. Open the environment → Deployment branches and tags → Selected branches → add `main`. A schedule on any other branch then cannot use the key.
+4. Do not add required reviewers. The list is built every 6 hours and nobody is there to click Approve. A reviewer rule would stop the updates.
+5. Environment secrets → Add secret. Name: `FEED_SIGNING_KEY`. Value: the one line in `.feed-signing-key` (gitignored; keep an offline backup).
+6. If an older repository secret with the same name exists, delete it. A repository secret would still be available to the install job.
+7. Settings → Pages → Build and deployment → Source: GitHub Actions. The deploy job uses the separate `github-pages` environment that GitHub creates for Pages. Do not put `FEED_SIGNING_KEY` on that environment.
+
+`node scripts/feed-keygen.mjs` prints the matching public key. That line belongs in `.env` as `VITE_LIVE_FEED_PUBKEY` and in the release build. The private key does not.
+
 ## Do not
 
 - Commit `.env`, webhook secrets, or the private license key.
