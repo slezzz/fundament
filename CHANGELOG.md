@@ -10,6 +10,11 @@
 - Page signals on whole public pages, local only, not in CI. 629 pages opened in Edge with the built extension (22 corpus URLs, 107 install and support pages, 500 homepages). 536 measured, 93 did not load and are not counted as clean, 1 warning. The warning is `clickfix-unseen` on `berkeley-humanoid-lite.gitbook.io` after a copy click. ClickFix context, tech-support, prompt injection, browser-in-the-browser, and keyboard lock were 0. The README does not call this a measured false-alarm rate. Weights unchanged.
 - Install and support pages reopened after the shell-form change, docs group only, local, not in CI. 107 pages, 105 measured, 2 did not load and are not counted as clean, 23 copy clicks, 0 warnings. The earlier GitBook host stayed up. The 500 homepages were not reopened. Weights unchanged.
 
+### Page cost
+- One service-worker restart, and one scan of the bridge and the content script, stay under three times a fixed calibration loop. The page has 3 000 elements and 20 frames. `tests/e2e/page-cost.spec.ts` builds with `VITE_FUNDAMENT_MARKS=1`. The store build does not. Port 5174 was empty. Weights unchanged.
+- Those marks were visible to the page: `performance.getEntriesByType("measure")` returned `fundament-bridge` and `fundament-content`. The store build cuts them out before the bundle, and `release:check` fails if the zip still contains either name. The clock sits in `try` and the report runs after `collect()` returns, so a missing `performance` object cannot skip the scan. `tests/e2e/live.spec.ts`.
+- The same local page opened without the extension has no script error the extension adds. Two console differences are named: HTTPS upgrade asks for the favicon over HTTPS on an HTTP-only server, and Chrome logs a sandboxed `about:blank` frame that already disallows scripts. `tests/security/page-cost.test.ts`.
+
 ### Content scripts
 - `content.js` and `content-search.js` are wrapped in a function. They share one isolated world, and the minifier had reused one top-level name. On Google both run, so the second script replaced a function the first one calls (`s is not a function`) and the scan stopped. The manifest and the checks are unchanged. Weights unchanged.
 

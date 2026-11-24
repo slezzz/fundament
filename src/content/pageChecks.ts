@@ -11,7 +11,17 @@
  * leaves the tab; the worker only receives signal names plus, on pages that ask for
  * credentials, the page title / site name / logo alt text (to compare the claimed
  * brand with the real domain). Never reads typed values, cookie values, or the clipboard.
+ *
+ * A measurement build records one duration. The clock sits in try and the
+ * report runs after collect() returns, so a missing performance object cannot
+ * skip the scan. The store build constant-folds the flag off.
  */
+
+declare const __FUNDAMENT_MARKS__: boolean | undefined;
+
+function marksOn(): boolean {
+  return typeof __FUNDAMENT_MARKS__ !== "undefined" && __FUNDAMENT_MARKS__ === true;
+}
 
 const TOP = window.top === window;
 
@@ -296,7 +306,16 @@ function brandHints(): string[] {
   return hints.map((h) => h.slice(0, 160)).slice(0, 12);
 }
 
+let scanStarted = 0;
+
 function collect(): string[] {
+  try {
+    /* mark-start */
+    if (marksOn()) scanStarted = performance.now();
+    /* mark-end */
+  } catch {
+    scanStarted = 0;
+  }
   const kinds: string[] = [];
   if (location.protocol === "http:" && document.querySelector("input[type='password']")) kinds.push("password-http");
   collectForms(kinds);
@@ -420,9 +439,23 @@ void chrome.storage.local.get("settings").then((stored) => {
     return out;
   };
 
+  let contentMeasured = false;
   const run = (): void => {
     if (!pageChecks && !overlay) return;
     const kinds = filter(collect());
+    try {
+      /* mark-start */
+      if (marksOn() && !contentMeasured) {
+        contentMeasured = true;
+        performance.measure("fundament-content", {
+          start: scanStarted,
+          duration: performance.now() - scanStarted,
+        });
+      }
+      /* mark-end */
+    } catch {
+      /* a missing clock must not skip the report */
+    }
     if (kinds.includes("tech-support-scam")) exitScamFullscreen();
     send(kinds);
   };

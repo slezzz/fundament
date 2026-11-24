@@ -20,7 +20,12 @@
  * Pings go to the isolated content script via window.postMessage. A page can forge a
  * ping (which can only *raise* a warning) but cannot switch any protection off.
  */
+declare const __FUNDAMENT_MARKS__: boolean | undefined;
+
 (function () {
+  function marksOn(): boolean {
+    return typeof __FUNDAMENT_MARKS__ !== "undefined" && __FUNDAMENT_MARKS__ === true;
+  }
   /* page-natives */
   // Captured before page scripts run. Later calls go through these references only.
   // RegExp.prototype.test and String.prototype.replace look up exec / Symbol.replace,
@@ -68,6 +73,7 @@
     error: Error,
     deref: WeakRef.prototype.deref,
     now: pick(() => Performance.prototype.now),
+    measure: pick(() => Performance.prototype.measure),
     preventDefault: pick(() => Event.prototype.preventDefault),
     isTrusted: pick(() => Object.getOwnPropertyDescriptor(Event.prototype, "isTrusted")?.get),
     eventTarget: pick(() => Object.getOwnPropertyDescriptor(Event.prototype, "target")?.get),
@@ -134,6 +140,14 @@
   const nativeConfirm = native.confirm ? apply(Function.prototype.bind, native.confirm, [window]) : () => false;
   const post = native.postMessage ? apply(Function.prototype.bind, native.postMessage, [window]) : () => undefined;
   /* end-page-natives */
+  let bridgeStarted = 0;
+  try {
+    /* mark-start */
+    if (marksOn() && native.now) bridgeStarted = apply(native.now, performance, []);
+    /* mark-end */
+  } catch {
+    bridgeStarted = 0;
+  }
 
   function matches(re: RegExp, value: string): boolean {
     try {
@@ -1320,5 +1334,16 @@
     }
   } catch {
     /* ignore */
+  }
+
+  try {
+    /* mark-start */
+    if (marksOn() && native.now && native.measure) {
+      const bridgeElapsed = apply(native.now, performance, []) - bridgeStarted;
+      apply(native.measure, performance, ["fundament-bridge", { start: bridgeStarted, duration: bridgeElapsed }]);
+    }
+    /* mark-end */
+  } catch {
+    /* a missing clock must not undo the hooks above */
   }
 })();

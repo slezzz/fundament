@@ -113,6 +113,15 @@ test("an ordinary page loads without an interstitial", async () => {
   await page.close();
 });
 
+test("the page timeline does not show that Fundament is installed", async () => {
+  const page = await freshPage();
+  await page.goto(`http://weather-news.example:${port}/clean`);
+  await page.waitForTimeout(1500);
+  const names = await page.evaluate(() => performance.getEntriesByType("measure").map((entry) => entry.name));
+  expect(names.filter((name) => /fundament/i.test(name))).toEqual([]);
+  await page.close();
+});
+
 test("a brand-lookalike sign-in URL is stopped before the page is used", async () => {
   const page = await freshPage();
   await page.goto(`http://paypal-login.secure-check.xyz:${port}/signin`).catch(() => undefined);

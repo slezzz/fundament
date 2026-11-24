@@ -2,6 +2,32 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-24 — The page must not see the clock
+
+- Hypothesis: a duration mark is private because the content script is isolated, and a missing `performance` object only skips the mark.
+- Red first: `tests/e2e/live.spec.ts` opened a clean page and read `performance.getEntriesByType("measure")`. The page saw `fundament-bridge` and `fundament-content`. Separately, `tests/unit/content-isolation.test.ts` threw `performance is not defined` because `performance.now()` ran before `collect()` and outside `try`. That test was not edited.
+- The names exist only when `VITE_FUNDAMENT_MARKS=1` and the pack is not a store pack. Otherwise the build deletes the marked blocks before bundling, and the bundle step throws if either name remains. `release:check` and the zip test fail on those strings. The page-cost test builds `dist-marks` with the flag. The store build does not.
+- The start of the content clock is the first line of `collect()`, inside `try`. The mark is written after `collect()` returns, also inside `try`. The bridge clock is inside `try` before the hooks and the mark is written after them, also inside `try`. A throw cannot skip the scan or the hooks.
+- Kann die Seite durch diese Änderung erkennen, dass Fundament installiert ist? Im Store-Build nein. Die beiden Namen sind nicht im Skript, und die Zeitleiste der Seite hat keinen Fundament-Eintrag. Der Test-Build schreibt sie absichtlich, und der wird nicht gepackt. `window.__fundamentBridge` ist älter und nicht diese Änderung. Two packs of this tree are both `a7dd1641e9c04ba6c201a8d4c78bb431082e3d01659bf1cdfc0c414221451b8f`. The earlier `ab86f12a…` was the wrap before the marks were cut out of the store build.
+
+### Self-check
+
+- Real user, real attack: A page that lists its performance marks learns the extension is installed and can change its behavior. The store package no longer writes those marks.
+- Five-minute bypass: Ship the measurement build, or leave the name in a source map that the zip still contains. The zip check inflates every entry and fails on either name. Pack skips source maps.
+- False alarm: `fundament-serp` and `fundament-cosmetic` are the search badge and the cosmetic style. They are not measure names. The check does not flag them.
+- Simpler or more complicated: One flag, and the store build deletes the blocks. No second runtime check the page could turn on.
+- AGENTS.md: Nothing is sent. No weight change. The measurement cannot skip `collect()` or the bridge hooks.
+- Would I defend it: Yes, as “the store zip has neither name, and the page timeline test is green.” Not as “no page can ever tell an extension is installed.” The older bridge guard is still on `window`.
+- Harmless on weird input: A browser without `performance` still reports the scan. The isolation test runs in a VM with no `performance` and still finishes.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The scan does not read the clock. The flag is the build, not the page.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? `performance.measure` belongs to the page. The store build does not call it.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None. No detection change.
+- Richtig: Der Zeitleisten-Test war rot (`fundament-bridge`, `fundament-content`) und ist grün. Der Isolations-Test ist grün, ohne dass er geändert wurde. Der Store-Build enthält die beiden Namen nicht. Der Mess-Build enthält sie.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die Seite die Einträge selbst liest und das Zip die Namen nicht enthält.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Namen wieder ins Paket legen. Getestet, an einem kleinen Zip und am Build, der abbricht, wenn sie übrig bleiben.
+
+Urteil: BEHALTEN
+
 ## 2026-11-24 — Two content scripts, one world
 
 - Hypothesis: the Google page error `s is not a function` is a page bug.
@@ -26,6 +52,34 @@ Newest first. One entry per pass.
 - Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Hülle weglassen. Der Test wird rot. Benannt am roten Zustand vor der Hülle, festgehalten am grünen Zustand danach.
 
 Urteil: BEHALTEN
+
+## 2026-11-23 — What one page costs
+
+- Hypothesis: the service worker, the bridge, and the content script on a large page stay in the same band as a fixed loop, and the page does not gain a script error from the extension.
+- Red first: the budget helper did not exist. After it did, a run with the engine’s 38 500 000 steps put the service-worker restart at about 17 times that loop, and the content scan at about 4.5 times a 2 000 000-step loop. The multiple stayed 3. The loops were lengthened until they sat next to the work, the same way the engine loop was sized. Service worker: 620 000 000 steps. A frame: 4 500 000 steps.
+- Quiet Edge, port 5174 empty, before that sizing. Five restarts: 787, 755, 787, 647, 719 ms (median 755). The 38 500 000-step loop in the worker was 46 ms. Bridge install across 21 frames, max 1.6 ms. Content scan, max 4.6 ms on the top frame, about 0 ms in the small frames. The following locked run, same machine, port 5174 empty, passed in 10.4 s. It does not print its own samples. Ubuntu was not measured.
+- The heavy page with the extension and without it. No `pageerror` on either side. Console, extension only: `Failed to load resource: net::ERR_CONNECTION_CLOSED`. Playwright recorded no failed document request. HTTPS upgrade rewrites the HTTP favicon to HTTPS, and this server is HTTP only. A sandboxed `about:blank` frame logs that its scripts are blocked when a content script is offered to it. That frame already disallows scripts. Those two are reasons, not breakage. A real `pageerror` or any other console line only on the extension side fails the test.
+- Google’s homepage did throw, in the extension’s own content script: `s is not a function` at the scan. `content.js` and `content-search.js` are classic scripts in one isolated world, and the minifier used the same top-level name in both. On Google both run, so the second script replaced a function the first one calls. The build now wraps those two files in a function. Four visits after that: no page error. GitHub’s earlier hit was the same class of collision when another script shared the world. The manifest and the checks are unchanged. Weights unchanged.
+- The 2 000-page comparison is a separate run, started after this measurement, with nothing else on port 5174. It is not finished in this entry.
+
+### Self-check
+
+- Real user, real attack: A page of 3 000 nodes and 20 frames is where a content script can spend time. The bound fails if that scan grows past three times the loop.
+- Five-minute bypass: Not a detector. Stretching the loop until the test is quiet would hide a slowdown. The step counts are fixed from this quiet run. The multiple did not move.
+- False alarm: A faster CPU shrinks the loop and can make a process-bound service-worker restart look worse. That was not measured on another machine.
+- Simpler or more complicated: One loop, three times, two step counts. The marks are one measure per frame.
+- AGENTS.md: Nothing is sent. No weight change. The sandbox log is Chrome refusing the script. The manifest was not changed to hide it.
+- Would I defend it: Yes, as “on this quiet machine the scan and the restart stayed under three times a loop that sits next to them.” Not as “2 000 sites were compared.”
+- Harmless on weird input: A zero calibration fails the budget. A missing frame fails the count of 21.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The clock is the browser’s. The page can replace `performance.now` only after the bridge has captured it.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? `performance.measure` in the page world is the page’s, called through the captured reference. The isolated scan uses the extension’s own clock. Both names showed up in the page’s own timeline. The entry above this one removes them from the store build.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None. No detection change. A sandboxed frame that disallows scripts is left disallowed.
+- Richtig: Port 5174 leer. 21 Frames. Neustart-Median 755 ms bei 46 ms für die kurze Schleife, danach 620 000 000 Schritte. Inhalt max 4,6 ms. Der festgeschriebene Lauf ist grün. Kein `pageerror`.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die beiden Konsolenzeilen benannt sind und ein anderer Konsolenfehler den Test rot macht.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Schleife verlängern, bis ein langsamer Scan passt. Die Schrittzahl steht fest. Ein fehlender Frame wäre ein stilles Bestehen. Getestet: der Lauf verlangt 21 Brücken und 21 Scans.
+
+Urteil: BEHALTEN
+
 
 ## 2026-11-23 — Free release check, Pro screen still waiting
 

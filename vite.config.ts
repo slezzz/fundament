@@ -5,10 +5,22 @@ import { resolve } from "node:path";
 import { storeConnectableMatches } from "./src/billing/connectable";
 
 function chromeMv3(): Plugin {
+  let outDir = resolve(import.meta.dirname, "dist");
   return {
     name: "fundament-mv3",
+    configResolved(config) {
+      outDir = resolve(config.root, config.build.outDir);
+    },
     transformIndexHtml(html) {
       return html.replace(/ crossorigin/g, "");
+    },
+    load(id) {
+      const allowMarks = process.env.VITE_STORE_PACK !== "1" && process.env.VITE_FUNDAMENT_MARKS === "1";
+      if (allowMarks) return null;
+      const file = id.split("?")[0]?.replace(/\\/g, "/") ?? "";
+      if (!file.endsWith("/src/content/pageChecks.ts") && !file.endsWith("/src/content/walletBridge.ts")) return null;
+      const code = readFileSync(file, "utf8").replace(/\/\* mark-start \*\/[\s\S]*?\/\* mark-end \*\//g, "");
+      return code;
     },
     generateBundle(_options, bundle) {
       for (const file of ["content.js", "content-bridge.js", "content-search.js", "content-shield.js"]) {
@@ -25,9 +37,18 @@ function chromeMv3(): Plugin {
           chunk.code = `(function(){\n${chunk.code}\n})();\n`;
         }
       }
+      const allowMarks = process.env.VITE_STORE_PACK !== "1" && process.env.VITE_FUNDAMENT_MARKS === "1";
+      if (!allowMarks) {
+        for (const file of ["content.js", "content-bridge.js"]) {
+          const chunk = bundle[file];
+          if (chunk && chunk.type === "chunk" && /fundament-bridge|fundament-content/.test(chunk.code)) {
+            throw new Error(`${file} still names a page-timeline mark. The store build must not tell the page that Fundament is installed.`);
+          }
+        }
+      }
     },
     closeBundle() {
-      const dist = resolve(import.meta.dirname, "dist");
+      const dist = outDir;
       mkdirSync(dist, { recursive: true });
       const manifest = JSON.parse(
         readFileSync(resolve(import.meta.dirname, "src/manifest.json"), "utf8"),
@@ -51,18 +72,23 @@ function chromeMv3(): Plugin {
 }
 
 const storePack = process.env.VITE_STORE_PACK === "1";
+/** Page timeline marks exist only in an explicit measurement build. A store pack never gets them. */
+const marks = !storePack && process.env.VITE_FUNDAMENT_MARKS === "1";
 
 export default defineConfig({
   base: "./",
-  define: storePack
-    ? {
-        "import.meta.env.VITE_STORE_PACK": JSON.stringify("1"),
-        "import.meta.env.VITE_REPUTATION_URL": JSON.stringify(""),
-        "import.meta.env.VITE_PAY_ORIGIN": JSON.stringify(""),
-      }
-    : {
-        "import.meta.env.VITE_STORE_PACK": JSON.stringify(""),
-      },
+  define: {
+    __FUNDAMENT_MARKS__: marks ? "true" : "false",
+    ...(storePack
+      ? {
+          "import.meta.env.VITE_STORE_PACK": JSON.stringify("1"),
+          "import.meta.env.VITE_REPUTATION_URL": JSON.stringify(""),
+          "import.meta.env.VITE_PAY_ORIGIN": JSON.stringify(""),
+        }
+      : {
+          "import.meta.env.VITE_STORE_PACK": JSON.stringify(""),
+        }),
+  },
   plugins: [react(), chromeMv3()],
   resolve: {
     alias: {
