@@ -27,6 +27,16 @@ Detection stays frozen through 1.2. These are not built. The exception would be 
 - **EIP-7702.** An `authorizationList` is a new transaction field. It does not hide the `approve` or `setApprovalForAll` selectors the bridge already confirms. Memo: `concepts/wallet-delegation.md`. Recommendation: no.
 - **Lookalike address.** Address poisoning imitates an earlier recipient, or the account as it appears in history. MetaMask compares the destination with addresses the account has used before. Comparing `from` with `to` on the same request misses that send and warns on a different, rare case. Memo: `concepts/wallet-delegation.md`. Recommendation: no.
 
+## Geparkt am 24.11.2026 — nicht in 1.2.0
+
+Die erste Store-Version ist kostenlos. Was darin kostenlos ist, bleibt kostenlos. Deshalb sind die geplanten Pro-Funktionen nicht im Start-Build, auch nicht umsonst: erweiterter Tracker-Katalog, Fingerprint/Social/Telemetrie, kosmetisches Ausblenden, Stufen „Locker“ und „Streng“, Listen über 10, Verlauf über 24 Stunden.
+
+Während Google prüft, nicht bauen: page-breakage (Lauf ohne gegen ohne Erweiterung, die 72 Seiten als Blocking oder Bridge), Ausfälle unter 5 %, Neustart des Service Workers (755 ms), und ob `window.__fundamentBridge` von der Seite verschwinden kann. Ein Fehler in der Bridge ist das erste Update.
+
+- **Server, noch nicht.** Tests und Lint für den Server, Begrenzung der Anfragen hinter einem Proxy, atomare Abrechnungsdaten, Header der Bezahlseiten, Stripe-Version pinnen, Zustimmung nach deutschem Recht, Testlizenz für die Prüfer. Der Server ist nicht der Start-Weg.
+- **Pro-Modell, beschlossen, nicht gebaut.** Einmalzahlung, 12 Monate, `exp = session.created + 365 Tage`. Dieselbe Session später gelesen behält dieses `exp` (ein Ablauf ab „jetzt“ wäre ein Lesezeichen-Bug). Wiederherstellung über die Erfolgsseite mit der `session_id`. Ohne Online-Reputation, ohne Filterpacks. `STRIPE_MODE=payment`. Der Preis kommt von `VITE_PRO_PRICE_LABEL`.
+- **Voraussetzungen beim Nutzer.** Gewerbe, Stripe-Konto, Rechtstexte, Server, im Store auf „Händler“ wechseln.
+
 ## Wartet auf Freigabe
 
 Code waits for a yes. The concept file comes first and does not wait.
@@ -41,7 +51,7 @@ Code waits for a yes. The concept file comes first and does not wait.
 - Downloading Chrome for Testing, to finish the `contentSettings` update check on Chrome. Not downloaded.
 - Any new permission, network request, data source, or change to the privacy promise.
 - Copy that compares Fundament with Google, Chrome, or another product.
-- **Pro-Ansicht und Lizenzfeld.** Entwurf, nicht gebaut. Heute zeigt das Popup `plan_comingSoon`, wenn kein bezahlter Checkout aktiv ist, und das Lizenzfeld, wenn der Entwicklungsschlüssel Lizenzen annimmt. Nach einem Ja sind beide nicht da, solange `paidCheckoutLive()` falsch ist. Nicht als „kommt bald“. Die kostenlose Prüfung ist schon da: `npm run release:check` (bezahlt: `--paid`).
+- **Pro-Ansicht.** Gebaut am 24.11.2026. Kein „kommt bald“. Das Lizenzfeld bleibt nur, solange der öffentliche Schlüssel Lizenzen annimmt. Reputation und fremde Filterpacks sind keine Pro-Zeilen.
 
 ## Later
 

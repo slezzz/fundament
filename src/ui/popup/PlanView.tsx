@@ -1,6 +1,7 @@
 import { useState } from "react";
 import type { Entitlements, PlanId } from "@shared/types";
 import { LICENSE_PUBLIC_KEY_SPKI_B64 } from "@billing/publicKey";
+import { PLAN_LINES } from "@billing/planLines";
 import { openCheckout, proPriceLabel } from "@billing/checkout";
 import { licenseActivationAllowed, paidCheckoutLive } from "@billing/launch";
 import { send } from "../lib/messaging";
@@ -36,15 +37,9 @@ export function PlanView({
       <p className="hint">{t("plan_hint")}</p>
       {price ? <p className="plan-price">{price}</p> : null}
       <ul className="plan-list">
-        <Row label={t("plan_local")} free />
-        <Row label={t("plan_ads")} free />
-        <Row label={t("plan_extra")} free />
-        <Row label={t("plan_hibp")} free />
-        <Row label={t("plan_extended")} pro />
-        <Row label={t("plan_fp")} pro />
-        <Row label={t("plan_cosmetic")} pro />
-        <Row label={t("plan_rep")} pro />
-        <Row label={t("plan_pack")} pro />
+        {PLAN_LINES.filter((line) => line.tier !== "scaled").map((line) => (
+          <Row key={line.text} label={t(line.text)} free={line.tier === "free"} pro={line.tier === "pro"} />
+        ))}
         <li>
           <span>{t("plan_lists")}</span>
           <strong>{entitlements.maxListEntries}</strong>
@@ -67,9 +62,7 @@ export function PlanView({
               </button>
               <p className="note">{t("plan_checkoutHow")}</p>
             </>
-          ) : (
-            <p className="note">{t("plan_comingSoon")}</p>
-          )}
+          ) : null}
           {licenseOn ? (
             <>
               <button className="text-btn" type="button" onClick={() => setShowLicense((v) => !v)}>

@@ -2,6 +2,7 @@ node_modules/
 dist/
 dist-e2e/
 dist-marks/
+dist-store/
 playwright-report/
 test-results/
 coverage/

@@ -335,6 +335,7 @@ function collect(): string[] {
   return [...new Set(kinds)];
 }
 
+/* store-omit-start */
 const COSMETIC = [
   "[id*='google_ads']",
   "[id*='GoogleAd']",
@@ -382,6 +383,7 @@ function injectCosmetic(): void {
   style.textContent = `${COSMETIC.join(",")}{display:none !important;}`;
   (document.head || document.documentElement).appendChild(style);
 }
+/* store-omit-end */
 
 function hardenBlankTargets(): void {
   for (const node of Array.from(document.querySelectorAll("a[target='_blank']")).slice(0, 300)) {
@@ -469,7 +471,9 @@ void chrome.storage.local.get("settings").then((stored) => {
   };
 
   whenReady(() => {
+    /* store-omit-start */
     if (settings?.cosmeticFiltering === true && TOP) injectCosmetic();
+    /* store-omit-end */
     hardenBlankTargets();
     const idle = window.requestIdleCallback;
     if (typeof idle === "function") idle(run, { timeout: 1200 });

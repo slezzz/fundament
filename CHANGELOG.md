@@ -1,6 +1,10 @@
 # Changelog
 
-## Unreleased
+## 1.2.0 — 2026-11-24
+
+The first Chrome Web Store package is the free product. Pro is not on its pages and cannot be switched on. `npm run build` can still show Pro. Weights unchanged.
+
+### Pro
 
 ### Measured, not guessed
 - A 40-page homepage probe on 2026-11-23, Edge, local, not CI. 35 measured, 5 not measured, 0 warnings. The measurer now follows a redirect to the host the extension actually recorded (`youtu.be` to `www.youtube.com`, `bit.ly` to `bitly.com`). The five misses are `twitter.com` and `x.com` (HTTP error), `w2rt6byl5nf1opmc-a.com` (name does not resolve), and `europa.eu` and `reddit.com` (browser closed). They are not counted as clean. This is not the 2 000-page run. Weights unchanged.
@@ -9,6 +13,10 @@
 - Detection floor on a deterministic sample of real phishing hosts analyzed as if unlisted (URL only ≥ 4 %, with login form ≥ 28 %).
 - Page signals on whole public pages, local only, not in CI. 629 pages opened in Edge with the built extension (22 corpus URLs, 107 install and support pages, 500 homepages). 536 measured, 93 did not load and are not counted as clean, 1 warning. The warning is `clickfix-unseen` on `berkeley-humanoid-lite.gitbook.io` after a copy click. ClickFix context, tech-support, prompt injection, browser-in-the-browser, and keyboard lock were 0. The README does not call this a measured false-alarm rate. Weights unchanged.
 - Install and support pages reopened after the shell-form change, docs group only, local, not in CI. 107 pages, 105 measured, 2 did not load and are not counted as clean, 23 copy clicks, 0 warnings. The earlier GitBook host stayed up. The 500 homepages were not reopened. Weights unchanged.
+
+### Free store
+- The store package has no plan badge, no upgrade, no license field, and no grayed Pro switch. `ACTIVATE_LICENSE` is refused. The manifest has no `externally_connectable`. Extended tracker rules, the fingerprint shield, and the `scripting` permission are not in the package. A list stops at 10 entries and the history at 24 hours, and those messages do not mention Pro. Online reputation and a user-typed filter address are not called.
+- Privacy pages for GitHub Pages are `pages/privacy/en.html` and `pages/privacy/de.html`. They have no scripts. `PRIVACY.md` names the live-feed GET, the Chrome version check, and the HIBP prefix.
 
 ### Page cost
 - One service-worker restart, and one scan of the bridge and the content script, stay under three times a fixed calibration loop. The page has 3 000 elements and 20 frames. `tests/e2e/page-cost.spec.ts` builds with `VITE_FUNDAMENT_MARKS=1`. The store build does not. Port 5174 was empty. Weights unchanged.
@@ -20,7 +28,7 @@
 
 ### Store package
 - `npm run pack` writes a zip with the ZIP epoch as the timestamp, sorted names, and fixed modes (files `0644`, directories `0755`). Two packs of one tree match. The SHA-256 is the release note in `STORE_LISTING.md`. `tests/security/pack-zip.test.ts`.
-- `npm run release:check` is the free path. It fails if the zip contains `127.0.0.1`, an `http://localhost` address, `fundament-bridge`, or `fundament-content`, if a pay origin or a reputation URL is set, or if the public key would accept a license. A store pack leaves the reputation URL empty, so the dev server and a local `.env` URL are not in the zip. The word localhost stays in the DNS-rebind check and in feed hosts such as `localhost.run`. `--paid` still requires a real license key and an HTTPS pay origin. The Pro screen and the license field stay as they are until a yes. Draft: `BACKLOG.md`, “Wartet auf Freigabe”.
+- `npm run release:check` is the free path. It fails if the zip contains `127.0.0.1`, an `http://localhost` address, `fundament-bridge`, `fundament-content`, `/pay/start`, `/v1/license/status`, `/v1/reputation`, or a user-pack download. The word localhost stays in the DNS-rebind check and in feed hosts such as `localhost.run`.
 
 ### Supply chain
 - GitHub Actions are pinned to a full commit, with the version in a comment. `ci.yml` sets `permissions: contents: read`. The live-feed signature is a separate job: it receives the unsigned file and runs `scripts/sign-live-feed.mjs` (`node:crypto` only, no `npm ci`). The private key is an environment secret. The clicks in GitHub are in `GO_LIVE.md`. A workflow test fails if an action has no commit, a workflow has no permissions block, or a secret sits in a job that runs `npm ci`.

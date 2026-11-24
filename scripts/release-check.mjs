@@ -37,6 +37,10 @@ export function freeZipProblems(bytes) {
   if (text.includes("127.0.0.1")) problems.push("127.0.0.1");
   if (/https?:\/\/localhost(?::|\/|"|'|$)/.test(text)) problems.push("localhost");
   if (text.includes("fundament-bridge") || text.includes("fundament-content")) problems.push("measure-mark");
+  if (text.includes("/v1/reputation")) problems.push("reputation");
+  if (text.includes("/v1/license/status")) problems.push("license-status");
+  if (text.includes("/pay/start")) problems.push("pay-start");
+  if (text.includes("Pack URL must be https")) problems.push("user-pack");
   return problems;
 }
 
@@ -56,6 +60,20 @@ function paidProblems(source) {
       if (origin.protocol !== "https:") problems.push("VITE_PAY_ORIGIN must be https for a store build.");
     } catch {
       problems.push("VITE_PAY_ORIGIN is not a valid URL.");
+    }
+  }
+  if (process.env.STRIPE_MODE !== "payment") {
+    problems.push("STRIPE_MODE must be payment. A subscription is not the store path.");
+  }
+  if (!(process.env.VITE_PRO_PRICE_LABEL ?? "").trim()) {
+    problems.push("VITE_PRO_PRICE_LABEL is empty. The price comes from you; this check will not invent one.");
+  }
+  const zipPath = resolve(root, "fundament-store.zip");
+  if (!existsSync(zipPath)) {
+    problems.push("fundament-store.zip is missing. Run npm run pack first.");
+  } else {
+    for (const hit of freeZipProblems(readFileSync(zipPath))) {
+      problems.push(`fundament-store.zip contains ${hit}.`);
     }
   }
   return problems;

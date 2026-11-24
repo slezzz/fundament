@@ -34,7 +34,7 @@ Use this with `PRIVACY.md`, `PERMISSIONS.md`, and `STORE_LISTING.md`.
 ## Package
 
 - [ ] `npm run pack` → `fundament-store.zip` (not `src/`, not a zip that still talks to 127.0.0.1)
-- [ ] Version in `src/manifest.json` matches the store listing (1.1.0)
+- [ ] Version in `src/manifest.json` matches the store listing (1.2.0)
 - [ ] `npm run feeds` run within the last week before packing (phishing list freshness), result committed
 - [ ] Privacy policy URL hosted (copy from `PRIVACY.md`)
 - [ ] Terms URL hosted (copy from `TERMS.md`) when you sell; for free, privacy URL is the blocker

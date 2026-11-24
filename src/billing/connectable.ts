@@ -1,30 +1,19 @@
-/** Matches allowed to talk to the extension after checkout. */
+/** Matches allowed to talk to the extension after checkout. The free store package has none. */
 
 export function storeConnectableMatches(
   existing: string[],
   payOrigin: string,
   storePack: boolean,
 ): string[] | null {
-  if (!storePack) {
-    const matches = new Set(existing);
-    try {
-      const origin = new URL(payOrigin);
-      if (origin.protocol === "https:" && !origin.username && !origin.password) {
-        matches.add(`${origin.origin}/*`);
-      }
-    } catch {
-      /* keep shipped localhost for unpacked Pro */
-    }
-    return [...matches];
-  }
-
+  if (storePack) return null;
+  const matches = new Set(existing);
   try {
-    const origin = new URL(payOrigin.trim());
+    const origin = new URL(payOrigin);
     if (origin.protocol === "https:" && !origin.username && !origin.password) {
-      return [`${origin.origin}/*`];
+      matches.add(`${origin.origin}/*`);
     }
   } catch {
-    /* no pay host yet */
+    /* keep shipped localhost for unpacked Pro */
   }
-  return null;
+  return [...matches];
 }

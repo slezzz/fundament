@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import type { Entitlements, PopupState, SecurityEvent, Settings } from "@shared/types";
 import { ENGINE_VERSION, APP_VERSION } from "@engine/version";
+import { isStorePack } from "@billing/launch";
 import { RULESET_LABELS } from "@shared/constants";
 import { coverageLine, contributingPoints, formatAnalysisReport, sortSignals } from "@engine/report/format";
 import { parseSettings } from "@storage/settings";
@@ -120,8 +121,10 @@ export function App() {
       <header className="top">
         <span className="brand">
           <BrandMark />
-          Fundament
-          <span className={`tier ${state.plan}`}>{state.plan === "pro" ? t("popup_planPro") : t("popup_planFree")}</span>
+            Fundament
+          {isStorePack() ? null : (
+            <span className={`tier ${state.plan}`}>{state.plan === "pro" ? t("popup_planPro") : t("popup_planFree")}</span>
+          )}
         </span>
         <button className="icon-btn" aria-label={t("popup_settingsAria")} onClick={() => setView(view === "settings" ? "home" : "settings")}>
           <svg width="16" height="16" viewBox="0 0 16 16" fill="none" stroke="currentColor" strokeWidth="1.4" aria-hidden="true">
@@ -160,7 +163,7 @@ export function App() {
           onPlan={() => setView("plan")}
         />
       )}
-      {view === "plan" && (
+      {view === "plan" && !isStorePack() && (
         <PlanView
           plan={state.plan}
           entitlements={state.entitlements}
@@ -252,9 +255,6 @@ function Home({
       <h1 className={`label label-${status.tone}`}>{shown.label}</h1>
       {host ? <p className="site-host">{host}</p> : null}
       <p className="hint">{shown.hint}</p>
-      {!state.reputationAvailable && hasAnalysis && status.tone === "safe" && (
-        <p className="note">{t("popup_localOnly")}</p>
-      )}
       {host && (
         <div className="site-actions">
           {paused ? (
@@ -313,9 +313,11 @@ function Home({
         <button type="button" className="nav-link" onClick={onHistory}>
           {t("popup_history")}
         </button>
-        <button type="button" className="nav-link" onClick={onPlan}>
-          {state.plan === "pro" ? t("popup_managePlan") : t("popup_upgrade")}
-        </button>
+        {isStorePack() ? null : (
+          <button type="button" className="nav-link" onClick={onPlan}>
+            {state.plan === "pro" ? t("popup_managePlan") : t("popup_upgrade")}
+          </button>
+        )}
         <button type="button" className="nav-link" onClick={() => void chrome.runtime.openOptionsPage()}>
           {t("popup_dashboard")}
         </button>
@@ -472,9 +474,11 @@ function SettingsView({
       <button className="text-btn" onClick={onBack}>
         {t("popup_back")}
       </button>
-      <button className="text-btn" onClick={onPlan}>
-        {entitlements.plan === "pro" ? t("popup_managePlan") : t("popup_upgrade")}
-      </button>
+      {isStorePack() ? null : (
+        <button className="text-btn" onClick={onPlan}>
+          {entitlements.plan === "pro" ? t("popup_managePlan") : t("popup_upgrade")}
+        </button>
+      )}
       <section>
         <h2>{t("popup_protection")}</h2>
         <label className="field">
@@ -494,7 +498,7 @@ function SettingsView({
         />
         <FilteredToggle
           label={t("toggle_trackers")}
-          hint={entitlements.plusTrackers ? t("toggle_trackersHintPro") : t("toggle_trackersHintFree")}
+          hint={isStorePack() ? t("toggle_trackersHintStore") : entitlements.plusTrackers ? t("toggle_trackersHintPro") : t("toggle_trackersHintFree")}
           checked={settings.trackerBlocking}
           onChange={(trackerBlocking) => void onChange({ trackerBlocking })}
         />
@@ -558,19 +562,21 @@ function SettingsView({
           checked={settings.httpsUpgradePages}
           onChange={(httpsUpgradePages) => void onChange({ httpsUpgradePages })}
         />
-        <FilteredToggle
-          label={t("toggle_cosmetic")}
-          hint={entitlements.cosmeticFiltering ? t("toggle_cosmeticHint") : t("toggle_cosmeticHintFree")}
-          checked={settings.cosmeticFiltering}
-          disabled={!entitlements.cosmeticFiltering}
-          onChange={(cosmeticFiltering) => {
-            if (!entitlements.cosmeticFiltering) {
-              onPlan();
-              return;
-            }
-            void onChange({ cosmeticFiltering });
-          }}
-        />
+        {isStorePack() ? null : (
+          <FilteredToggle
+            label={t("toggle_cosmetic")}
+            hint={entitlements.cosmeticFiltering ? t("toggle_cosmeticHint") : t("toggle_cosmeticHintFree")}
+            checked={settings.cosmeticFiltering}
+            disabled={!entitlements.cosmeticFiltering}
+            onChange={(cosmeticFiltering) => {
+              if (!entitlements.cosmeticFiltering) {
+                onPlan();
+                return;
+              }
+              void onChange({ cosmeticFiltering });
+            }}
+          />
+        )}
         <FilteredToggle
           label={t("toggle_overlay")}
           hint={t("toggle_overlayHint")}
@@ -583,12 +589,18 @@ function SettingsView({
           checked={settings.cspReinforce}
           onChange={(cspReinforce) => void onChange({ cspReinforce })}
         />
-        <FilteredToggle
-          label={t("toggle_fingerprint")}
-          hint={t("toggle_fingerprintHint")}
-          checked={settings.fingerprintShield}
-          onChange={(fingerprintShield) => void onChange({ fingerprintShield })}
-        />
+        {isStorePack() ? null : (
+          <FilteredToggle
+            label={t("toggle_fingerprint")}
+            hint={t("toggle_fingerprintHint")}
+            checked={settings.fingerprintShield && entitlements.fingerprintShield}
+            disabled={!entitlements.fingerprintShield}
+            onChange={(fingerprintShield) => {
+              if (!entitlements.fingerprintShield) return;
+              void onChange({ fingerprintShield });
+            }}
+          />
+        )}
         <FilteredToggle
           label={t("toggle_ioc")}
           hint={t("toggle_iocHint")}
@@ -604,26 +616,10 @@ function SettingsView({
           checked={settings.telemetry}
           onChange={(telemetry) => void onChange({ telemetry })}
         />
-        <FilteredToggle
-          label={t("toggle_reputation")}
-          hint={
-            entitlements.onlineReputation
-              ? t("toggle_reputationHintPro")
-              : t("toggle_reputationHintFree")
-          }
-          checked={settings.onlineReputation}
-          disabled={!entitlements.onlineReputation}
-          onChange={(online) => {
-            if (!entitlements.onlineReputation) {
-              onPlan();
-              return;
-            }
-            void onChange({ onlineReputation: online });
-          }}
-        />
       </section>
       <section>
         <h2>{t("popup_advanced")}</h2>
+        {isStorePack() ? null : (
         <label className="field">
           {t("popup_securityLevel")}
           <select
@@ -636,6 +632,7 @@ function SettingsView({
             {entitlements.securityLevels.includes("strict") && <option value="strict">{t("level_strict")}</option>}
           </select>
         </label>
+        )}
         <HostList
           title={t("popup_allowlist", [String(settings.allowlist.length), String(entitlements.maxListEntries)])}
           value={allow}

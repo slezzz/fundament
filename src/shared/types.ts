@@ -208,6 +208,7 @@ export interface Entitlements {
   plusTrackers: boolean;
   extendedTrackers: boolean;
   cosmeticFiltering: boolean;
+  fingerprintShield: boolean;
   filterPack: boolean;
   securityLevels: SecurityLevel[];
   maxListEntries: number;

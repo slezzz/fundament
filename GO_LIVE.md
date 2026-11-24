@@ -1,30 +1,20 @@
 # Go live
 
-Two tracks. Today is the **free store zip**. Stripe stays off until you say so.
+## Free store, version 1.2.0
 
-## Today (free Chrome Web Store)
-
-You can submit **1.0.0** without Pay-Host.
+This is the package to upload. It is the free product. Pro is not in it.
 
 ```powershell
 npm.cmd run pack
 ```
 
-Upload **`fundament-store.zip`**. Listing copy: `STORE_LISTING.md`.
+That writes `fundament-store.zip`. Upload it as a draft. Do not list it. Do not turn on automatic publishing. Install that zip, open the popup, the dashboard, onboarding, and a warning, and confirm the pages. Then publish it yourself.
 
-Still on you (Google will bounce without this):
+The dashboard answers are in `STORE_DASHBOARD.md`. The listing text is `STORE_LISTING.md`. The privacy pages are `pages/privacy/en.html` and `pages/privacy/de.html`. The live-feed workflow copies them beside `live-feed.json` and does not move that file. Their addresses are `https://<user>.github.io/<repo>/privacy/en.html` and `.../privacy/de.html`.
 
-- Host **HTTPS** privacy + terms pages (paste `PRIVACY.md` / `TERMS.md`).
-- Chrome Web Store account, screenshots (popup Protected, HTTP warn, Inspect, warning page).
-- EU trader / Impressum if you sell later; for a free listing you still need a privacy URL.
+`npm run build` is the development build. It may still show Pro. The store zip does not.
 
-This zip **does not** expose localhost checkout and **does not** accept the example license key.
-
-After packing, `dist/` is a store build. For local Pro testing run `npm run build` again.
-
-Local unpacked development stays `npm run build` (localhost pay + dev license still work).
-
-## Later (Stripe + Pro)
+## Später: Pro
 
 This is the production paid path. Do not skip key rotation.
 
@@ -46,15 +36,14 @@ The key in `.env.example` is **dev only**. A store build signed with it is worth
 
 ## 2. Stripe
 
-1. Product + Price (one-time or subscription).
-2. `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_MODE=payment` or `subscription`.
+1. Product + one-time Price. Not a subscription.
+2. `STRIPE_SECRET_KEY`, `STRIPE_PRICE_ID`, `STRIPE_MODE=payment`.
 3. Webhook endpoint `https://<pay-host>/pay/webhook` for:
    - `checkout.session.completed`
-   - `customer.subscription.deleted`
    - `charge.refunded`
    - `charge.dispute.created`
 4. `STRIPE_WEBHOOK_SECRET=whsec_…`
-5. Tax: Stripe Tax or your own invoices. `VITE_PRO_PRICE_LABEL` e.g. `€4,99 / Monat`.
+5. Tax: Stripe Tax or your own invoices. Set `VITE_PRO_PRICE_LABEL` to the price you charge. Leave it empty until you decide; the paid check fails while it is empty.
 
 `ALLOW_DEMO_CHECKOUT` must stay `0` on this host.
 

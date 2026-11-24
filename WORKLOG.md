@@ -2,6 +2,61 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-24 — The first store package is free
+
+- Hypothesis: the first public package can still show Pro, or can still carry the extended lists and the shield, as long as nobody pays.
+- What is free at launch stays free. The store package therefore does not contain those features. `storeManifest` drops `externally_connectable`, the `scripting` permission, and the extended and plus rules. The shield script is not built. `ACTIVATE_LICENSE` returns false for every key. Entitlements stay the free set, so a stored token cannot turn a Pro flag on.
+- The development build (`npm run build`) still shows Pro, so the later update has a place to land.
+- Privacy pages are static HTML, English and German, no scripts. The feed workflow copies them beside `live-feed.json` and does not move that file. `PRIVACY.md` names three requests: the signed list, the Chrome version check, and the HIBP prefix.
+- Red first: the store build still contained `/pay/start`. After the checkout and status modules are replaced with empty functions in that build, the pages show neither Pro nor Upgrade nor a license field. The cosmetic hider is cut out of that build as well.
+- Measured: typecheck clean, lint clean, 318 unit tests, 46 Edge end-to-end tests. Port 5174 was empty. Two store packs both `6d33d3f0e0db1e98b6a2c9bea623a921008861f5bb3c091a8cdbf9d6df9005fb`. `release:check` free path is green.
+
+### Self-check
+
+- Real user, real attack: A reviewer who opens the popup and sees Upgrade is being sold a product the zip cannot deliver. The pages do not say it. A message from another site cannot deliver a license, because the manifest has no externally_connectable and the worker refuses the message.
+- Five-minute bypass: Put `/pay/start` back into the store bundle, or add `scripting` to the store manifest. The page test and the dashboard test fail.
+- False alarm: “Protected” and “Protokoll” are not the product name Pro. The test requires Pro as its own word.
+- Simpler or more complicated: One manifest function and one flag. The Pro screens stay in the development build.
+- AGENTS.md: The store build leaves the device for the signed feed, the Chrome version check, and a HIBP prefix the user starts. No weight change.
+- Would I defend it: Yes, as “1.2.0 is the free package and Pro is not in it.”
+- Harmless on weird input: A license pasted into a message is refused. A list past 10 entries is refused without mentioning Pro.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? Detection is unchanged. The store package does not add a remote list the page can hide.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None of this pass. The privacy pages have no scripts.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None. No detection change.
+- Richtig: Der rote Test sah `/pay/start` im Store-Build. Danach sind die drei Adressen weg, und die eigenen Seiten zeigen kein Pro.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die Seiten, das Manifest und der Text dasselbe kostenlose Paket beschreiben.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? `/pay/start` oder `scripting` wieder in den Store-Build legen. Der Seiten-Test und der Dashboard-Test erwarten das Gegenteil. Getestet.
+
+Urteil: BEHALTEN
+
+## 2026-11-24 — No reputation call, no user pack, one payment
+
+- Hypothesis: Pro can include Safe Browsing lookups and a filter list from an address the user types, and a license can last a year from the moment the success page is opened.
+- Safe Browsing v4 is not for a paid extension. `onlineReputation` is false on Free and on Pro. The worker no longer constructs the HTTP client, so the store bundle has no `/v1/reputation` call. The server route stays in the repo and is off the store path. One line left `PRIVACY.md`: origins are not sent for reputation.
+- Remote filter packs are off until we ship our own list. The options page has no URL field. The worker clears any stored pack and does not call `fetchHostPack`. A user-typed address is not requested.
+- Payment is one checkout, not a subscription. `release:check --paid` fails unless `STRIPE_MODE` is `payment`, and it fails when `VITE_PRO_PRICE_LABEL` is empty. No price was written into the product. `customer.subscription.deleted` stays: the tests still revoke an old subscription id, and removing it would touch the refund map. Checkout no longer sends `mode=subscription`.
+- The license ends at `session.created` + 365 days. The same session read 300 days later has the same `exp`. At that instant, and after it, the session mints nothing. The success page says to keep the address or the license. Restore is that same address. Session ids must look like `cs_live_` or `cs_test_` plus 24 to 80 letters. One address gets 8 success-page requests in 10 minutes.
+- Every Pro-screen line names a behavior the entitlements change or that Free already does. Reputation and the remote pack are not lines. “Kommt bald” is not on the screen.
+- Measured: typecheck clean, lint clean, 315 unit tests, 45 Edge end-to-end tests. Two store packs both `7d37796d4025b5df791cf86badff2d04e83c6ef13c46178373e372e7bfbd8b7b`. The built store files contain neither `/v1/reputation` nor `Pack URL must be https`. `release:check` free path is green. `--paid` fails on `STRIPE_MODE=subscription`, and it still fails when the mode is `payment` because `VITE_PRO_PRICE_LABEL` is empty. No `STRIPE_SECRET_KEY` was set, so the success page was exercised with a fake Stripe session, not a live test charge. Port 5174 was empty before the end-to-end run. The measurement build folder is ignored by lint the same way `dist/` is.
+
+### Self-check
+
+- Real user, real attack: A paid build that still posts origins to Safe Browsing breaks Google’s non-commercial term and our privacy sentence. It no longer posts them. A success page that extends the year each time it is opened sells a longer license than the payment. It does not.
+- Five-minute bypass: Put `/v1/reputation` back in the worker, or set `STRIPE_MODE=subscription`. The zip check and the paid check fail. Fetch a pack by calling the old function from the worker. The worker does not import it.
+- False alarm: `localhost.run` in the feed is still not a loopback address. The word subscription in the old webhook is not a store checkout.
+- Simpler or more complicated: Two flags forced off. One expiry function. The subscription webhook stays because it is already tested and not on the checkout path.
+- AGENTS.md: Nothing new leaves the device. One request leaves: the signed live feed, the Chrome version check, and a HIBP prefix the user starts. Reputation is no longer one of them. No weight change.
+- Would I defend it: Yes, as “the store build cannot call reputation or a user pack, and one session has one end date.” Not as “Stripe was charged in test mode on this machine.” No test key was in the environment.
+- Harmless on weird input: A session id that is not `cs_test_` or `cs_live_` gets 400 and no license. An expired session gets 402. The ninth request from one address in ten minutes gets 429.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? Detection does not read reputation or a remote pack. The expiry comes from Stripe’s `created`, not from the page clock.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None of these. The success page is ours.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None. No detection change.
+- Richtig: Pro-Ansprüche für Reputation und Pack sind falsch. Der Worker importiert den Abruf nicht. Dieselbe Session nach 300 Tagen hat dasselbe `exp`. Danach kommt keine Lizenz. Der Preis bleibt leer, bis du ihn setzt.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil jede Zeile auf dem Pro-Schirm eine messbare Wirkung hat und die beiden entfernten Zeilen nicht mehr da sind.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? `/v1/reputation` oder „Pack URL must be https“ wieder ins Zip legen. Der Zip-Test erwartet beide Treffer. `STRIPE_MODE=subscription` lässt `--paid` fehlschlagen. Getestet an den Prüfungen, nicht an einem echten Stripe-Konto.
+
+Urteil: BEHALTEN
+
 ## 2026-11-24 — The page must not see the clock
 
 - Hypothesis: a duration mark is private because the content script is isolated, and a missing `performance` object only skips the mark.

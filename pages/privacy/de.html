@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <title>Fundament Datenschutz</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font: 16px/1.5 sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+    code { font-size: 0.95em; }
+  </style>
+</head>
+<body>
+  <h1>Fundament Datenschutz</h1>
+  <p>Fundament prüft Seiten auf deinem Gerät. Die Analyse bleibt auf dem Gerät, außer du bestätigst eine öffentliche Falschalarm-Meldung.</p>
+  <h2>Was das Gerät verlassen kann</h2>
+  <ul>
+    <li>Aktualisierung der Phishing-Liste, höchstens alle 6 Stunden: ein GET einer signierten Datei. Keine Cookies, keine Browserverläufe, keine Kennungen.</li>
+    <li>Chrome-Versionsprüfung, höchstens alle 6 Stunden: GET <code>https://versionhistory.googleapis.com/v1/chrome/platforms/&lt;platform&gt;/channels/stable/versions/all/releases?filter=endtime=none</code> ohne Cookies. Nichts über dich steht in der Anfrage.</li>
+    <li>Have I Been Pwned, nur wenn du es startest: ein 5-stelliges Präfix eines SHA-1 geht an <code>api.pwnedpasswords.com</code>. Das Passwort wird vor der Anfrage aus dem Feld gelöscht.</li>
+  </ul>
+  <p>Der Telemetrie-Schalter ist aus. Dieser Build hat keine Adresse für Zähler, also sendet Einschalten nichts.</p>
+  <h2>Berechtigungen</h2>
+  <ul>
+    <li><code>storage</code> — Einstellungen, Listen und ein kurzes lokales Ereignisprotokoll (24 Stunden, höchstens 40 Einträge).</li>
+    <li><code>tabs</code> — die Adresse des Tabs, der geprüft wird.</li>
+    <li><code>webNavigation</code> — Navigationen des Hauptrahmens, einschließlich Umleitungen.</li>
+    <li><code>declarativeNetRequest</code> — Tracker und Sperrlisten blockieren, ohne den Inhalt zu lesen.</li>
+    <li><code>declarativeNetRequestFeedback</code> — zählen, welche Regeln getroffen haben.</li>
+    <li><code>alarms</code> — Zwischenspeicher und das Ereignisprotokoll kürzen.</li>
+    <li><code>downloads</code> — Download-Adressen und Dateinamen sehen. Dateien werden nicht hochgeladen.</li>
+    <li><code>privacy</code> — WebRTC, Prefetch und Hyperlink-Auditing härten.</li>
+    <li><code>contentSettings</code> — optionale Sperre von Benachrichtigungsfragen. Standard aus.</li>
+    <li><code>contextMenus</code> — die aktuelle Seite erlauben, sperren oder pausieren.</li>
+    <li><code>declarativeNetRequestWithHostAccess</code> — Datenschutz-Header und Tracking-Parameter.</li>
+    <li><code>management</code> — andere Erweiterungen auflisten. Fundament schaltet sie nicht ab.</li>
+    <li><code>notifications</code> — ein lokaler Hinweis, wenn ein Download gestoppt wurde.</li>
+    <li>Host-Zugriff <code>http://*/*</code>, <code>https://*/*</code> — Seitenprüfungen und die Warnseite. Die Adresse geht nicht an einen Server.</li>
+  </ul>
+  <p>Dieser Build hat keinen externally_connectable-Eintrag. <code>warning.html</code> kann eine Umleitung öffnen. Eine Seite kann diese Adresse abfragen und so sehen, dass die Erweiterung installiert ist. Lesen kann sie daraus nichts.</p>
+</body>
+</html>

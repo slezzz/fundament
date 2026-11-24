@@ -21,6 +21,6 @@ export function licenseActivationAllowed(
   publicKeySpki: string,
   storePack = isStorePack(),
 ): boolean {
-  if (publicKeySpki !== DEV_LICENSE_SPKI_B64) return true;
-  return !storePack;
+  if (storePack) return false;
+  return publicKeySpki.length > 0;
 }

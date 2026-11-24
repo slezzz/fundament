@@ -49,7 +49,6 @@ Features:
 - Page checks: password field on HTTP, forms that submit to HTTP, seed/API-key field *names*, wallet object on HTTP, ClickFix clipboard writes, fullscreen-over-login, large overlays — **never reads typed values**, **does not rewrite wallet transactions**, **does not read your clipboard**
 - Bundled cosmetic hide for common ad slots (off by default; skipped on allowlisted hosts)
 - Pro-only extended tracker hosts compiled at build (`filters/trackers-extended.txt`); Free ads compile from `filters/ads-networks.txt` only
-- Optional pinned HTTPS filter pack (SHA-256 required; see FILTERS.md)
 - Extension permission audit on the dashboard (`chrome.management`)
 - User-initiated Have I Been Pwned check (SHA-1 prefix only)
 - Download protection: cancel programs over HTTP and double-extension tricks (`invoice.pdf.exe`)
@@ -57,10 +56,6 @@ Features:
 - Interstitial warning for high / critical risk navigations
 - Local security event history (short retention)
 - Privacy controls: telemetry **off** by default; no passwords, cookies, or form data collected
-
-Optional (off by default, **Pro**):
-
-- Online reputation via a local or self-hosted backend that calls Google Safe Browsing.
 
 ## Plans
 
@@ -74,8 +69,6 @@ Optional (off by default, **Pro**):
 | Extended tracker catalog | no | yes |
 | Fingerprint / social / telemetry blocking | no | yes |
 | Cosmetic hiding | no | yes |
-| Online reputation | no | yes |
-| Pinned remote filter packs | no | yes |
 | Allow/block entries | 10 | 200 |
 | History | 24 hours | 7 days |
 | Security level | Standard | Relaxed / Standard / Strict |
@@ -106,7 +99,7 @@ Not implemented:
 - Anything below the browser: infostealer malware, OS exploits, stolen session cookies on an infected PC
 - Card skimmers (Magecart) injected into a shop's own scripts. Behavioral detection is possible but looks like ordinary checkout code; without a measured false-positive rate on real checkouts it is not shipped. Hidden autofill fields on payment forms are detected.
 
-When online reputation is unavailable, the UI says so. It never claims “everything is safe” on that basis.
+The extension does not ask a reputation service whether a site is safe, and it does not download a filter list from an address you type.
 
 ## Develop
 
@@ -126,26 +119,9 @@ $env:FUNDAMENT_E2E_BROWSER="C:\Program Files (x86)\Microsoft\Edge\Application\ms
 
 Load `dist/` as an unpacked extension in `chrome://extensions`. Free store zip (no Stripe): `npm run pack` → `fundament-store.zip`. Paid store zip later: `npm run release` after key rotation (`GO_LIVE.md`).
 
-### Online reputation (optional)
+### Reputation service
 
-1. Create a [Safe Browsing API key](https://developers.google.com/safe-browsing/v4/get-started) (Lookup API).
-2. Copy `.env.example` to `.env` and set `SAFE_BROWSING_API_KEY`.
-3. Start the server (binds to localhost only by default):
-
-```bash
-node --env-file=.env server/index.mjs
-```
-
-4. Rebuild the extension (`npm run build`), reload it, and enable **Online reputation** in Settings.
-
-Without a key, you can exercise the plumbing with Google’s public test hosts only:
-
-```bash
-# PowerShell
-$env:MOCK_SAFE_BROWSING="1"; node server/index.mjs
-```
-
-Production: host `server/` behind HTTPS, set `VITE_REPUTATION_URL` at build time, keep the key only on the server. Never prefix the key with `VITE_`.
+The store build does not call `/v1/reputation`. Safe Browsing v4 is limited to non-commercial use, so Pro does not include it. The server route can stay in the repo. It is not on the store path.
 
 
 ## Docs

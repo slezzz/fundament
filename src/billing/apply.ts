@@ -9,6 +9,7 @@ export function applyEntitlements(settings: Settings, entitlements: Entitlements
     ...settings,
     onlineReputation: entitlements.onlineReputation ? settings.onlineReputation : false,
     cosmeticFiltering: entitlements.cosmeticFiltering ? settings.cosmeticFiltering : false,
+    fingerprintShield: entitlements.fingerprintShield ? settings.fingerprintShield : false,
     filterPackUrl: entitlements.filterPack ? settings.filterPackUrl : "",
     filterPackSha256: entitlements.filterPack ? settings.filterPackSha256 : "",
     securityLevel,

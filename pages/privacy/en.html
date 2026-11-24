@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Fundament privacy</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <style>
+    body { font: 16px/1.5 sans-serif; max-width: 42rem; margin: 2rem auto; padding: 0 1rem; color: #1a1a1a; }
+    code { font-size: 0.95em; }
+  </style>
+</head>
+<body>
+  <h1>Fundament privacy</h1>
+  <p>Fundament checks pages on this device. Analysis stays on the device unless you confirm a public false-alarm report.</p>
+  <h2>What can leave the device</h2>
+  <ul>
+    <li>Phishing list updates, at most every 6 hours: one GET of a signed file. No cookies, no browsing data, no identifiers.</li>
+    <li>Chrome version check, at most every 6 hours: GET <code>https://versionhistory.googleapis.com/v1/chrome/platforms/&lt;platform&gt;/channels/stable/versions/all/releases?filter=endtime=none</code> without cookies. Nothing about you is in the request.</li>
+    <li>Have I Been Pwned, only when you run it: a 5-character prefix of a SHA-1 is sent to <code>api.pwnedpasswords.com</code>. The password is cleared before the request.</li>
+  </ul>
+  <p>The telemetry switch is off. This build has no address to send counters to, so turning it on sends nothing.</p>
+  <h2>Permissions</h2>
+  <ul>
+    <li><code>storage</code> — settings, lists, and a short local event log (24 hours, max 40 entries).</li>
+    <li><code>tabs</code> — the URL of the tab being analyzed.</li>
+    <li><code>webNavigation</code> — main-frame navigations, including redirects.</li>
+    <li><code>declarativeNetRequest</code> — block tracker and blocklisted requests without reading bodies.</li>
+    <li><code>declarativeNetRequestFeedback</code> — count which rules matched.</li>
+    <li><code>alarms</code> — trim caches and the event log.</li>
+    <li><code>downloads</code> — see download URLs and filenames. Files are not uploaded.</li>
+    <li><code>privacy</code> — harden WebRTC, prefetch, and hyperlink auditing.</li>
+    <li><code>contentSettings</code> — optional block of notification prompts. Off by default.</li>
+    <li><code>contextMenus</code> — allow, block, or pause the current site.</li>
+    <li><code>declarativeNetRequestWithHostAccess</code> — privacy headers and tracking-parameter stripping.</li>
+    <li><code>management</code> — list other extensions. Fundament does not disable them.</li>
+    <li><code>notifications</code> — a local notice when a download was stopped.</li>
+    <li>Host access <code>http://*/*</code>, <code>https://*/*</code> — page checks and the warning screen. The address is not sent to a server.</li>
+  </ul>
+  <p>This build has no externally_connectable entry. <code>warning.html</code> can be opened by a redirect. A site can probe that URL and learn the extension is installed. It cannot read anything from it.</p>
+</body>
+</html>

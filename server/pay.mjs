@@ -1,4 +1,5 @@
 import { mintLicense } from "./license.mjs";
+import { isCheckoutSessionId, licenseExpFromSession } from "./license-term.mjs";
 import { verifyStripeSignature } from "./stripe.mjs";
 import { recordStripeEvent } from "./billing-state.mjs";
 
@@ -38,9 +39,11 @@ export async function createStripeCheckout(extId) {
   const secret = process.env.STRIPE_SECRET_KEY ?? "";
   const price = process.env.STRIPE_PRICE_ID ?? "";
   if (!secret || !price) return null;
-  const mode = process.env.STRIPE_MODE === "subscription" ? "subscription" : "payment";
+  if (process.env.STRIPE_MODE !== "payment") {
+    throw new Error("STRIPE_MODE must be payment. A subscription is not the store path.");
+  }
   const params = new URLSearchParams();
-  params.set("mode", mode);
+  params.set("mode", "payment");
   params.set("line_items[0][price]", price);
   params.set("line_items[0][quantity]", "1");
   params.set("success_url", `${publicBase()}/pay/success?session_id={CHECKOUT_SESSION_ID}&ext=${extId}`);
@@ -48,7 +51,6 @@ export async function createStripeCheckout(extId) {
   if (extId) {
     params.set("client_reference_id", extId);
     params.set("metadata[ext]", extId);
-    if (mode === "subscription") params.set("subscription_data[metadata][ext]", extId);
   }
   const response = await fetch("https://api.stripe.com/v1/checkout/sessions", {
     method: "POST",
@@ -85,13 +87,29 @@ function subscriptionId(session) {
   return "";
 }
 
-function licenseDaysFromSession(session) {
-  const sub = session?.subscription;
-  const end = sub && typeof sub === "object" ? sub.current_period_end : null;
-  if (typeof end === "number" && end > Date.now() / 1000) {
-    return Math.max(1, Math.ceil((end - Date.now() / 1000) / 86400));
+const PAY_LIMIT = 8;
+const PAY_WINDOW_MS = 10 * 60 * 1000;
+const payHits = new Map();
+
+export function resetPayLimits() {
+  payHits.clear();
+}
+
+export function allowPayAttempt(ip, now = Date.now()) {
+  const key = typeof ip === "string" && ip ? ip : "unknown";
+  const recent = (payHits.get(key) ?? []).filter((at) => now - at < PAY_WINDOW_MS);
+  if (recent.length >= PAY_LIMIT) {
+    payHits.set(key, recent);
+    return false;
   }
-  return LICENSE_DAYS;
+  recent.push(now);
+  payHits.set(key, recent);
+  return true;
+}
+
+function clientIp(req) {
+  const raw = req.socket?.remoteAddress ?? "";
+  return raw.replace(/^::ffff:/, "");
 }
 
 function successPage(token, extId) {
@@ -100,6 +118,8 @@ function successPage(token, extId) {
     "Fundament Pro",
     `<h1>You're in.</h1>
 <p>Payment is done. Activate Pro in the browser that has Fundament installed.</p>
+<p>Keep this address or the license. Opening the same address again restores the same license, with the same end date. There is no email.</p>
+<p>Bewahre diese Adresse oder die Lizenz auf. Dieselbe Adresse stellt dieselbe Lizenz wieder her, mit demselben Ablauf. Es gibt keine E-Mail.</p>
 <textarea id="token" readonly>${escaped}</textarea>
 <p>
   <button type="button" id="activate">Activate in Fundament</button>
@@ -172,8 +192,18 @@ export async function handlePay(req, res, url) {
   }
 
   if (req.method === "GET" && url.pathname === "/pay/success") {
+    if (!allowPayAttempt(clientIp(req))) {
+      res.writeHead(429, { "Content-Type": "text/plain; charset=utf-8" });
+      res.end("Too many restore attempts from this address. Wait and try the same link again.");
+      return true;
+    }
     const demo = url.searchParams.get("demo") === "1" && process.env.ALLOW_DEMO_CHECKOUT === "1";
     const sessionId = url.searchParams.get("session_id") ?? "";
+    if (!demo && sessionId && !isCheckoutSessionId(sessionId)) {
+      res.writeHead(400, { "Content-Type": "text/html; charset=utf-8" });
+      res.end(html("Not a checkout session", "<h1>Not a checkout session</h1><p>The address has to be a Stripe checkout session. Nothing was minted.</p>"));
+      return true;
+    }
     let session = null;
     if (!demo && sessionId) {
       session = await loadPaidCheckoutSession(sessionId);
@@ -183,11 +213,25 @@ export async function handlePay(req, res, url) {
       res.end(html("Payment not confirmed", "<h1>Payment not confirmed</h1><p>Stripe did not report a paid session. Do not activate a license.</p>"));
       return true;
     }
-    const token = mintLicense(demo ? LICENSE_DAYS : licenseDaysFromSession(session), {
+    const nowSec = Math.floor(Date.now() / 1000);
+    const exp = demo ? null : licenseExpFromSession(session, nowSec);
+    if (!demo && exp == null) {
+      res.writeHead(402, { "Content-Type": "text/html; charset=utf-8" });
+      res.end(html("License ended", "<h1>This payment has ended</h1><p>The same session does not mint a new license after its year.</p>"));
+      return true;
+    }
+    const token = mintLicense(demo ? LICENSE_DAYS : 365, {
       sid: session?.id,
       sub: subscriptionId(session),
       ext,
+      exp: exp ?? undefined,
+      now: nowSec,
     });
+    if (!token) {
+      res.writeHead(402, { "Content-Type": "text/html; charset=utf-8" });
+      res.end(html("License ended", "<h1>This payment has ended</h1><p>The same session does not mint a new license after its year.</p>"));
+      return true;
+    }
     res.writeHead(200, { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" });
     res.end(successPage(token, ext));
     return true;

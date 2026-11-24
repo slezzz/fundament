@@ -21,7 +21,7 @@ What they often imply that we will not: live global intel in the extension, anti
 - Checks addresses for phishing tricks such as lookalike brands (banks, shops, AI apps, wallets), punycode/homograph domains, odd encodings, login-style URLs, fake CAPTCHA / ClickFix lures, and OAuth consent proxies
 - Combines several independent signals into a 0–100 risk score you can inspect
 - Never shows a green “Protected” state when something is actually wrong (including plain HTTP)
-- Blocks advertising and analytics hosts with a bundled catalog (not live EasyList). Extra tracker lists are planned for a later paid build.
+- Blocks advertising and analytics hosts with the catalog shipped in the extension (not live EasyList).
 - Blocks ClickFix: when a fake CAPTCHA tries to put a PowerShell/Terminal command on your clipboard, Fundament replaces it with a warning. What you copy yourself is never touched
 - Ships a list of ~385,000 active phishing hosts (Phishing.Database) that is matched inside Chrome — nothing you visit is sent anywhere
 - Recognizes pages that claim to be your bank, PayPal, Microsoft, or a wallet on a domain that is not theirs
@@ -36,8 +36,6 @@ What they often imply that we will not: live global intel in the extension, anti
 - Stops obvious malware and HTML-smuggling download tricks
 - Warns on high-risk navigations and lets you go back or see why
 - Keeps a short local log of protections — not a full browsing history
-- Optional online reputation: if you turn it on, only the site origin is sent to a reputation service you run, which can query Google Safe Browsing. Local checks still run if that service is down.
-
 **What it does not do**
 
 - It is not a full antivirus (no scanning of file contents)
@@ -64,7 +62,7 @@ Analysis runs on your device. Optional telemetry is off unless you turn it on. I
 
 ## Privacy explanation (store form)
 
-Fundament processes the URL of pages you visit locally to detect phishing patterns and count blocked trackers. A content script looks only at whether a password field exists and where forms submit — never at typed values. It stores settings and a short host-only event log on the device. Optional telemetry is off by default and has no endpoint in the current build. Optional online reputation (off by default) sends only the site origin to a user-configured reputation host; it does not send paths or query strings. A confirmed false-alarm report opens a public GitHub issue containing the hostname and signal ids, not the path or query.
+Fundament processes the URL of pages you visit locally to detect phishing patterns and count blocked trackers. A content script looks only at whether a password field exists and where forms submit — never at typed values. It stores settings and a short host-only event log on the device. Optional telemetry is off and this build has no address for it. A confirmed false-alarm report opens a public GitHub issue containing the hostname and signal ids, not the path or query.
 
 ## Permission justification (store form)
 
@@ -81,8 +79,7 @@ Fundament processes the URL of pages you visit locally to detect phishing patter
 - **contextMenus:** Allow, block, or pause the current site.
 - **declarativeNetRequestWithHostAccess:** GPC/DNT headers and tracking-parameter stripping.
 - **management:** Show other extensions' permissions and alert when an update adds new ones. Fundament never disables them.
-- **scripting:** Register the optional fingerprint shield only while the user has it turned on.
-- **Host access `http://*/*`, `https://*/*`:** Page-structure checks, ClickFix/clipboard and wallet guards, HTTPS upgrades, redirecting known phishing pages to the local warning screen, and optional origin-only reputation lookups. Not the `<all_urls>` pattern; not `file:` or `chrome:`.
+- **Host access `http://*/*`, `https://*/*`:** Page-structure checks, ClickFix/clipboard and wallet guards, and redirecting known phishing pages to the local warning screen. Not the `<all_urls>` pattern; not `file:` or `chrome:`. The address is not sent to a server.
 
 ## Screenshots plan
 
@@ -115,7 +112,7 @@ No. It reduces common URL and lookalike tricks. You should still treat unexpecte
 To know which site the popup is talking about and to show a warning instead of the dangerous page when risk is high.
 
 **Can I use it offline?**  
-Yes. Local heuristics and tracker rules work offline. If you enabled online reputation and the service is unreachable, the UI says so instead of pretending the site was cleared by that feed.
+Yes. Local heuristics and tracker rules work offline.
 
 **Is there a company dashboard?**  
 Not in this extension. The engine is built so a later product can attach.
@@ -126,4 +123,4 @@ Do not use: “100% protection”, “unhackable”, “military-grade”, “AI
 
 ## Release notes
 
-SHA-256 of `fundament-store.zip`: `a7dd1641e9c04ba6c201a8d4c78bb431082e3d01659bf1cdfc0c414221451b8f`
+SHA-256 of `fundament-store.zip`: `6d33d3f0e0db1e98b6a2c9bea623a921008861f5bb3c091a8cdbf9d6df9005fb`

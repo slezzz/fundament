@@ -1,10 +1,8 @@
 import { LocalSecurityAnalyzer } from "@privacy/localAnalyzer";
 import { ThreatIntelligenceClient } from "@privacy/threatIntelligence";
-import { HttpThreatIntelligence } from "@privacy/httpProvider";
 import { NullThreatIntelligence } from "@engine/reputation/null-provider";
 import { GatedTelemetryClient } from "@privacy/telemetry";
 import { hostOnly } from "@privacy/sanitize";
-import { reputationBaseUrl } from "@privacy/remoteConfig";
 import { healStoredSettings, loadSettings, patchSettings } from "@storage/settings";
 import { appendEvent, clearEvents, loadEvents } from "@storage/events";
 import { deleteTab, emptyTab, getTab, saveTab, type TabRecord } from "@storage/tabs";
@@ -36,8 +34,7 @@ import { readPosture } from "./posture";
 import { liveFeedView, loadLiveFeed, refreshLiveFeed } from "./liveFeed";
 import { loadPauses, pauseUntilFor, savePauses, withPause, withoutPause } from "@storage/pauses";
 import { bumpStats, loadStats, EMPTY_STATS } from "@storage/stats";
-import { clearPack, loadPackHosts, loadPackStatus, savePack, savePackError } from "@storage/pack";
-import { fetchHostPack } from "@network/pack";
+import { clearPack, loadPackHosts, loadPackStatus } from "@storage/pack";
 import { loadIocState } from "@storage/feeds";
 import { loadIntegrityStatus } from "@storage/integrity";
 import { iocStatusFrom, refreshPinnedIoc, rollbackIoc, seedShippedIoc } from "./feeds";
@@ -49,7 +46,7 @@ import type { Entitlements, FeedStatusView, PopupState, PostureItem, RiskSignal,
 import { resolveEntitlements } from "@storage/settings";
 import { verifyLicense } from "@billing/license";
 import { LICENSE_PUBLIC_KEY_SPKI_B64 } from "@billing/publicKey";
-import { licenseActivationAllowed } from "@billing/launch";
+import { isStorePack, licenseActivationAllowed } from "@billing/launch";
 import { fetchLicenseRevoked } from "@billing/status";
 import { FREE_ENTITLEMENTS } from "@billing/entitlements";
 import { WEIGHTS } from "@engine/risk/weights";
@@ -57,7 +54,6 @@ import { textSignal } from "@engine/i18n/signal";
 import { langFromLocale } from "@engine/i18n/signals";
 import { parsePopularList, popularityCheck } from "@engine/reputation/popular";
 
-const httpIntelligence = new HttpThreatIntelligence({ baseUrl: reputationBaseUrl() });
 const telemetry = new GatedTelemetryClient(() => telemetryEnabled);
 
 let telemetryEnabled = false;
@@ -104,10 +100,9 @@ chrome.storage.onChanged.addListener((changes, area) => {
   }
 });
 
-function analyzerFor(settings: Settings): LocalSecurityAnalyzer {
-  const inner = settings.onlineReputation ? httpIntelligence : new NullThreatIntelligence();
+function analyzerFor(): LocalSecurityAnalyzer {
   return new LocalSecurityAnalyzer({
-    intelligence: new ThreatIntelligenceClient(inner),
+    intelligence: new ThreatIntelligenceClient(new NullThreatIntelligence()),
   });
 }
 
@@ -160,6 +155,7 @@ const SHIELD_ID = "fundament-shield";
  * No page-controlled message can switch it (the old postMessage config could be spoofed).
  */
 async function syncFingerprintShield(on: boolean, allowlist: string[]): Promise<void> {
+  if (isStorePack()) return;
   if (!chrome.scripting?.getRegisteredContentScripts) return;
   try {
     const existing = await chrome.scripting.getRegisteredContentScripts({ ids: [SHIELD_ID] });
@@ -216,7 +212,7 @@ function siteKey(analysis: UrlAnalysis | null, url: string): string {
 async function analyze(url: string, settings: Settings): Promise<UrlAnalysis> {
   const cached = analysisCache.get(url);
   if (cached && Date.now() - cached.at < ANALYSIS_TTL_MS) return cached.analysis;
-  const analysis = await analyzerFor(settings).analyze({
+  const analysis = await analyzerFor().analyze({
     url,
     allowlist: settings.allowlist,
     blocklist: settings.blocklist,
@@ -719,7 +715,7 @@ async function addToList(list: "allowlist" | "blocklist", raw: unknown): Promise
   if (settings[list].length >= entitlements.maxListEntries) {
     return {
       type: "ERROR",
-      message: list === "allowlist" ? "Allowlist limit reached. Upgrade to Pro for more." : "Blocklist limit reached. Upgrade to Pro for more.",
+      message: `This list holds ${entitlements.maxListEntries} entries.`,
     };
   }
   await patchSettings({ [list]: [...settings[list], host] } as Partial<Settings>);
@@ -877,17 +873,8 @@ async function enforceLicense(): Promise<void> {
   if (await fetchLicenseRevoked(claims.sid, claims.sub)) await dropLicense();
 }
 
-async function refreshFilterPack(settings: Settings): Promise<void> {
-  if (!settings.filterPackUrl || !settings.filterPackSha256) {
-    await clearPack();
-    return;
-  }
-  const result = await fetchHostPack(settings.filterPackUrl, settings.filterPackSha256);
-  if (!result.ok) {
-    await savePackError(result.error);
-    return;
-  }
-  await savePack(result.hosts, result.sha256);
+async function refreshFilterPack(_settings: Settings): Promise<void> {
+  await clearPack();
 }
 
 chrome.alarms.onAlarm.addListener(async (alarm) => {

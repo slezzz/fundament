@@ -1,9 +1,8 @@
 import { useEffect, useState } from "react";
-import { paidCheckoutLive } from "@billing/launch";
-import { openCheckout } from "@billing/checkout";
 import { parseSettings } from "@storage/settings";
 import { missedPhishingIssueUrl } from "@engine/report/githubIssue";
 import { APP_VERSION, ENGINE_VERSION } from "@engine/version";
+import { isStorePack } from "@billing/launch";
 import { pwnedCountForHash, sha1Hex } from "@privacy/hibp";
 import { send } from "../lib/messaging";
 import { normalizePopupState } from "../lib/popupState";
@@ -24,9 +23,6 @@ export function OptionsApp() {
   const [password, setPassword] = useState("");
   const [pwned, setPwned] = useState<string | null>(null);
   const [busy, setBusy] = useState(false);
-  const [packUrl, setPackUrl] = useState("");
-  const [packPin, setPackPin] = useState("");
-  const [packBusy, setPackBusy] = useState(false);
   const [iocUrl, setIocUrl] = useState("");
   const [iocPin, setIocPin] = useState("");
   const [iocBusy, setIocBusy] = useState(false);
@@ -37,8 +33,6 @@ export function OptionsApp() {
       const next = normalizePopupState(response.state);
       setState(next);
       if (next) {
-        setPackUrl(next.settings.filterPackUrl);
-        setPackPin(next.settings.filterPackSha256);
         setIocUrl(next.settings.iocFeedUrl);
         setIocPin(next.settings.iocFeedSha256);
       }
@@ -118,7 +112,7 @@ export function OptionsApp() {
           <div>
             <h1>{t("dash_title")}</h1>
             <p className="muted">
-              v{APP_VERSION} · engine {ENGINE_VERSION} · {state.plan}
+              v{APP_VERSION} · engine {ENGINE_VERSION}{isStorePack() ? "" : ` · ${state.plan}`}
             </p>
             <p className="muted credits">
               {t("dash_credits")}{" "}
@@ -194,15 +188,17 @@ export function OptionsApp() {
           checked={settings.trackerBlocking}
           onChange={(trackerBlocking) => void patch({ trackerBlocking })}
         />
-        <Toggle
-          label={t("toggle_cosmetic")}
-          hint={state.entitlements.cosmeticFiltering ? t("toggle_cosmeticHint") : t("toggle_cosmeticHintFree")}
-          checked={settings.cosmeticFiltering}
-          onChange={(cosmeticFiltering) => {
-            if (!state.entitlements.cosmeticFiltering) return;
-            void patch({ cosmeticFiltering });
-          }}
-        />
+        {isStorePack() ? null : (
+          <Toggle
+            label={t("toggle_cosmetic")}
+            hint={state.entitlements.cosmeticFiltering ? t("toggle_cosmeticHint") : t("toggle_cosmeticHintFree")}
+            checked={settings.cosmeticFiltering}
+            onChange={(cosmeticFiltering) => {
+              if (!state.entitlements.cosmeticFiltering) return;
+              void patch({ cosmeticFiltering });
+            }}
+          />
+        )}
         <Toggle
           label={t("toggle_phishing")}
           checked={settings.phishingProtection}
@@ -231,12 +227,18 @@ export function OptionsApp() {
           checked={settings.cspReinforce}
           onChange={(cspReinforce) => void patch({ cspReinforce })}
         />
-        <Toggle
-          label={t("toggle_fingerprint")}
-          hint={t("toggle_fingerprintHint")}
-          checked={settings.fingerprintShield}
-          onChange={(fingerprintShield) => void patch({ fingerprintShield })}
-        />
+        {isStorePack() ? null : (
+          <Toggle
+            label={t("toggle_fingerprint")}
+            hint={t("toggle_fingerprintHint")}
+            checked={settings.fingerprintShield && state.entitlements.fingerprintShield}
+            disabled={!state.entitlements.fingerprintShield}
+            onChange={(fingerprintShield) => {
+              if (!state.entitlements.fingerprintShield) return;
+              void patch({ fingerprintShield });
+            }}
+          />
+        )}
         <Toggle
           label={t("toggle_ioc")}
           hint={t("toggle_iocHint")}
@@ -429,78 +431,6 @@ export function OptionsApp() {
           </div>
         </label>
         {pwned ? <p className="note">{pwned}</p> : null}
-      </section>
-
-      <section>
-        <h2>{t("dash_pack")}</h2>
-        <p className="note">{state.entitlements.filterPack ? t("dash_packNote") : t("dash_packPro")}</p>
-        {state.filterPack.error ? <p className="note">{state.filterPack.error}</p> : null}
-        <p className="note">
-          {t("dash_packStatus", [
-            String(state.filterPack.hostCount),
-            state.filterPack.updatedAt
-              ? new Intl.DateTimeFormat(undefined, { dateStyle: "medium", timeStyle: "short" }).format(state.filterPack.updatedAt)
-              : t("dash_packNever"),
-          ])}
-        </p>
-        <label className="field">
-          {t("dash_packUrl")}
-          <input
-            value={packUrl}
-            onChange={(e) => setPackUrl(e.target.value)}
-            spellCheck={false}
-            disabled={!state.entitlements.filterPack}
-          />
-        </label>
-        <label className="field">
-          {t("dash_packPin")}
-          <input
-            value={packPin}
-            onChange={(e) => setPackPin(e.target.value)}
-            spellCheck={false}
-            disabled={!state.entitlements.filterPack}
-          />
-        </label>
-        <div className="row">
-          <button
-            className="small-btn"
-            type="button"
-            disabled={packBusy || !state.entitlements.filterPack}
-            onClick={() => {
-              void (async () => {
-                setPackBusy(true);
-                await patch({ filterPackUrl: packUrl.trim(), filterPackSha256: packPin.trim().toLowerCase() });
-                setPackBusy(false);
-              })();
-            }}
-          >
-            {t("dash_packSave")}
-          </button>
-          <button
-            className="small-btn"
-            type="button"
-            disabled={packBusy || !state.entitlements.filterPack}
-            onClick={() => {
-              void (async () => {
-                setPackBusy(true);
-                await send({ type: "REFRESH_FILTER_PACK" });
-                await refresh();
-                setPackBusy(false);
-              })();
-            }}
-          >
-            {t("dash_packRefresh")}
-          </button>
-          {!state.entitlements.filterPack ? (
-            paidCheckoutLive() ? (
-              <button className="small-btn" type="button" onClick={() => openCheckout()}>
-                {t("plan_getPro")}
-              </button>
-            ) : (
-              <p className="note">{t("plan_comingSoon")}</p>
-            )
-          ) : null}
-        </div>
       </section>
 
       <section>

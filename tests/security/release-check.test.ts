@@ -23,6 +23,13 @@ describe("free release zip", () => {
     expect(freeZipProblems(zipWith("settings.js", "http://localhost:8787/pay"))).toContain("localhost");
   });
 
+  it("fails when the zip can call reputation or download a user pack", () => {
+    expect(freeZipProblems(zipWith("background.js", 'fetch(`${base}/v1/reputation`)'))).toContain("reputation");
+    expect(freeZipProblems(zipWith("pay.js", "https://pay.example/pay/start"))).toContain("pay-start");
+    expect(freeZipProblems(zipWith("status.js", "/v1/license/status"))).toContain("license-status");
+    expect(freeZipProblems(zipWith("pack.js", "Pack URL must be https without credentials."))).toContain("user-pack");
+  });
+
   it("fails when the zip names a page-timeline mark", () => {
     expect(freeZipProblems(zipWith("content.js", 'performance.measure("fundament-content", {})'))).toContain("measure-mark");
     expect(freeZipProblems(zipWith("content-bridge.js", 'performance.measure("fundament-bridge", {})'))).toContain("measure-mark");

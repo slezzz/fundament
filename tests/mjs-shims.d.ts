@@ -111,6 +111,13 @@ declare module "*.mjs" {
     bare: { failed?: boolean; reason?: string; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number },
   ): { measured: boolean; broken: boolean; warned: boolean; resource?: boolean; failClass: string };
   export function netClass(error: unknown): string;
+  export const LICENSE_TERM_SECONDS: number;
+  export function licenseExpFromSession(session: { created?: number }, nowSec: number): number | null;
+  export function isCheckoutSessionId(value: unknown): boolean;
+  export function mintLicense(days?: number, extra?: { exp?: number | null; now?: number; sid?: string }): string | null;
+  export function allowPayAttempt(ip: string, now?: number): boolean;
+  export function resetPayLimits(): void;
+  export function handlePay(req: { method?: string; socket?: { remoteAddress?: string } }, res: { writeHead: (code: number, headers?: Record<string, string>) => void; end: (chunk?: string) => void }, url: URL): Promise<boolean>;
   export function loadTargets(root: string, majesticCap?: number): {
     corpus: { host: string; url: string }[];
     docs: { host: string; url: string }[];

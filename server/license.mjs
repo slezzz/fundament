@@ -28,12 +28,14 @@ export function loadLicensePrivateKey() {
 }
 
 export function mintLicense(days = 365, extra = {}) {
-  const now = Math.floor(Date.now() / 1000);
+  const now = typeof extra.now === "number" ? extra.now : Math.floor(Date.now() / 1000);
+  if (typeof extra.exp === "number" && now >= extra.exp) return null;
+  const exp = typeof extra.exp === "number" ? extra.exp : Number.isFinite(days) && days > 0 ? now + days * 24 * 60 * 60 : null;
   const payload = {
     v: 1,
     plan: "pro",
     iat: now,
-    exp: Number.isFinite(days) && days > 0 ? now + days * 24 * 60 * 60 : null,
+    exp,
   };
   if (typeof extra.sid === "string" && extra.sid.length >= 4 && extra.sid.length <= 200) {
     payload.sid = extra.sid;
