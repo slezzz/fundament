@@ -5,5 +5,7 @@ export function reputationBaseUrl(): string {
   if (typeof fromEnv === "string" && fromEnv.trim()) {
     return fromEnv.replace(/\/$/, "");
   }
+  // A store pack has no dev server. The literal stays in this file for unpacked builds.
+  if (import.meta.env.VITE_STORE_PACK === "1") return "";
   return DEFAULT_REPUTATION_URL;
 }

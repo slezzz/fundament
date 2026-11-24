@@ -1,7 +1,9 @@
+import { createHash } from "node:crypto";
 import { spawnSync } from "node:child_process";
-import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, readFileSync } from "node:fs";
+import { cpSync, existsSync, mkdirSync, readdirSync, rmSync, statSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { insertZipChecksum, writeDeterministicZip } from "./zip-store.mjs";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 const dist = resolve(root, "dist");
@@ -37,12 +39,9 @@ function copyTree(from, to) {
 
 copyTree(dist, stage);
 if (existsSync(zip)) rmSync(zip);
+writeDeterministicZip(stage, zip);
 
-const compressed = spawnSync(
-  "powershell.exe",
-  ["-NoProfile", "-Command", `Compress-Archive -Force -Path '${stage}\\*' -DestinationPath '${zip}'`],
-  { stdio: "inherit" },
-);
-if (compressed.status !== 0) process.exit(compressed.status ?? 1);
-
-process.stdout.write(`pack-store: wrote ${zip}\n`);
+const sum = createHash("sha256").update(readFileSync(zip)).digest("hex");
+const notesPath = resolve(root, "STORE_LISTING.md");
+writeFileSync(notesPath, insertZipChecksum(readFileSync(notesPath, "utf8"), sum));
+process.stdout.write(`pack-store: wrote ${zip}\npack-store: sha256 ${sum}\n`);

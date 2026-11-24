@@ -47,8 +47,19 @@ function chromeMv3(): Plugin {
   };
 }
 
+const storePack = process.env.VITE_STORE_PACK === "1";
+
 export default defineConfig({
   base: "./",
+  define: storePack
+    ? {
+        "import.meta.env.VITE_STORE_PACK": JSON.stringify("1"),
+        "import.meta.env.VITE_REPUTATION_URL": JSON.stringify(""),
+        "import.meta.env.VITE_PAY_ORIGIN": JSON.stringify(""),
+      }
+    : {
+        "import.meta.env.VITE_STORE_PACK": JSON.stringify(""),
+      },
   plugins: [react(), chromeMv3()],
   resolve: {
     alias: {

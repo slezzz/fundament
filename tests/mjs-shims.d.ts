@@ -65,6 +65,52 @@ declare module "*.mjs" {
     bySignal: Record<string, { seen: number; warned: number }>;
     warningHosts: string[];
   };
+  export function writeDeterministicZip(sourceDir: string, destZip: string): void;
+  export function insertZipChecksum(markdown: string, sha256: string): string;
+  export function freeZipProblems(bytes: Uint8Array): string[];
+  export function calibrationLoop(steps: number): number;
+  export function median(samples: number[]): number;
+  export function withinBudget(elapsed: number, reference: number): boolean;
+  export function sideDifferences(
+    withExt: { pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number; failed?: boolean },
+    bare: { pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number; failed?: boolean },
+  ): { kind: string; items?: string[]; deltaMs?: number }[];
+  export function unexplained(
+    differences: { kind: string }[],
+    reasons: { kind: string; text: string }[],
+  ): { kind: string }[];
+  export function brokenByExtension(differences: { kind: string; items?: string[] }[]): { kind: string }[];
+  export const SW_STEPS: number;
+  export const FRAME_STEPS: number;
+  export const FRAME_COUNT: number;
+  export function measurePageCost(options: {
+    executablePath: string;
+    dist: string;
+    swSteps: number;
+    frameSteps: number;
+  }): Promise<{
+    swMs: number[];
+    swCalibration: number[];
+    bridgeMs: number[];
+    contentMs: number[];
+    frameCalibration: number[];
+    differences: { kind: string; items?: string[]; deltaMs?: number }[];
+  }>;
+  export function breakageSummary(rows: unknown[]): {
+    pages: number;
+    measured: number;
+    notMeasured: number;
+    warnings: number;
+    broken: number;
+    resourceOnly: number;
+    sandboxOnly: number;
+    failClasses: Record<string, number>;
+  };
+  export function breakageRow(
+    withExt: { failed?: boolean; reason?: string; warned?: boolean; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number },
+    bare: { failed?: boolean; reason?: string; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number },
+  ): { measured: boolean; broken: boolean; warned: boolean; resource?: boolean; failClass: string };
+  export function netClass(error: unknown): string;
   export function loadTargets(root: string, majesticCap?: number): {
     corpus: { host: string; url: string }[];
     docs: { host: string; url: string }[];

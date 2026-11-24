@@ -123,3 +123,7 @@ Not in this extension. The engine is built so a later product can attach.
 ## Claims to avoid
 
 Do not use: “100% protection”, “unhackable”, “military-grade”, “AI detected a threat”, “powered by live global intel” (until a real, licensed feed exists).
+
+## Release notes
+
+SHA-256 of `fundament-store.zip`: `cf1f1cf3fdd1a42aefb488ac221d54933a1b5def4acd6d4f1c0328ea04e3a8f0`

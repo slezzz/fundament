@@ -41,6 +41,7 @@ Code waits for a yes. The concept file comes first and does not wait.
 - Downloading Chrome for Testing, to finish the `contentSettings` update check on Chrome. Not downloaded.
 - Any new permission, network request, data source, or change to the privacy promise.
 - Copy that compares Fundament with Google, Chrome, or another product.
+- **Pro-Ansicht und Lizenzfeld.** Entwurf, nicht gebaut. Heute zeigt das Popup `plan_comingSoon`, wenn kein bezahlter Checkout aktiv ist, und das Lizenzfeld, wenn der Entwicklungsschlüssel Lizenzen annimmt. Nach einem Ja sind beide nicht da, solange `paidCheckoutLive()` falsch ist. Nicht als „kommt bald“. Die kostenlose Prüfung ist schon da: `npm run release:check` (bezahlt: `--paid`).
 
 ## Later
 

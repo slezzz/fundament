@@ -2,6 +2,62 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-23 — Free release check, Pro screen still waiting
+
+- Hypothesis: `release:check` can treat this tree as a paid release, and the loopback string in `remoteConfig.ts` is only a default.
+- Red first: the new test could not load, because importing `release-check.mjs` ran the old check and exited on the development license key. After the script exported `freeZipProblems`, the check on the zip from the previous pass failed: the inflated entries still contained `127.0.0.1`. A raw search of the zip bytes does not see it. Deflate hides the text, so the check inflates each entry.
+- Free path, no flag: the public key must be the development key, so a store pack does not activate licenses (`licenseActivationAllowed` is already false for that key). `VITE_PAY_ORIGIN` and `VITE_REPUTATION_URL` must be empty. The zip must not contain `127.0.0.1` or `http://localhost` / `https://localhost`. `--paid` keeps the old rule and still fails here: development key, and no pay origin.
+- The store build sets `VITE_STORE_PACK` in the Vite config. Vite 8 did not inline that variable by itself: the config process saw `"1"`, and the bundle still returned `http://127.0.0.1:8787`. The config now defines the flag. On a store pack it also defines the reputation URL and the pay origin as empty, so a local `.env` does not enter the zip. An unpacked build does not overwrite those two. An empty reputation base was already “unavailable” in `httpProvider.ts`.
+- The word `localhost` is still in the package. `dnsRebind.js` compares the host with `localhost`. The shipped threat list contains `808211188ad0ed.localhost.run`. Deleting either would change detection. The check flags an address, not that word. The test builds both and expects only the address to fail. The same check fails if the zip contains `fundament-bridge` or `fundament-content`. Those names are not in this package. A later pass may write them only in a measurement build.
+- Two packs after the string left: both `cf1f1cf3fdd1a42aefb488ac221d54933a1b5def4acd6d4f1c0328ea04e3a8f0`. `STORE_LISTING.md` carries that line. The earlier `181b6724…` was the same writer with the dev server still inside.
+- The Pro view and the license field are not changed. The popup still says the paid plan is coming, and the license box still appears when the development key would accept a license. That edit is a draft under “Wartet auf Freigabe”. Weights unchanged.
+
+### Self-check
+
+- Real user, real attack: A store build that still calls `127.0.0.1:8787` is a dev server in a public package. The free zip no longer has that address.
+- Five-minute bypass: Put the address back in a file that the store build copies. The check inflates the zip and fails. A `localhost.run` host is not that bypass. It is a listed name and stays.
+- False alarm: The DNS-rebind check and that feed host contain the word. They are not reported.
+- Simpler or more complicated: One flag on the checker. The store build forces three defines. The screen copy waits.
+- AGENTS.md: Nothing new is sent. The free package has no reputation URL. Unpacked builds still default to the local server. No weight change. No new permission.
+- Would I defend it: Yes, as “the free zip has no loopback address and does not activate the development key.” Not as “the popup no longer says coming soon.” That line is still there.
+- Harmless on weird input: A paid check without an HTTPS origin still fails. A free check without a zip fails and says to pack first.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? No new detection. The feed host stays. The page cannot choose the build flag.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None. The zip is our build.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? `localhost` as a host is the rebind exception, and it stays allowed. A `localhost.run` name in the threat list stays listed.
+- Richtig: Der Check war rot, solange `127.0.0.1` im Zip stand. Danach ist der freie Pfad grün und `--paid` rot. Zweimal packen, dieselbe SHA-256 `cf1f1cf3fdd1a42aefb488ac221d54933a1b5def4acd6d4f1c0328ea04e3a8f0`.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die Pro-Ansicht ausdrücklich nicht umgebaut wurde und der Entwurf im Backlog steht.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Adresse wieder ins Paket legen. Getestet, an einem kleinen Zip und am echten Paket vor dem Umbau. Das Wort `localhost` im Rebind-Check als Verstoß zu werten wäre ein Fehlalarm. Benannt und nicht so gebaut.
+
+Urteil: BEHALTEN
+
+## 2026-11-23 — Two packs, one checksum
+
+- Hypothesis: the two different SHA-256 values from one commit come from `Compress-Archive`, which stores the current time.
+- Red first: `tests/security/pack-zip.test.ts` failed because `scripts/zip-store.mjs` did not exist. After the writer existed, the same test failed again: `0o100644 << 16` is negative, and `writeUInt32LE` refused it.
+- The zip now uses the ZIP epoch (1980-01-01), UTF-8 names, no extra field, deflate level 9, and a fixed mode (`0644` for a file, `0755` for a directory). Names are sorted. A changed mtime between the two writes does not change the hash. The test reads the central directory itself.
+- `npm run pack` no longer calls PowerShell. It zips `.store-pack` with that writer and puts the SHA-256 under `## Release notes` in `STORE_LISTING.md`. A second pack replaces the line instead of adding another.
+- Two full packs, this machine, after the supply-chain bump: both `181b6724c9e4589de9082084357d5cb0438375ebe6ee16da7badd1d9a4a5d73a`, both 4 108 454 bytes. That hash will move when the zip contents change. The earlier pair (`DE79…` / `318E…`) was the timestamp, not two different builds: the file bytes matched across these two builds.
+- Weights unchanged. The package still contains the developer license key and `http://127.0.0.1:8787`. Those are the next pass, not this one.
+
+### Self-check
+
+- Real user, real attack: A reviewer who hashes the zip twice and gets two answers cannot tell which file was submitted. One hash is the file.
+- Five-minute bypass: Put the current time back into an extra field, or take the mode from the filesystem. The test sets a later mtime and still requires one hash, the epoch stamp, and `0644` / `0755`.
+- False alarm: A directory and a file can share a prefix. They sort as strings, and the test builds `b.txt` beside `nested/a.txt`.
+- Simpler or more complicated: One writer in Node. No new dependency. PowerShell is gone from this path.
+- AGENTS.md: Nothing is sent. The zip still drops source maps. Localhost in `externally_connectable` is still refused before the zip is written. The address inside `settings.js` is still there; this pass does not claim it is gone.
+- Would I defend it: Yes, as “two packs of these bytes are `181b6724…`.” Not as “the store package is free of the dev server.”
+- Harmless on weird input: A checksum that is not 64 hex digits throws. Release notes that have the heading but not the line throw, so a broken note is not given a second heading.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? No page. The bytes are the build output. The clock is not an input.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None.
+- Richtig: Der Test war rot (Modul fehlt, dann ein negatives Modus-Bit). Danach zweimal `npm run pack`, dieselbe SHA-256 `181b6724c9e4589de9082084357d5cb0438375ebe6ee16da7badd1d9a4a5d73a`.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die Prüfsumme in `STORE_LISTING.md` steht und ein zweiter Pack sie ersetzt statt zu verdoppeln.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Uhrzeit in den Zip-Kopf oder in ein Extra-Feld schreiben. Getestet: anderer mtime, gleiche Prüfsumme, fester Stempel, feste Rechte.
+
+Urteil: BEHALTEN
+
+
 ## 2026-11-23 — Pin the workflows and drop the high advisories
 
 - Hypothesis: the signing key is safe if it stays a repository secret next to `npm ci`, and the current dev tree is fine because the runtime audit is already 0.
