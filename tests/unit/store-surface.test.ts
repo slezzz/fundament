@@ -53,4 +53,15 @@ describe("free store surface", () => {
     expect(listing).not.toMatch(/(^|[^A-Za-z])Pro(?![a-z])/);
     expect(listing.toLowerCase()).not.toMatch(/\bpaid\b|\bprice\b|kostenpflichtig|bald/);
   });
+
+  it("does not offer a telemetry switch on the store pages", () => {
+    const popup = readFileSync("src/ui/popup/App.tsx", "utf8");
+    const telemetry = popup.indexOf('t("toggle_telemetry")');
+    const guard = popup.lastIndexOf("isStorePack()", telemetry);
+    expect(telemetry).toBeGreaterThan(0);
+    expect(guard).toBeGreaterThan(0);
+    expect(popup.slice(guard, telemetry)).toContain("? null");
+    expect(en).not.toContain("turning it on");
+    expect(de).not.toContain("Einschalten");
+  });
 });

@@ -36,4 +36,4 @@ Same facts as `PRIVACY.md` and `pages/privacy/en.html`.
 - At most every 6 hours, a GET to `versionhistory.googleapis.com` for the current stable Chrome version. Nothing about the user is in the request.
 - Have I Been Pwned runs only after a click. A 5-character SHA-1 prefix goes to `api.pwnedpasswords.com`.
 - A false-alarm report opens a public GitHub issue only after a second click. It contains the hostname and signal ids.
-- The telemetry switch sends nothing. This build has no address for it.
+- This build has no telemetry switch and no address for counters.

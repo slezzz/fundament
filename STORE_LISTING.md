@@ -47,7 +47,7 @@ What they often imply that we will not: live global intel in the extension, anti
 
 **Privacy**
 
-Analysis runs on your device. Optional telemetry is off unless you turn it on. If you confirm a false-alarm report, Fundament opens a public GitHub issue with the hostname and signal ids only. See the privacy policy for permissions and data handling.
+Analysis runs on your device. This build has no telemetry switch and no address for counters. If you confirm a false-alarm report, Fundament opens a public GitHub issue with the hostname and signal ids only. See the privacy policy for permissions and data handling.
 
 ## Feature list
 
@@ -62,7 +62,7 @@ Analysis runs on your device. Optional telemetry is off unless you turn it on. I
 
 ## Privacy explanation (store form)
 
-Fundament processes the URL of pages you visit locally to detect phishing patterns and count blocked trackers. A content script looks only at whether a password field exists and where forms submit — never at typed values. It stores settings and a short host-only event log on the device. Optional telemetry is off and this build has no address for it. A confirmed false-alarm report opens a public GitHub issue containing the hostname and signal ids, not the path or query.
+Fundament processes the URL of pages you visit locally to detect phishing patterns and count blocked trackers. A content script looks only at whether a password field exists and where forms submit — never at typed values. It stores settings and a short host-only event log on the device. This build has no telemetry switch and no address for counters. A confirmed false-alarm report opens a public GitHub issue containing the hostname and signal ids, not the path or query.
 
 ## Permission justification (store form)
 

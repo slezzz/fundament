@@ -611,11 +611,13 @@ function SettingsView({
       <section>
         <h2>{t("popup_privacy")}</h2>
         <FilteredToggle label={t("toggle_local")} checked disabled onChange={() => undefined} />
-        <FilteredToggle
-          label={t("toggle_telemetry")}
-          checked={settings.telemetry}
-          onChange={(telemetry) => void onChange({ telemetry })}
-        />
+        {isStorePack() ? null : (
+          <FilteredToggle
+            label={t("toggle_telemetry")}
+            checked={settings.telemetry}
+            onChange={(telemetry) => void onChange({ telemetry })}
+          />
+        )}
       </section>
       <section>
         <h2>{t("popup_advanced")}</h2>

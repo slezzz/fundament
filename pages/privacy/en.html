@@ -18,7 +18,7 @@
     <li>Chrome version check, at most every 6 hours: GET <code>https://versionhistory.googleapis.com/v1/chrome/platforms/&lt;platform&gt;/channels/stable/versions/all/releases?filter=endtime=none</code> without cookies. Nothing about you is in the request.</li>
     <li>Have I Been Pwned, only when you run it: a 5-character prefix of a SHA-1 is sent to <code>api.pwnedpasswords.com</code>. The password is cleared before the request.</li>
   </ul>
-  <p>The telemetry switch is off. This build has no address to send counters to, so turning it on sends nothing.</p>
+  <p>This build has no telemetry switch and no address for counters.</p>
   <h2>Permissions</h2>
   <ul>
     <li><code>storage</code> — settings, lists, and a short local event log (24 hours, max 40 entries).</li>

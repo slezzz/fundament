@@ -1,6 +1,6 @@
 # Privacy
 
-Fundament is **local-first**. Telemetry is **off** by default.
+Fundament is **local-first**. This build has no telemetry switch.
 
 ## Processed locally (on device)
 
@@ -32,7 +32,7 @@ The phishing host list (Phishing.Database, MIT) ships inside the extension and i
 
 ## Optional remote (opt-in)
 
-The telemetry switch is off. This build has no address to send counters to, so turning it on sends nothing.
+This build has no telemetry switch and no address for counters. Nothing is sent as a usage counter.
 
 ## Never collected
 
@@ -77,7 +77,7 @@ Settings has a separate link for phishing Fundament did not catch. It opens an e
 ## User controls
 
 - Disable threat protection, tracker blocking, or phishing signals independently.
-- Disable (default already off) anonymous telemetry.
+- There is no telemetry switch in this build.
 - Allowlist a host (skips interstitial; does not silently disable DNR unless the host is also allowed in DNR).
 - Clear history from Settings.
 
