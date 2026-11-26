@@ -65,6 +65,15 @@ test("a large page stays under three times the calibration", async () => {
     swSteps: SW_STEPS,
     frameSteps: FRAME_STEPS,
   });
+  console.log(
+    `page-cost times ${JSON.stringify({
+      sw: result.swMs,
+      swRef: result.swCalibration,
+      bridge: result.bridgeMs,
+      content: result.contentMs,
+      frameRef: result.frameCalibration,
+    })}`,
+  );
   expect(result.bridgeMs).toHaveLength(FRAME_COUNT + 1);
   expect(result.contentMs).toHaveLength(FRAME_COUNT + 1);
   const swReference = median(result.swCalibration);

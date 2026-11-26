@@ -2,6 +2,31 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-26 — Page cost waits out a reused service worker
+
+- Hypothesis: Playwright Chromium does not emit `serviceworker` after `chrome.runtime.reload()` because Chrome reuses the CDP target. The docs for Playwright 1.62 say the same Worker object answers the next `evaluate`. Edge still attaches a new target, which is why the old wait passed here and timed out in CI.
+- `swRestart` now takes whichever comes first: a new `serviceworker` event, or the same worker once `globalThis.__fundamentBoot` is gone. The clock still ends at `getManifest()`.
+- Edge, one worker, port 5174 empty: restarts 780, 900, 980, 942, 906 ms (median 906). Calibration median 830. Bridge max 2.7 ms, content max 4.1 ms, frame calibration median 6.9. All inside the unchanged 3× bound. The previous quiet run sat near 755 ms, so this is the same size.
+- Chromium itself was not launched. Norton removes Playwright's Chromium on this machine. Whether the same-handle path answers there is only provable in CI, and that job does not run this test until that is shown.
+
+### Self-check
+
+- Real user, real attack: None. This is the restart clock.
+- Five-minute bypass: Wait only for the event. Chromium times out again.
+- False alarm: A worker that still has the marker is rejected, so a pre-reload `evaluate` does not count as a start.
+- Simpler or more complicated: Two waits, one marker.
+- AGENTS.md: No weight change. No threshold change.
+- Would I defend it: Yes, as “the restart is the first answer from a fresh worker realm.”
+- Harmless on weird input: Both waits fail after 20 s and the test throws.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? Not a detection change.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None.
+- Richtig: Edge still measures a sub-second restart. Chromium is unproven here.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die fünf Edge-Zeiten neben der Kalibrierung stehen.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Nur das Event abwarten. Der Marker-Pfad ist im Code; Chromium dazu fehlt lokal. Benannt, nicht auf Chromium getestet.
+
+Urteil: BEHALTEN
+
 ## 2026-11-26 — Page cost finds a browser on Linux
 
 - Hypothesis: CI failed because the page-cost spec required the Windows Edge path even when `FUNDAMENT_E2E_BROWSER` was unset.

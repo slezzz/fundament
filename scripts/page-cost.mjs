@@ -127,15 +127,62 @@ async function durations(worker, tabId, world, name) {
   return rows;
 }
 
+function firstResult(promises) {
+  return new Promise((resolve, reject) => {
+    let pending = promises.length;
+    let error;
+    for (const promise of promises) {
+      promise.then(resolve, (reason) => {
+        error = reason;
+        pending -= 1;
+        if (pending === 0) reject(error instanceof Error ? error : new Error(String(error)));
+      });
+    }
+  });
+}
+
+/**
+ * Cold start until the new worker answers.
+ * Chromium reuses the CDP target after runtime.reload(), so Playwright emits no
+ * serviceworker event and the same Worker object answers the next evaluate.
+ * Edge still attaches a new target. Whichever answers first, without the
+ * pre-reload marker, is the restarted worker.
+ */
 async function swRestart(context) {
   const current = context.serviceWorkers()[0];
   if (!current) throw new Error("service worker missing");
-  const next = context.waitForEvent("serviceworker", { timeout: 20000 });
+  await current.evaluate(() => {
+    globalThis.__fundamentBoot = 1;
+  });
   const started = performance.now();
-  await current.evaluate(() => chrome.runtime.reload());
-  const worker = await next;
-  await worker.evaluate(() => chrome.runtime.getManifest().manifest_version);
-  return { ms: performance.now() - started, worker };
+  let stop = false;
+  const reloadSent = current.evaluate(() => chrome.runtime.reload()).catch(() => undefined);
+  const ready = (worker) =>
+    worker.evaluate(() => {
+      if (globalThis.__fundamentBoot) throw new Error("stale worker");
+      return chrome.runtime.getManifest().manifest_version;
+    });
+  const viaEvent = context.waitForEvent("serviceworker", { timeout: 20000 }).then((worker) => ready(worker).then(() => worker));
+  const viaSame = (async () => {
+    const deadline = started + 20000;
+    while (!stop && performance.now() < deadline) {
+      try {
+        await ready(current);
+        return current;
+      } catch (error) {
+        if (stop || performance.now() >= deadline) throw error;
+        await new Promise((resolve) => setTimeout(resolve, 25));
+      }
+    }
+    throw new Error("service worker did not answer");
+  })();
+  try {
+    const worker = await firstResult([viaEvent, viaSame]);
+    return { ms: performance.now() - started, worker };
+  } finally {
+    stop = true;
+    void reloadSent;
+  }
 }
 
 /**
