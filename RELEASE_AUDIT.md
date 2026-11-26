@@ -53,7 +53,7 @@ Store package, after the unit run, without a second non-store build:
 
 | Step | Result |
 |------|--------|
-| `npm run pack` | `fundament-store.zip`, 4,196,942 bytes, SHA-256 `3a597b60c1b8568015b1183d5ab5119202a6ec55657cb7f665915eb4d7a237a0`. That pack set `VITE_STORE_PACK=1` with no `VITE_PAY_ORIGIN`, so the build deleted `externally_connectable`. `scripts/pack-store.mjs` exits if localhost is still present. It does not delete the key itself. |
+| `npm run pack` | `fundament-store.zip`, 4,196,942 bytes, SHA-256 `3a597b60c1b8568015b1183d5ab5119202a6ec55657cb7f665915eb4d7a237a0`. That pack set `VITE_STORE_PACK=1` with no `VITE_PAY_ORIGIN`, so the build deleted `externally_connectable`. `scripts/pack-store.mjs` exits if localhost is still present. It does not delete the key itself. The upload candidate on 2026-11-26, after the short description was cut to the store limit, is SHA-256 `05476c249d9d485daa8fd4690280061bff589610b1c80f70efbfd7d8658cde6f`. Do not upload `a142c74b88c5b83ecb74fca758ab83a70768d705d1161ac2c2eb72679b40f41f`. |
 | `npx playwright test` on that `dist/`, Edge | 11 passed. This loaded the store build. The zip omits `.map` files; the scripts are the ones just packed. |
 | `node scripts/store-screenshots.mjs` on that `dist/` | Wrote `store-assets/screenshots/{de,en}/`. Looked at DE and EN warning, DE protected, DE dashboard. |
 

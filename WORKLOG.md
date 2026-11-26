@@ -2,6 +2,31 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-26 — The store description fits the 132-character field
+
+- Hypothesis: Chrome rejects a manifest description over 132 characters. English was 152, German 160. No test counted them.
+- The test walks every language under `public/_locales` and counts Unicode code points. It failed on German (160) before the strings changed.
+- The manifest strings are now the short descriptions already written in `STORE_LISTING.md`. English 100, German 94, name 9 in both. `release:check` passed. Pack SHA-256 is `05476c249d9d485daa8fd4690280061bff589610b1c80f70efbfd7d8658cde6f`.
+- The same sentence is not the onboarding copy, the README line “The security layer for your browser.”, or `package.json`. Those stay. Screenshots show the popup, the warning page, and the dashboard. They do not draw the manifest description, so they stay too.
+
+### Self-check
+
+- Real user, real attack: A reviewer reads the short description before installing. A cut-off sentence hides what the extension does.
+- Five-minute bypass: Put the long sentence back. The locale test fails.
+- False alarm: A description of 132 code points passes. An emoji would count as one or two code points, the same way Chrome counts.
+- Simpler or more complicated: One loop over `_locales`.
+- AGENTS.md: No weight change. The zip hash changed because the locale files are in the package.
+- Would I defend it: Yes, as “the store field and the manifest string are the same sentence, and both fit.”
+- Harmless on weird input: A locale without `extDescription` throws, and the test fails.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? Not a detection change.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None.
+- Richtig: en 100, de 94, name 9. The old lengths were 152 and 160.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil der Test jede Sprache unter `public/_locales` misst und die Sätze in `STORE_LISTING.md` stehen.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Den alten Satz zurückschreiben. Der Test war davor rot. Getestet.
+
+Urteil: BEHALTEN
+
 ## 2026-11-26 — Page cost leaves the shared CI run
 
 - The Chromium same-handle restart is not shown on this machine, so page cost stays out of CI. `playwright test` ignores `page-cost.spec.ts`. `npm run test:perf` runs that file with one worker after the build. `test:e2e` is still build, then the other Playwright tests, then the store zip.

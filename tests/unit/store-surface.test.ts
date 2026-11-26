@@ -1,4 +1,5 @@
-import { readFileSync } from "node:fs";
+import { readdirSync, readFileSync } from "node:fs";
+import { resolve } from "node:path";
 import { storeManifest } from "@billing/storeManifest";
 
 const manifest = JSON.parse(readFileSync("src/manifest.json", "utf8")) as {
@@ -14,6 +15,20 @@ const de = readFileSync("pages/privacy/de.html", "utf8");
 const listing = readFileSync("STORE_LISTING.md", "utf8");
 
 describe("free store surface", () => {
+  it("keeps every locale name and description inside the store limits", () => {
+    const root = resolve("public/_locales");
+    const languages = readdirSync(root, { withFileTypes: true }).filter((entry) => entry.isDirectory());
+    expect(languages.length).toBeGreaterThan(0);
+    for (const language of languages) {
+      const messages = JSON.parse(readFileSync(resolve(root, language.name, "messages.json"), "utf8")) as {
+        extName: { message: string };
+        extDescription: { message: string };
+      };
+      expect([...messages.extName.message].length, `${language.name} extName`).toBeLessThanOrEqual(75);
+      expect([...messages.extDescription.message].length, `${language.name} extDescription`).toBeLessThanOrEqual(132);
+    }
+  });
+
   it("lists every store permission in the dashboard and in the privacy pages", () => {
     expect(store.permissions).not.toContain("scripting");
     expect(store.externally_connectable).toBeUndefined();

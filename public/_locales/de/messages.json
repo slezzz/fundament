@@ -1,6 +1,6 @@
 {
   "extName": { "message": "Fundament" },
-  "extDescription": { "message": "Die Sicherheitsschicht für Chrome. Stoppt Phishing, Werbung, ClickFix, AI-/Crypto-Imitate, Miner, Tracking-Links und unsichere Downloads — und sagt das ehrlich." },
+  "extDescription": { "message": "Sicherheitsschicht für Chrome: Phishing, ClickFix, HTTP, Werbung/Tracker, unsichere Downloads." },
   "popup_loadError": { "message": "Status konnte nicht geladen werden." },
   "popup_checking": { "message": "Diese Seite wird geprüft…" },
   "popup_settingsAria": { "message": "Einstellungen" },

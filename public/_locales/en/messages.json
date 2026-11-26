@@ -1,6 +1,6 @@
 {
   "extName": { "message": "Fundament" },
-  "extDescription": { "message": "The security layer for Chrome. Stops phishing, ads, ClickFix, AI/crypto lookalikes, miners, tracking links, and unsafe downloads — and says so honestly." },
+  "extDescription": { "message": "Local Chrome security: phishing lookalikes, ClickFix, HTTP warnings, ads/trackers, unsafe downloads." },
   "popup_loadError": { "message": "Could not load status." },
   "popup_checking": { "message": "Checking this site…" },
   "popup_settingsAria": { "message": "Settings" },
