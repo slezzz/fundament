@@ -603,7 +603,7 @@ function SettingsView({
         )}
         <FilteredToggle
           label={t("toggle_ioc")}
-          hint={t("toggle_iocHint")}
+          hint={isStorePack() ? t("toggle_iocHintStore") : t("toggle_iocHint")}
           checked={settings.iocFeeds}
           onChange={(iocFeeds) => void onChange({ iocFeeds })}
         />

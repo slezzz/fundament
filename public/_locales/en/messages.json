@@ -89,6 +89,7 @@
   "toggle_fingerprintHint": { "message": "Detection is always on with page checks. This toggle adds tiny canvas noise and can break drawings or games." },
   "toggle_ioc": { "message": "IOC host lists" },
   "toggle_iocHint": { "message": "Applies shipped IOC hosts (malware/C2/miners) in the network layer, including document loads. Optional pinned HTTPS feed; rollback keeps the previous snapshot." },
+  "toggle_iocHintStore": { "message": "Applies the bundled malware, C2, and miner hosts in the network layer, including document loads." },
   "toggle_strip": { "message": "Strip tracking from links" },
   "toggle_stripHint": { "message": "Removes click IDs such as utm, fbclid, and gclid from page addresses." },
   "toggle_gpc": { "message": "Global Privacy Control" },

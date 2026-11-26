@@ -89,6 +89,7 @@
   "toggle_fingerprintHint": { "message": "Erkennung läuft mit den Seitenprüfungen. Dieser Schalter fügt Canvas-Rauschen hinzu und kann Zeichnungen oder Spiele stören." },
   "toggle_ioc": { "message": "IOC-Hostlisten" },
   "toggle_iocHint": { "message": "Wendet mitgelieferte IOC-Hosts (Malware/C2/Miner) in der Netzwerkschicht an, inklusive Dokument-Loads. Optional gepinnter HTTPS-Feed; Rollback behält den vorherigen Stand." },
+  "toggle_iocHintStore": { "message": "Wendet die mitgelieferte Liste von Malware-, C2- und Miner-Hosts an, auch beim Laden der Seite." },
   "toggle_strip": { "message": "Tracking aus Links entfernen" },
   "toggle_stripHint": { "message": "Entfernt Klick-IDs wie utm, fbclid und gclid aus Seitenadressen." },
   "toggle_gpc": { "message": "Global Privacy Control" },

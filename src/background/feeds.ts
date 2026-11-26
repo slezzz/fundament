@@ -38,6 +38,19 @@ export async function seedShippedIoc(force = false): Promise<IocState> {
   }
 }
 
+/** A store install applies the bundled IOC file. A typed address is a dev build only. */
+export function usesRemoteIoc(storePack: boolean, url: string): boolean {
+  return storePack !== true && url.trim().length > 0;
+}
+
+export function withoutRemoteIoc<T extends { iocFeedUrl?: string; iocFeedSha256?: string }>(storePack: boolean, patch: T): T {
+  if (storePack !== true) return patch;
+  const next = { ...patch };
+  delete next.iocFeedUrl;
+  delete next.iocFeedSha256;
+  return next;
+}
+
 export async function refreshPinnedIoc(urlRaw: string, pinRaw: string): Promise<IocState> {
   const url = feedFetchUrl(urlRaw);
   if (!url) {

@@ -37,7 +37,7 @@ import { bumpStats, loadStats, EMPTY_STATS } from "@storage/stats";
 import { clearPack, loadPackHosts, loadPackStatus } from "@storage/pack";
 import { loadIocState } from "@storage/feeds";
 import { loadIntegrityStatus } from "@storage/integrity";
-import { iocStatusFrom, refreshPinnedIoc, rollbackIoc, seedShippedIoc } from "./feeds";
+import { iocStatusFrom, refreshPinnedIoc, rollbackIoc, seedShippedIoc, usesRemoteIoc, withoutRemoteIoc } from "./feeds";
 import { runIntegrityCheck } from "./integrity";
 import { PAUSE_MS_DEFAULT } from "@shared/constants";
 import { parseClientMessage, parseExternalActivation, senderMaySend } from "@shared/messageGate";
@@ -538,7 +538,7 @@ async function onMessage(message: ClientMessage, sender: chrome.runtime.MessageS
       return { type: "TAB_ANALYSIS", analysis: record?.analysis ?? null };
     }
     case "UPDATE_SETTINGS": {
-      const settings = await patchSettings(message.patch);
+      const settings = await patchSettings(withoutRemoteIoc(isStorePack(), message.patch));
       if (message.patch.filterPackUrl !== undefined || message.patch.filterPackSha256 !== undefined) {
         await refreshFilterPack(settings);
       }
@@ -638,7 +638,7 @@ async function onMessage(message: ClientMessage, sender: chrome.runtime.MessageS
       const settings = await loadSettings();
       if (!settings.iocFeeds) return { type: "ERROR", message: "IOC feeds are turned off." };
       const before = await loadIocState();
-      const next = settings.iocFeedUrl
+      const next = usesRemoteIoc(isStorePack(), settings.iocFeedUrl)
         ? await refreshPinnedIoc(settings.iocFeedUrl, settings.iocFeedSha256)
         : await seedShippedIoc(true);
       if (next.current && next.current.sha256 !== before.current?.sha256) {
@@ -899,7 +899,7 @@ chrome.alarms.onAlarm.addListener(async (alarm) => {
     case "fundament-ioc": {
       const settings = await loadSettings();
       if (settings.iocFeeds) {
-        if (settings.iocFeedUrl) await refreshPinnedIoc(settings.iocFeedUrl, settings.iocFeedSha256);
+        if (usesRemoteIoc(isStorePack(), settings.iocFeedUrl)) await refreshPinnedIoc(settings.iocFeedUrl, settings.iocFeedSha256);
         else await seedShippedIoc();
         await applySettings(await loadSettings());
       }

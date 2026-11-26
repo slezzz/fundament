@@ -241,7 +241,7 @@ export function OptionsApp() {
         )}
         <Toggle
           label={t("toggle_ioc")}
-          hint={t("toggle_iocHint")}
+          hint={isStorePack() ? t("toggle_iocHintStore") : t("toggle_iocHint")}
           checked={settings.iocFeeds}
           onChange={(iocFeeds) => void patch({ iocFeeds })}
         />
@@ -333,41 +333,45 @@ export function OptionsApp() {
           ])}
         </p>
         {state.iocFeed.error ? <p className="note">{state.iocFeed.error}</p> : null}
-        <p className="note">{t("dash_iocNote")}</p>
-        <label className="field">
-          {t("dash_iocUrl")}
-          <input value={iocUrl} onChange={(e) => setIocUrl(e.target.value)} spellCheck={false} />
-        </label>
-        <label className="field">
-          {t("dash_iocPin")}
-          <input value={iocPin} onChange={(e) => setIocPin(e.target.value)} spellCheck={false} />
-        </label>
-        <div className="row">
-          <button
-            className="small-btn"
-            type="button"
-            disabled={iocBusy}
-            onClick={() => {
-              void (async () => {
-                setIocBusy(true);
-                await patch({ iocFeedUrl: iocUrl.trim(), iocFeedSha256: iocPin.trim().toLowerCase() });
-                await send({ type: "REFRESH_IOC_FEED" });
-                await refresh();
-                setIocBusy(false);
-              })();
-            }}
-          >
-            {t("dash_iocRefresh")}
-          </button>
-          <button
-            className="small-btn"
-            type="button"
-            disabled={!state.iocFeed.canRollback || iocBusy}
-            onClick={() => void send({ type: "ROLLBACK_IOC_FEED" }).then(() => refresh())}
-          >
-            {t("dash_iocRollback")}
-          </button>
-        </div>
+        {isStorePack() ? null : (
+          <>
+            <p className="note">{t("dash_iocNote")}</p>
+            <label className="field">
+              {t("dash_iocUrl")}
+              <input value={iocUrl} onChange={(e) => setIocUrl(e.target.value)} spellCheck={false} />
+            </label>
+            <label className="field">
+              {t("dash_iocPin")}
+              <input value={iocPin} onChange={(e) => setIocPin(e.target.value)} spellCheck={false} />
+            </label>
+            <div className="row">
+              <button
+                className="small-btn"
+                type="button"
+                disabled={iocBusy}
+                onClick={() => {
+                  void (async () => {
+                    setIocBusy(true);
+                    await patch({ iocFeedUrl: iocUrl.trim(), iocFeedSha256: iocPin.trim().toLowerCase() });
+                    await send({ type: "REFRESH_IOC_FEED" });
+                    await refresh();
+                    setIocBusy(false);
+                  })();
+                }}
+              >
+                {t("dash_iocRefresh")}
+              </button>
+              <button
+                className="small-btn"
+                type="button"
+                disabled={!state.iocFeed.canRollback || iocBusy}
+                onClick={() => void send({ type: "ROLLBACK_IOC_FEED" }).then(() => refresh())}
+              >
+                {t("dash_iocRollback")}
+              </button>
+            </div>
+          </>
+        )}
       </section>
 
       <section>
