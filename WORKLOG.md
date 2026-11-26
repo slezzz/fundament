@@ -2,6 +2,30 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-26 — A second phishing source stays a question
+
+- Phishing.Database has not moved since 2026-10-02. The live feed was empty on 2026-11-26 (0 hosts). That is a backlog row, not a new download.
+- OpenPhish forbids commercial use without written consent. Phishing Army does not license its upstream sources. PhishTank’s archived terms are not a clear right to ship the list. URLhaus is CC0 and is a malware-URL list, not phishing hosts. A later paid version rules out NC. No source was added.
+- The second row is a fail or a warning in `build-live-feed` and `fetch-threat-feeds` when a source is unchanged for more than 7 days. Not built.
+
+### Self-check
+
+- Real user, real attack: A still list keeps blocking hosts that were phishing in October and misses hosts that appeared since.
+- Five-minute bypass: Paste a new feed URL into the builder. That would ship someone else’s list without a license check.
+- False alarm: Naming URLhaus as a phishing source would block malware URLs under the wrong claim. It is named as a different list.
+- Simpler or more complicated: Two backlog lines.
+- AGENTS.md: No feed run, no weight change, no new network request.
+- Would I defend it: Yes, as “the list is still, and the next source waits for a yes.”
+- Harmless on weird input: Nothing new runs.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The shipped list is the old file. A new source is not connected.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None. No new hosts were added.
+- Richtig: The rows are in `BACKLOG.md`. The builder scripts are unchanged.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil jede genannte Quelle eine Lizenzgrenze hat und der Eintrag STOPP sagt.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Eine Quelle trotzdem einbauen. Nicht getan.
+
+Urteil: BEHALTEN
+
 ## 2026-11-26 — The listing says what the package actually reads
 
 - “Active” phishing hosts became “known”. Phishing.Database has not been updated since 2026-10-02, so activity is not shown.

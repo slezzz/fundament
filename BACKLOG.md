@@ -2,6 +2,16 @@
 
 Highest user benefit first. A row is done only after a test or a cited measurement in `RELEASE_AUDIT.md`.
 
+## P1 nach dem Start — nicht bauen, bevor gefragt wird
+
+1. **Zweite, lebendige Phishing-Quelle.** Phishing.Database steht seit 2026-10-02 still. Der Live-Feed ist deshalb leer (0 Hosts, geprüft am 26.11.2026). Eine neue Quelle braucht ein Ja. Die Lizenz muss auch eine spätere Bezahlversion erlauben. Eine NC-Lizenz scheidet aus.
+   - OpenPhish verbietet kommerzielle Nutzung ohne schriftliche Zustimmung, einschließlich Produkterstellung. https://www.openphish.com/terms.html — nicht geeignet.
+   - Phishing Army verbietet die kommerzielle Nutzung der erzeugten Feeds nicht selbst, vergibt aber keine Rechte an den Upstream-Quellen. Jede Quelle müsste einzeln geprüft werden. https://phishing.army/license/ — kein Ja.
+   - PhishTank: die archivierten Bedingungen nennen eine kommerzielle Nutzung der „Data“ und beschränken gleichzeitig Kopieren und Weitergabe. Das ist keine klare Lizenz. https://www.phishtank.org/terms.php — nicht verwenden, bevor das geklärt ist.
+   - URLhaus (abuse.ch) ist CC0, listet aber Malware-URLs, keine Phishing-Hosts.
+   - Neue Datenquelle: STOPP und fragen.
+2. **Stillstand der Quelle sichtbar machen.** `scripts/build-live-feed` und `scripts/fetch-threat-feeds` sollen scheitern oder warnen, wenn die Quelle seit mehr als 7 Tagen unverändert ist, zum Beispiel über den letzten Commit oder einen Inhalts-Hash. Nicht gebaut.
+
 Paste lures now include `finger` / `ct.exe`, a `.search-ms` / `.lnk` / `.hta` name, and a fake crashed browser only when the page also tells the visitor to paste or run a fix. “reCAPTCHA” and “out of date” alone stay quiet. A Terminal-only page that copies a rustup-shaped command is still open, on purpose.
 
 ## Next

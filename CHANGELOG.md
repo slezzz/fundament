@@ -53,6 +53,7 @@ The first Chrome Web Store package is the free product. Pro is not on its pages 
 - Dev dependencies with a critical or high advisory are gone. Vite 8.3.8, Vitest 5.1.1, `@vitejs/plugin-react` 6.3.0. `esbuild` is a direct dev dependency because the bridge isolation test compiles one classic script and Vite 8 no longer pulls it in. `npm audit` after that: 0. Runtime dependencies were already 0. Weights unchanged. Corpora unchanged.
 
 ### Decisions
+- Backlog only: a second phishing source after launch, and a warning when a feed source has not changed for 7 days. Phishing.Database has been still since 2026-10-02, and the live feed had 0 hosts on 2026-11-26. No source was added. `BACKLOG.md`.
 - Four concept memos, no code. ConsentFix, device-code phishing, and an extension-id list are not to be built. Confirmed 2026-11-17. `contentSettings` may move to `optional_permissions` later, alone. On Edge 157 an update from required to optional kept the grant, the API, and an on toggle. Branded Chrome 158 could not load the unpacked build, so that half is not measured and the manifest is unchanged. `privacy`, `scripting`, and `management` stay required. Weights unchanged.
 - EIP-7702 and a lookalike address are not built. `concepts/wallet-delegation.md`. An authorization list does not hide the existing approval selectors. Address poisoning imitates an earlier recipient; comparing `from` with `to` on the same request misses that. Weights unchanged.
 
