@@ -11,6 +11,7 @@ import {
   FRAME_COUNT,
   FRAME_STEPS,
   SW_STEPS,
+  browserLaunchOptions,
   brokenByExtension,
   measurePageCost,
   median,
@@ -56,10 +57,10 @@ function buildMarkedExtension(): string {
 
 test("a large page stays under three times the calibration", async () => {
   test.setTimeout(180_000);
-  const executablePath = process.env.FUNDAMENT_E2E_BROWSER || "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
-  expect(existsSync(executablePath)).toBe(true);
+  const launch = browserLaunchOptions({ env: process.env, platform: process.platform, exists: existsSync });
+  if (process.env.FUNDAMENT_E2E_BROWSER) expect(existsSync(process.env.FUNDAMENT_E2E_BROWSER)).toBe(true);
+  console.log(`page-cost browser ${JSON.stringify(launch)}`);
   const result = await measurePageCost({
-    executablePath,
     dist: buildMarkedExtension(),
     swSteps: SW_STEPS,
     frameSteps: FRAME_STEPS,

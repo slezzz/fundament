@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { brokenByExtension, calibrationLoop, sideDifferences, unexplained, withinBudget } from "../../scripts/page-cost.mjs";
+import { brokenByExtension, browserLaunchOptions, calibrationLoop, sideDifferences, unexplained, withinBudget } from "../../scripts/page-cost.mjs";
 
 describe("page cost budget", () => {
   it("keeps the work under three times the calibration and not a looser multiple", () => {
@@ -39,5 +39,27 @@ describe("page cost budget", () => {
     expect(sandbox.map((difference) => difference.kind)).toEqual(["sandbox"]);
     expect(brokenByExtension(sandbox)).toEqual([]);
     expect(unexplained([{ kind: "load" }], [{ kind: "load", text: "   " }])).toEqual([{ kind: "load" }]);
+  });
+
+  it("uses Chromium on Linux when no browser path is set", () => {
+    const edge = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+    expect(browserLaunchOptions({ env: {}, platform: "linux", exists: () => false })).toEqual({ channel: "chromium" });
+    expect(browserLaunchOptions({ env: {}, platform: "linux", exists: () => true })).toEqual({ channel: "chromium" });
+    expect(browserLaunchOptions({ env: {}, platform: "win32", exists: (path) => path === edge })).toEqual({ executablePath: edge });
+    expect(browserLaunchOptions({ env: {}, platform: "win32", exists: () => false })).toEqual({ channel: "chromium" });
+    expect(
+      browserLaunchOptions({
+        env: { FUNDAMENT_E2E_BROWSER: "/opt/edge" },
+        platform: "linux",
+        exists: (path) => path === "/opt/edge",
+      }),
+    ).toEqual({ executablePath: "/opt/edge" });
+    expect(() =>
+      browserLaunchOptions({
+        env: { FUNDAMENT_E2E_BROWSER: "/missing" },
+        platform: "linux",
+        exists: () => false,
+      }),
+    ).toThrow(/FUNDAMENT_E2E_BROWSER/);
   });
 });

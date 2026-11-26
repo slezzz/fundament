@@ -23,6 +23,9 @@ The first Chrome Web Store package is the free product. Pro is not on its pages 
 - Those marks were visible to the page: `performance.getEntriesByType("measure")` returned `fundament-bridge` and `fundament-content`. The store build cuts them out before the bundle, and `release:check` fails if the zip still contains either name. The clock sits in `try` and the report runs after `collect()` returns, so a missing `performance` object cannot skip the scan. `tests/e2e/live.spec.ts`.
 - The same local page opened without the extension has no script error the extension adds. Two console differences are named: HTTPS upgrade asks for the favicon over HTTPS on an HTTP-only server, and Chrome logs a sandboxed `about:blank` frame that already disallows scripts. `tests/security/page-cost.test.ts`.
 
+### Tests/intern
+- `browserLaunchOptions` chooses the browser for the page-cost run. A set `FUNDAMENT_E2E_BROWSER` must exist. On Windows, an installed Edge is used when the variable is unset, because Norton deletes Playwright's Chromium. Otherwise the run uses Playwright's Chromium. The three-times calibration is unchanged. `tests/security/page-cost.test.ts`.
+
 ### Content scripts
 - `content.js` and `content-search.js` are wrapped in a function. They share one isolated world, and the minifier had reused one top-level name. On Google both run, so the second script replaced a function the first one calls (`s is not a function`) and the scan stopped. The manifest and the checks are unchanged. Weights unchanged.
 - Store screenshots and the 440×280 promo tile are taken from the unpacked store zip. Weights unchanged.

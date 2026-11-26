@@ -86,8 +86,12 @@ declare module "*.mjs" {
   export const SW_STEPS: number;
   export const FRAME_STEPS: number;
   export const FRAME_COUNT: number;
+  export function browserLaunchOptions(input: {
+    env: { FUNDAMENT_E2E_BROWSER?: string };
+    platform: string;
+    exists: (path: string) => boolean;
+  }): { executablePath: string } | { channel: "chromium" };
   export function measurePageCost(options: {
-    executablePath: string;
     dist: string;
     swSteps: number;
     frameSteps: number;

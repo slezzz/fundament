@@ -6,7 +6,7 @@
  *   node scripts/page-cost.mjs
  */
 import { createServer } from "node:http";
-import { mkdtempSync, rmSync } from "node:fs";
+import { existsSync, mkdtempSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { resolve } from "node:path";
 
@@ -17,6 +17,21 @@ export const ELEMENT_COUNT = 3000;
 export const SW_STEPS = 620_000_000;
 /** The same run. The slowest content scan was under 9 ms. 2 000 000 steps took about 2.6 ms. */
 export const FRAME_STEPS = 4_500_000;
+/** Local Norton deletes Playwright's Chromium. CI has no Edge at this path. */
+export const EDGE_PATH = "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe";
+
+/**
+ * @param {{ env: { FUNDAMENT_E2E_BROWSER?: string }, platform: string, exists: (path: string) => boolean }} input
+ */
+export function browserLaunchOptions(input) {
+  const chosen = input.env?.FUNDAMENT_E2E_BROWSER;
+  if (chosen) {
+    if (!input.exists(chosen)) throw new Error(`FUNDAMENT_E2E_BROWSER does not exist: ${chosen}`);
+    return { executablePath: chosen };
+  }
+  if (input.platform === "win32" && input.exists(EDGE_PATH)) return { executablePath: EDGE_PATH };
+  return { channel: "chromium" };
+}
 
 export function calibrationLoop(steps) {
   const started = performance.now();
@@ -124,9 +139,10 @@ async function swRestart(context) {
 }
 
 /**
- * @param {{ executablePath: string, dist: string, swSteps: number, frameSteps: number }} options
+ * @param {{ dist: string, swSteps: number, frameSteps: number }} options
  */
 export async function measurePageCost(options) {
+  const launch = browserLaunchOptions({ env: process.env, platform: process.platform, exists: existsSync });
   const { chromium } = await import("@playwright/test");
   const { server, port } = await listen((req, res) => {
     const path = (req.url ?? "/").split("?")[0] ?? "/";
@@ -137,7 +153,7 @@ export async function measurePageCost(options) {
   const profile = mkdtempSync(resolve(tmpdir(), "fundament-cost-"));
   const bareProfile = mkdtempSync(resolve(tmpdir(), "fundament-cost-bare-"));
   const context = await chromium.launchPersistentContext(profile, {
-    executablePath: options.executablePath,
+    ...launch,
     headless: true,
     viewport: { width: 1280, height: 800 },
     args: [`--disable-extensions-except=${options.dist}`, `--load-extension=${options.dist}`],
@@ -195,7 +211,7 @@ export async function measurePageCost(options) {
     await page.close();
 
     const bare = await chromium.launchPersistentContext(bareProfile, {
-      executablePath: options.executablePath,
+      ...launch,
       headless: true,
       viewport: { width: 1280, height: 800 },
       args: ["--disable-extensions"],
@@ -242,7 +258,6 @@ const invoked = process.argv[1]?.endsWith("page-cost.mjs");
 if (invoked) {
   const root = resolve(import.meta.dirname, "..");
   const result = await measurePageCost({
-    executablePath: process.env.FUNDAMENT_E2E_BROWSER || "C:\\Program Files (x86)\\Microsoft\\Edge\\Application\\msedge.exe",
     dist: resolve(root, "dist"),
     swSteps: Number(process.env.FUNDAMENT_SW_STEPS || SW_STEPS),
     frameSteps: Number(process.env.FUNDAMENT_FRAME_STEPS || FRAME_STEPS),

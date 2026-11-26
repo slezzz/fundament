@@ -2,6 +2,30 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-26 — Page cost finds a browser on Linux
+
+- Hypothesis: CI failed because the page-cost spec required the Windows Edge path even when `FUNDAMENT_E2E_BROWSER` was unset.
+- `browserLaunchOptions` returns that path only when it is set and exists, or on Windows when Edge is installed. Linux without the variable returns `{ channel: "chromium" }`. The test was red before the function existed. The three-times bound is unchanged.
+- The store zip was not rebuilt from extension source. The hash stays `a142c74b88c5b83ecb74fca758ab83a70768d705d1161ac2c2eb72679b40f41f`.
+
+### Self-check
+
+- Real user, real attack: None. This chooses which browser runs the budget test.
+- Five-minute bypass: Hard-code the Edge path again. The Linux case in `tests/security/page-cost.test.ts` fails.
+- False alarm: A missing optional Edge install is Chromium, not a failed exists check.
+- Simpler or more complicated: One function, three cases.
+- AGENTS.md: No weight change. No threshold change.
+- Would I defend it: Yes, as “Ubuntu uses Playwright's Chromium; this Windows machine uses Edge when the variable is unset.”
+- Harmless on weird input: A set path that does not exist throws.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? Not a detection change.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None.
+- Richtig: Linux ohne Variable ergibt `channel: "chromium"`. Windows mit vorhandenem Edge ergibt den Edge-Pfad.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil der Test die drei Fälle mit einem übergebenen `exists` prüft.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Den Edge-Pfad wieder fest eintragen. Der Linux-Fall erwartet Chromium. Getestet.
+
+Urteil: BEHALTEN
+
 ## 2026-11-26 — The store zip asks, and the form matches it
 
 - An unlimited approve, a Permit, and eth_sign open a confirm dialog before the fake wallet sees them. Cancel leaves the wallet uncalled. eth_chainId, eth_accounts, and a small approval do not ask. A page message cannot turn the question off. 51 dev tests and 49 store-zip tests passed, including those five.
