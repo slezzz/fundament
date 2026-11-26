@@ -2,6 +2,30 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-26 — The store zip asks, and the form matches it
+
+- An unlimited approve, a Permit, and eth_sign open a confirm dialog before the fake wallet sees them. Cancel leaves the wallet uncalled. eth_chainId, eth_accounts, and a small approval do not ask. A page message cannot turn the question off. 51 dev tests and 49 store-zip tests passed, including those five.
+- The store build drops a typed IOC address and still applies the bundled list. The telemetry switch is gone. The unused “online reputation unavailable” line is gone. The Free badge stays off the popup. Privacy pages name https://github.com/slezzz/fundament/issues. STORE_DASHBOARD.md has the form’s data types, the three certifications, the privacy-page address, and the reviewer steps.
+- Screenshots and the 440×280 tiles are in store-assets/screenshots, taken from the unpacked zip. The zip hash is a142c74b88c5b83ecb74fca758ab83a70768d705d1161ac2c2eb72679b40f41f. The page-cause file from 25.11 is not a measurement of this zip.
+
+### Self-check
+
+- Real user, real attack: A page that asks for an unlimited approval does not reach the wallet until the user confirms. Cancel drops it. Tested on the store zip.
+- Five-minute bypass: A page message that says the guard is off. The confirm still appears. Tested.
+- False alarm: A chain id, an account list, and a small approval do not ask.
+- Simpler or more complicated: The bridge already asked. The missing piece was the test, then the store form.
+- AGENTS.md: No weight change.
+- Would I defend it: Yes, as “the uploaded zip asks before those three wallet calls, and the dashboard answers match that package.”
+- Harmless on weird input: A malformed amount is not treated as unlimited. The existing calldata check stays.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The request arguments. A page message cannot replace the confirm the bridge captured.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? window.ethereum.request, after the bridge wraps it.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? A site the user trusts that really needs an unlimited approval. Confirm lets it through. A small approval does not ask.
+- Richtig: Abbrechen bei unbegrenztem approve, Permit und eth_sign erreicht die Test-Wallet nicht. Eine kleine Freigabe, eth_chainId und eth_accounts fragen nicht. 49 Store-Zip-Tests sind grün.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die Nachfrage im Dialogtext steht und der Wallet-Zähler leer bleibt.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Eine Nachricht an die Bridge, die die Nachfrage abschalten soll. Der Test erwartet die Nachfrage trotzdem. Getestet.
+
+Urteil: BEHALTEN
+
 ## 2026-11-26 — The packed zip is what the tests load
 
 - `release:check` runs ESLint `no-undef` on the packed content scripts, `background.js`, and `assets/*.js`. A zip that calls `hostAllowed` after the cosmetic cut reports `'hostAllowed' is not defined`. The current zip `9544ed31…` reports nothing.

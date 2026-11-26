@@ -461,9 +461,11 @@ test("a dynamic rule at the live-feed id redirects only its own host", async () 
 async function openWallet() {
   const page = await freshPage();
   const dialogs: string[] = [];
-  page.on("dialog", (dialog) => {
+  let dialogSettled = false;
+  page.on("dialog", async (dialog) => {
     dialogs.push(dialog.message());
-    void dialog.dismiss();
+    await dialog.dismiss();
+    dialogSettled = true;
   });
   await page.goto(`http://wallet-probe.example:${port}/wallet`);
   await page.waitForFunction(() => {
@@ -471,36 +473,40 @@ async function openWallet() {
     if (!eth) return false;
     return Boolean(Object.getOwnPropertyDescriptor(eth, "request")?.get);
   });
-  return { page, dialogs };
+  return {
+    page,
+    dialogs,
+    settled: () => dialogSettled,
+  };
 }
 
 async function walletReached(page: Awaited<ReturnType<typeof freshPage>>): Promise<string> {
-  await page.goto(`http://wallet-probe.example:${port}/wallet`);
-  return page.evaluate(() => sessionStorage.getItem("fundament-wallet-reached") ?? "");
+  if (page.url().includes("warning.html")) return "";
+  return page.evaluate(() => sessionStorage.getItem("fundament-wallet-reached") ?? "").catch(() => "");
 }
 
 test("an unlimited token approval asks before it reaches the wallet, and cancel drops it", async () => {
-  const { page, dialogs } = await openWallet();
+  const { page, dialogs, settled } = await openWallet();
   await page.locator("#unlimited").click();
-  await expect.poll(() => dialogs.length).toBeGreaterThan(0);
+  await expect.poll(() => settled()).toBe(true);
   expect(dialogs.some((text) => /unlimited token approval|unbegrenzte Token-Freigabe/i.test(text))).toBe(true);
   expect(await walletReached(page)).toBe("");
   await page.close();
 });
 
 test("a Permit signature asks before it reaches the wallet", async () => {
-  const { page, dialogs } = await openWallet();
+  const { page, dialogs, settled } = await openWallet();
   await page.locator("#permit").click();
-  await expect.poll(() => dialogs.length).toBeGreaterThan(0);
+  await expect.poll(() => settled()).toBe(true);
   expect(dialogs.some((text) => /Permit/i.test(text))).toBe(true);
   expect(await walletReached(page)).toBe("");
   await page.close();
 });
 
 test("eth_sign asks before it reaches the wallet", async () => {
-  const { page, dialogs } = await openWallet();
+  const { page, dialogs, settled } = await openWallet();
   await page.locator("#blind").click();
-  await expect.poll(() => dialogs.length).toBeGreaterThan(0);
+  await expect.poll(() => settled()).toBe(true);
   expect(dialogs.some((text) => /eth_sign/i.test(text))).toBe(true);
   expect(await walletReached(page)).toBe("");
   await page.close();
@@ -519,9 +525,9 @@ test("a chain id, an account list, and a small approval reach the wallet with no
 });
 
 test("a page message to the bridge cannot turn the wallet question off", async () => {
-  const { page, dialogs } = await openWallet();
+  const { page, dialogs, settled } = await openWallet();
   await page.locator("#silence").click();
-  await expect.poll(() => dialogs.length).toBeGreaterThan(0);
+  await expect.poll(() => settled()).toBe(true);
   expect(dialogs.some((text) => /unlimited token approval|unbegrenzte Token-Freigabe/i.test(text))).toBe(true);
   expect(await walletReached(page)).toBe("");
   await page.close();

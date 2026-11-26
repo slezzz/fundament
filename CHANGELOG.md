@@ -25,6 +25,7 @@ The first Chrome Web Store package is the free product. Pro is not on its pages 
 
 ### Content scripts
 - `content.js` and `content-search.js` are wrapped in a function. They share one isolated world, and the minifier had reused one top-level name. On Google both run, so the second script replaced a function the first one calls (`s is not a function`) and the scan stopped. The manifest and the checks are unchanged. Weights unchanged.
+- Store screenshots and the 440×280 promo tile are taken from the unpacked store zip. Weights unchanged.
 - The store-zip end-to-end check also requires no plan badge, no telemetry switch, no private IOC address, and no “online reputation unavailable” line. Weights unchanged.
 - `STORE_DASHBOARD.md` lists every privacy-form data type, the three certifications, the privacy-page address, and the reviewer steps. Weights unchanged.
 - Privacy pages name the public issue list `https://github.com/slezzz/fundament/issues` as the contact. Weights unchanged.

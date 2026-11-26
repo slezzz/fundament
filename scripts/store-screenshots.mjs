@@ -17,7 +17,9 @@ import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
-const dist = resolve(root, "dist");
+const dist = process.env.FUNDAMENT_EXTENSION_DIR
+  ? resolve(process.env.FUNDAMENT_EXTENSION_DIR)
+  : resolve(root, "dist");
 const out = resolve(root, "store-assets/screenshots");
 const SAFE_SITE = "https://www.wikipedia.org/";
 
@@ -37,6 +39,16 @@ const PAGES = {
   "/signin": `<!doctype html><title>PayPal: Log in</title><form action="/x"><input type="email"><input type="password"><button>Log in</button></form>`,
   "/login": `<!doctype html><title>Shop – Login</title><h1>Shop</h1><form action="/x"><input type="email"><input type="password"><button>Login</button></form>`,
 };
+
+function promo(png, line) {
+  const b64 = png.toString("base64");
+  return `<!doctype html><html><meta charset="utf-8"><style>
+    html,body{margin:0;width:440px;height:280px;background:#f4f1ea;font-family:"Segoe UI",system-ui,sans-serif;color:#1c1a16}
+    .wrap{display:flex;align-items:center;height:100%;padding:0 28px;gap:22px;box-sizing:border-box}
+    h1{font-size:28px;line-height:1.1;margin:0 0 8px} p{margin:0;font-size:16px;line-height:1.35;color:#6f6a60}
+    img{width:118px;border-radius:12px;box-shadow:0 12px 28px rgba(28,26,22,.18);background:#fffcf7}
+  </style><div class="wrap"><img src="data:image/png;base64,${b64}"><div><h1>Fundament</h1><p>${line}</p></div></div></html>`;
+}
 
 function frame(lang, png, title, subtitle) {
   const b64 = png.toString("base64");
@@ -113,7 +125,13 @@ async function run(lang) {
       await page.close();
     }
 
-    await framed("01-protected.png", await popupShot(SAFE_SITE), COPY[lang].protected);
+    const protectedShot = await popupShot(SAFE_SITE);
+    await framed("01-protected.png", protectedShot, COPY[lang].protected);
+    const tile = await context.newPage();
+    await tile.setViewportSize({ width: 440, height: 280 });
+    await tile.setContent(promo(protectedShot, COPY[lang].protected[0]));
+    await tile.screenshot({ path: join(out, `promo-440x280-${lang}.png`) });
+    await tile.close();
     await framed("02-not-encrypted.png", await popupShot(`http://shop-beispiel.de:${port}/`), COPY[lang].http);
 
     const warn = await context.newPage();
