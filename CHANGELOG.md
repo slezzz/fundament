@@ -26,6 +26,7 @@ The first Chrome Web Store package is the free product. Pro is not on its pages 
 ### Tests/intern
 - `browserLaunchOptions` chooses the browser for the page-cost run. A set `FUNDAMENT_E2E_BROWSER` must exist. On Windows, an installed Edge is used when the variable is unset, because Norton deletes Playwright's Chromium. Otherwise the run uses Playwright's Chromium. The three-times calibration is unchanged. `tests/security/page-cost.test.ts`.
 - A service-worker restart is the first answer that no longer carries the pre-reload marker. Chromium keeps the same Playwright worker after `runtime.reload()` and emits no new `serviceworker` event. Edge still emits one. The three-times calibration is unchanged. `scripts/page-cost.mjs`.
+- Page cost is `npm run test:perf` (one worker) and is ignored by the default Playwright run. The shared CI job does not run it. `playwright.config.ts`, `playwright.perf.config.ts`.
 
 ### Content scripts
 - `content.js` and `content-search.js` are wrapped in a function. They share one isolated world, and the minifier had reused one top-level name. On Google both run, so the second script replaced a function the first one calls (`s is not a function`) and the scan stopped. The manifest and the checks are unchanged. Weights unchanged.

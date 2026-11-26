@@ -1,6 +1,7 @@
 /**
  * Service-worker restart and one scan of the bridge and the content script.
- * Runs alone: other Playwright files share the machine and move the clock.
+ * `npm run test:perf` runs this file alone with one worker. The default Playwright
+ * run ignores it, because the other files share the machine and move the clock.
  * The bound is three times a fixed loop on the same clock. Port 5174 must be empty.
  */
 import { test, expect } from "@playwright/test";

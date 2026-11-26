@@ -7,10 +7,12 @@ Fundament is a public Chrome MV3 security extension. Users trust it to say "safe
 ```powershell
 npm.cmd run typecheck; npm.cmd run lint; npm.cmd test
 $env:FUNDAMENT_E2E_BROWSER="C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"; npm.cmd run test:e2e
+$env:FUNDAMENT_E2E_BROWSER="C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"; npm.cmd run test:perf
 ```
 
 - `npm test` includes `tests/security/corpus.test.ts`: **0** warnings on 20,000 real sites (Majestic 1–10k and 100,001–110,000) plus a detection floor on real phishing hosts. Never loosen thresholds, edit fixtures, or special-case domains to make it pass — fix the engine.
 - E2E uses Edge locally because Norton deletes Playwright's Chromium. CI (GitHub Actions) runs Chromium.
+- Page cost is `npm.cmd run test:perf` on local Edge with one worker; the shared CI job does not run it, because the other browser tests share that machine and move the clock.
 - One focused branch/commit per change. Update `CHANGELOG.md`; update `PRIVACY.md` / `PERMISSIONS.md` / `STORE_LISTING.md` whenever data flow, network requests, or permissions change.
 
 ## Invariants — do not break

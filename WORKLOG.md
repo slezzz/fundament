@@ -2,6 +2,29 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-26 — Page cost leaves the shared CI run
+
+- The Chromium same-handle restart is not shown on this machine, so page cost stays out of CI. `playwright test` ignores `page-cost.spec.ts`. `npm run test:perf` runs that file with one worker after the build. `test:e2e` is still build, then the other Playwright tests, then the store zip.
+- The test is not skipped. A missing file would still fail `test:perf`.
+
+### Self-check
+
+- Real user, real attack: None. This is where the clock is measured.
+- Five-minute bypass: Put the file back into the default run. CI dies on the restart again, and the store-zip suite never starts.
+- False alarm: The file is ignored, not skipped, so `test:perf` still executes it.
+- Simpler or more complicated: One ignore, one config.
+- AGENTS.md: DoD names `test:perf`. No threshold change.
+- Would I defend it: Yes, as “the shared CI machine is not the clock.”
+- Harmless on weird input: `test:perf` with no matching file fails.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? Not a detection change.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None.
+- Richtig: Default Playwright no longer collects page cost. `test:perf` does, alone.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil `testIgnore` und `testMatch` nennen dieselbe Datei.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Datei wieder in den gemeinsamen Lauf nehmen. Getestet: `playwright test --list` ist 50 ohne page-cost, `test:perf` ist 1. Edge-Neustarts 802, 770, 864, 824, 738 ms, Kalibrierung Median 852, Bridge max 1.9 ms, Content max 3.9 ms, Frame-Kalibrierung Median 6.6.
+
+Urteil: BEHALTEN
+
 ## 2026-11-26 — Page cost waits out a reused service worker
 
 - Hypothesis: Playwright Chromium does not emit `serviceworker` after `chrome.runtime.reload()` because Chrome reuses the CDP target. The docs for Playwright 1.62 say the same Worker object answers the next `evaluate`. Edge still attaches a new target, which is why the old wait passed here and timed out in CI.

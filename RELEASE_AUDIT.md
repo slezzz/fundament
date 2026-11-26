@@ -29,7 +29,10 @@ npm.cmd run typecheck
 npm.cmd run lint
 npm.cmd test
 $env:FUNDAMENT_E2E_BROWSER="C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"; npm.cmd run test:e2e
+$env:FUNDAMENT_E2E_BROWSER="C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe"; npm.cmd run test:perf
 ```
+
+`test:perf` is the page-cost run (one worker, local Edge). The shared CI job does not run it, because the other browser tests share that machine and move the clock. The 2026-11-15 table below does not include it.
 
 | Command | Result |
 |---------|--------|
