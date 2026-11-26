@@ -84,4 +84,25 @@ describe("free store surface", () => {
     expect(de).toContain(url);
     expect(de).toMatch(/\bdu\b/);
   });
+
+  it("fills the store privacy form: every data type, the three certifications, and the policy address", () => {
+    for (const kind of [
+      "Personally identifiable information",
+      "Health information",
+      "Financial and payment information",
+      "Authentication information",
+      "Personal communications",
+      "Location",
+      "Web history",
+      "User activity",
+      "Website content",
+    ]) {
+      expect(dash).toContain(kind);
+    }
+    expect(dash).toContain("I do not sell or transfer user data to third parties, outside of the approved use cases.");
+    expect(dash).toContain("I do not use or transfer user data for purposes that are unrelated to my item's single purpose.");
+    expect(dash).toContain("I do not use or transfer user data to determine creditworthiness or for lending purposes.");
+    expect(dash).toContain("https://slezzz.github.io/fundament/privacy/en.html");
+    expect(dash).toContain("https://www.wikipedia.org/");
+  });
 });

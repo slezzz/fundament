@@ -25,6 +25,7 @@ The first Chrome Web Store package is the free product. Pro is not on its pages 
 
 ### Content scripts
 - `content.js` and `content-search.js` are wrapped in a function. They share one isolated world, and the minifier had reused one top-level name. On Google both run, so the second script replaced a function the first one calls (`s is not a function`) and the scan stopped. The manifest and the checks are unchanged. Weights unchanged.
+- `STORE_DASHBOARD.md` lists every privacy-form data type, the three certifications, the privacy-page address, and the reviewer steps. Weights unchanged.
 - Privacy pages name the public issue list `https://github.com/slezzz/fundament/issues` as the contact. Weights unchanged.
 - The unused line “Online reputation unavailable” is gone. The Free badge stays off the store popup. The listing no longer says wallet requests are ignored: an unlimited approval, a Permit, or `eth_sign` asks first. Weights unchanged.
 - The store popup has no telemetry switch. The privacy pages say so. Weights unchanged.

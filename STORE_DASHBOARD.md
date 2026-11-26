@@ -37,3 +37,43 @@ Same facts as `PRIVACY.md` and `pages/privacy/en.html`.
 - Have I Been Pwned runs only after a click. A 5-character SHA-1 prefix goes to `api.pwnedpasswords.com`.
 - A false-alarm report opens a public GitHub issue only after a second click. It contains the hostname and signal ids.
 - This build has no telemetry switch and no address for counters.
+
+## Privacy policy URL
+
+`https://slezzz.github.io/fundament/privacy/en.html`
+
+The German page is `https://slezzz.github.io/fundament/privacy/de.html`. Both are copied next to the signed feed by the live-feed workflow. Save the form after that workflow has published them. The feed file stays `live-feed.json` at the site root.
+
+## Data the form asks about
+
+Tick only what this package does. Nothing in this list is sold.
+
+- Personally identifiable information — not collected. No account, no name, no email.
+- Health information — not collected.
+- Financial and payment information — not collected. A wallet request is read on the device so an unlimited approval, a Permit, or `eth_sign` can ask first. The request is not uploaded.
+- Authentication information — not collected. The extension sees that a password field exists. It does not read the value. Have I Been Pwned runs only after a click and sends a 5-character SHA-1 prefix to `api.pwnedpasswords.com`.
+- Personal communications — not collected.
+- Location — not collected.
+- Web history — the current tab address is processed on the device. A host-only log stays for 24 hours, 40 entries, and is not uploaded.
+- User activity — not collected beyond that local log.
+- Website content — visible text is scanned on the device for scam instructions and is not uploaded. A confirmed false-alarm report sends the hostname and the signal ids to a public GitHub issue, not the page text.
+
+## Three certifications
+
+Check all three. They match the package:
+
+- I do not sell or transfer user data to third parties, outside of the approved use cases.
+- I do not use or transfer user data for purposes that are unrelated to my item's single purpose.
+- I do not use or transfer user data to determine creditworthiness or for lending purposes.
+
+The approved transfers are the signed phishing-list GET, the Chrome version GET, the Have I Been Pwned prefix after a click, and a public GitHub issue after a second click.
+
+## What a reviewer can check
+
+Load this zip. No account is required.
+
+- On https://www.wikipedia.org/ the popup shows a calm status. It has no plan badge, no upgrade, and no license field.
+- Settings has no telemetry switch and no box for a private IOC address. The IOC switch applies the bundled list.
+- Options has a Have I Been Pwned check that does nothing until you click it.
+- A page that calls `eth_sign`, `eth_signTypedData_v4` with a Permit, or an unlimited `approve` shows a confirm dialog. Cancel means the wallet does not receive that request. `eth_chainId` does not ask.
+- A host on the shipped phishing list opens the warning page before the site is used. Continue is a second click.
