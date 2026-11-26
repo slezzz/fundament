@@ -2,6 +2,29 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-26 — Page-cause classes, before a rate
+
+- The cause run opens each host twice with no extension, then with the store build, with ad rules off, and with the bridge script removed. A disagreement between the two bare visits is noise. The file stores the host and the cause only.
+- This does not name a breakage rate. The run that was writing `measure-output/page-cause.json` is not part of the commit.
+
+### Self-check
+
+- Real user, real attack: A rate that counts a page which fails with no extension would call Fundament the cause. The two bare visits exist so that page is noise.
+- Five-minute bypass: Count one visit with the extension and skip the second bare visit. `assignCause` returns noise when the bare pair disagrees. Tested.
+- False alarm: `ok` requires the extension visit to match a bare visit that loaded.
+- Simpler or more complicated: Four labels. The script is separate from the detection engine.
+- AGENTS.md: No weight change. `measure-output/` stays gitignored.
+- Would I defend it: Yes, as “the class comes from the arm that stops the difference.” Not as a percentage.
+- Harmless on weird input: A missing arm is `unmeasured`.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? This script does not detect phishing. It compares page errors.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? The page's own errors. Two visits without the extension are the baseline.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? A page that throws once and not the next time is noise, not a broken site.
+- Richtig: `assignCause` gibt blocking, bridge, other, ok, noise oder unmeasured zurück, und der Test prüft jede Klasse.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die Klasse an der Messung hängt, nicht an einer Quote.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die zweite Messung ohne Erweiterung weglassen. Der Test erwartet noise, wenn die beiden Besuche ohne Erweiterung nicht übereinstimmen. Getestet.
+
+Urteil: BEHALTEN
+
 ## 2026-11-25 — The store script threw before it scanned
 
 - Hypothesis: the 72 broken pages can be classed only after a run with no extension, twice, then with the store build, with ad rules off, and with the bridge script removed.

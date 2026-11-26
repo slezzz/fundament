@@ -1,6 +1,6 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
-import { breakageRow, breakageSummary, netClass } from "../../scripts/measure-page-breakage.mjs";
+import { assignCause, bareDisagrees, breakageRow, breakageSummary, netClass } from "../../scripts/measure-page-breakage.mjs";
 
 describe("page breakage classes", () => {
   it("does not count a dead name as a page the extension broke", () => {
@@ -27,6 +27,18 @@ describe("page breakage classes", () => {
       ),
     ]);
     expect(summary).toMatchObject({ pages: 2, measured: 1, notMeasured: 1, warnings: 1, broken: 1, failClasses: { timeout: 1 } });
+  });
+
+  it("names blocking, the bridge, or noise before it names a rate", () => {
+    const clean = { failed: false, pageErrors: [], consoleErrors: [], loadMs: 20 };
+    const threw = { failed: false, pageErrors: ["TypeError"], consoleErrors: [], loadMs: 20 };
+    expect(assignCause({ full: threw, noblock: clean, nobridge: threw, bareA: clean, bareB: clean })).toBe("blocking");
+    expect(assignCause({ full: threw, noblock: threw, nobridge: clean, bareA: clean, bareB: clean })).toBe("bridge");
+    expect(assignCause({ full: threw, noblock: threw, nobridge: threw, bareA: clean, bareB: clean })).toBe("other");
+    expect(assignCause({ full: clean, noblock: clean, nobridge: clean, bareA: clean, bareB: clean })).toBe("ok");
+    expect(bareDisagrees(threw, clean)).toBe(true);
+    expect(assignCause({ full: threw, noblock: clean, nobridge: clean, bareA: threw, bareB: clean })).toBe("noise");
+    expect(assignCause({ full: { failed: true, reason: "dns" }, bareA: { failed: true, reason: "dns" } })).toBe("unmeasured");
   });
 
   it("keeps the allowlist check when the store build cuts out cosmetic hiding", () => {

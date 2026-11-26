@@ -111,6 +111,14 @@ declare module "*.mjs" {
     bare: { failed?: boolean; reason?: string; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number },
   ): { measured: boolean; broken: boolean; warned: boolean; resource?: boolean; failClass: string };
   export function netClass(error: unknown): string;
+  export function bareDisagrees(left: { failed?: boolean; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number }, right: { failed?: boolean; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number }): boolean;
+  export function assignCause(arms: {
+    full?: { failed?: boolean; reason?: string; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number };
+    noblock?: { failed?: boolean; reason?: string; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number };
+    nobridge?: { failed?: boolean; reason?: string; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number };
+    bareA?: { failed?: boolean; reason?: string; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number };
+    bareB?: { failed?: boolean; reason?: string; pageErrors?: string[]; consoleErrors?: string[]; loadMs?: number };
+  }): "ok" | "noise" | "blocking" | "bridge" | "other" | "unmeasured";
   export const LICENSE_TERM_SECONDS: number;
   export function licenseExpFromSession(session: { created?: number }, nowSec: number): number | null;
   export function isCheckoutSessionId(value: unknown): boolean;

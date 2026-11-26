@@ -60,6 +60,34 @@ function readRows(file) {
   }
 }
 
+function armBroken(visit, bare) {
+  return breakageRow(visit, bare).broken === true;
+}
+
+/** Two visits with no extension. A difference either way is the page, not Fundament. */
+export function bareDisagrees(left, right) {
+  return armBroken(left, right) || armBroken(right, left);
+}
+
+/**
+ * full: extension as shipped. noblock: ad and tracker rules off. nobridge: bridge script absent.
+ * bareA and bareB: the same page, twice, with no extension.
+ */
+export function assignCause(arms) {
+  const full = arms?.full;
+  const bareA = arms?.bareA;
+  const bareB = arms?.bareB;
+  if (!full || !bareA || !bareB) return "unmeasured";
+  if (full.failed === true && bareA.failed === true && bareB.failed === true) return "unmeasured";
+  if (bareDisagrees(bareA, bareB)) return "noise";
+  const baseline = bareA.failed === true ? bareB : bareA;
+  if (baseline.failed === true || full.failed === true) return "unmeasured";
+  if (!armBroken(full, baseline)) return "ok";
+  if (arms.noblock && arms.noblock.failed !== true && !armBroken(arms.noblock, baseline)) return "blocking";
+  if (arms.nobridge && arms.nobridge.failed !== true && !armBroken(arms.nobridge, baseline)) return "bridge";
+  return "other";
+}
+
 export function breakageSummary(rows) {
   const list = Array.isArray(rows) ? rows : [];
   const measured = list.filter((row) => row && row.measured === true);
@@ -101,7 +129,7 @@ async function readWarned(worker, host) {
   }, host);
 }
 
-async function openPage(page, url) {
+export async function openPage(page, url) {
   const pageErrors = [];
   const consoleErrors = [];
   const onError = (error) => {
