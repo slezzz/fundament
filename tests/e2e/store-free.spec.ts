@@ -99,7 +99,11 @@ async function expectFree(page: Page, name: string) {
   const text = await page.locator("body").innerText();
   expect(productWords(text), name).toEqual([]);
   await expect(page.locator("textarea"), name).toHaveCount(0);
+  await expect(page.locator(".tier"), name).toHaveCount(0);
   await expect(page.getByText(/I already have a license|Lizenzschlüssel/i), name).toHaveCount(0);
+  await expect(page.getByText(/Anonymous telemetry|Anonyme Telemetrie/i), name).toHaveCount(0);
+  await expect(page.getByText(/HTTPS IOC URL|HTTPS-IOC-URL/i), name).toHaveCount(0);
+  await expect(page.getByText(/Online reputation unavailable|Online-Reputation nicht verfügbar/i), name).toHaveCount(0);
 }
 
 test("the packed store build has no Pro, upgrade, or license field", async () => {
