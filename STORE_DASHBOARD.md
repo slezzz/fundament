@@ -46,17 +46,17 @@ The German page is `https://slezzz.github.io/fundament/privacy/de.html`. Both ar
 
 ## Data the form asks about
 
-Tick only what this package does. Nothing in this list is sold.
+Tick only what this package does. Nothing in this list is sold. Google’s [user data FAQ](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq) also requires a tick when the data is processed only on the device.
 
 - Personally identifiable information — not collected. No account, no name, no email.
 - Health information — not collected.
-- Financial and payment information — not collected. A wallet request is read on the device so an unlimited approval, a Permit, or `eth_sign` can ask first. The request is not uploaded.
-- Authentication information — not collected. The extension sees that a password field exists. It does not read the value. Have I Been Pwned runs only after a click and sends a 5-character SHA-1 prefix to `api.pwnedpasswords.com`.
+- Financial and payment information — tick. A wallet request is processed on the device, not uploaded, so an unlimited approval, a Permit, or `eth_sign` can ask first.
+- Authentication information — tick. The extension sees that a password field exists and does not read the value. Have I Been Pwned runs only after a click and sends a 5-character SHA-1 prefix to `api.pwnedpasswords.com`.
 - Personal communications — not collected.
 - Location — not collected.
-- Web history — the current tab address is processed on the device. A host-only log stays for 24 hours, 40 entries, and is not uploaded.
+- Web history — tick. The current tab address is processed on the device, not uploaded. A host-only log stays for 24 hours, 40 entries.
 - User activity — not collected beyond that local log.
-- Website content — visible text is scanned on the device for scam instructions and is not uploaded. A confirmed false-alarm report sends the hostname and the signal ids to a public GitHub issue, not the page text.
+- Website content — tick. Visible text is processed on the device, not uploaded, and scanned there for scam instructions. A confirmed false-alarm report sends the hostname and the signal ids to a public GitHub issue, not the page text.
 
 ## Three certifications
 

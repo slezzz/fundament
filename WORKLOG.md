@@ -2,6 +2,32 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-26 — The listing says what the package actually reads
+
+- “Active” phishing hosts became “known”. Phishing.Database has not been updated since 2026-10-02, so activity is not shown.
+- The privacy paragraph now says the content script also scans visible text on the device for scam instructions and does not upload that text. That matches `STORE_DASHBOARD.md`.
+- The English listing has the same opening as the German one. The German long description follows “What it does today”, “What it does not do”, and “Privacy”, in the du form, with no extra promise.
+- The dashboard ticks web history, website content, authentication information, and financial and payment information. Each is processed on the device. Authentication adds the HIBP prefix. The other five types stay “not collected”. The form rule is the [user data FAQ](https://developer.chrome.com/docs/webstore/program-policies/user-data-faq).
+- Docs only. A pack after the edits is still `05476c249d9d485daa8fd4690280061bff589610b1c80f70efbfd7d8658cde6f`.
+
+### Self-check
+
+- Real user, real attack: A reviewer compares the form with the extension. A missing tick for local page text is the mismatch.
+- Five-minute bypass: Put “active” and “looks only at a password field” back. The sentences would be false again.
+- False alarm: “Not collected” stays on name, health, messages, location, and user activity.
+- Simpler or more complicated: The same facts, in both languages, and four ticks.
+- AGENTS.md: No code, no weight, no new request.
+- Would I defend it: Yes, as “the form names the data the extension actually touches, including what stays on the device.”
+- Harmless on weird input: No new claim a page can trigger.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? Not a detection change.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? None.
+- Richtig: The German sections match the English sections. The zip hash did not move.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil jede angekreuzte Art einen lokalen Satz oder das HIBP-Präfix hat und die FAQ verlinkt ist.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die vier Haken wieder auf „not collected“ stellen. Der Text wäre dann wieder unvollständig. Benannt. Der Zip-Hash nach dem Pack ist geprüft.
+
+Urteil: BEHALTEN
+
 ## 2026-11-26 — The store description fits the 132-character field
 
 - Hypothesis: Chrome rejects a manifest description over 132 characters. English was 152, German 160. No test counted them.

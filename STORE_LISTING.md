@@ -16,6 +16,8 @@ What those tools do that we also do, locally: lookalike / phishing URL checks, s
 
 What they often imply that we will not: live global intel in the extension, antivirus file scanning, “we replaced Chrome’s Safe Browsing.”
 
+Fundament is the security layer for Chrome. Green never means “all good” when something is wrong. Analysis runs on your device. Not an antivirus, not a VPN, not a uBlock replacement.
+
 **What it does today**
 
 - Checks addresses for phishing tricks such as lookalike brands (banks, shops, AI apps, wallets), punycode/homograph domains, odd encodings, login-style URLs, fake CAPTCHA / ClickFix lures, and OAuth consent proxies
@@ -23,7 +25,7 @@ What they often imply that we will not: live global intel in the extension, anti
 - Never shows a green “Protected” state when something is actually wrong (including plain HTTP)
 - Blocks advertising and analytics hosts with the catalog shipped in the extension (not live EasyList).
 - Blocks ClickFix: when a fake CAPTCHA tries to put a PowerShell/Terminal command on your clipboard, Fundament replaces it with a warning. What you copy yourself is never touched
-- Ships a list of ~385,000 active phishing hosts (Phishing.Database) that is matched inside Chrome — nothing you visit is sent anywhere
+- Ships a list of ~385,000 known phishing hosts (Phishing.Database) that is matched inside Chrome — nothing you visit is sent anywhere
 - Recognizes pages that claim to be your bank, PayPal, Microsoft, or a wallet on a domain that is not theirs
 - Stops fake browser login pop-ups (browser-in-the-browser) and tech-support scam screens
 - Asks before a site gets an unlimited token approval or a Permit signature from your wallet, and keeps your wallet address if a page swaps it on the clipboard
@@ -62,7 +64,7 @@ Analysis runs on your device. This build has no telemetry switch and no address 
 
 ## Privacy explanation (store form)
 
-Fundament processes the URL of pages you visit locally to detect phishing patterns and count blocked trackers. A content script looks only at whether a password field exists and where forms submit — never at typed values. It stores settings and a short host-only event log on the device. This build has no telemetry switch and no address for counters. A confirmed false-alarm report opens a public GitHub issue containing the hostname and signal ids, not the path or query.
+Fundament processes the URL of pages you visit locally to detect phishing patterns and count blocked trackers. A content script checks whether a password field exists and where forms submit, and it scans visible text on the device for scam instructions. It never reads what you type, and the page text is not uploaded. It stores settings and a short host-only event log on the device. This build has no telemetry switch and no address for counters. A confirmed false-alarm report opens a public GitHub issue containing the hostname and signal ids, not the path or query.
 
 ## Permission justification (store form)
 
@@ -96,9 +98,43 @@ Capture at 1280×800, light and dark.
 
 Sicherheitsschicht für Chrome: Phishing, ClickFix, HTTP, Werbung/Tracker, unsichere Downloads.
 
-## German long description (opening)
+## German long description
 
 Fundament ist die Sicherheitsschicht für Chrome. Grün heißt nie „alles gut“, wenn etwas nicht stimmt. Analyse läuft lokal. Kein Antivirus, kein VPN, kein uBlock-Ersatz.
+
+**Was es heute tut**
+
+- Prüft Adressen auf Phishing-Tricks: nachgemachte Marken (Banken, Shops, KI-Apps, Wallets), Punycode- und Homograph-Domains, ungewöhnliche Kodierungen, Login-artige URLs, Fake-CAPTCHA- und ClickFix-Köder und OAuth-Zustimmungsproxys
+- Fasst mehrere unabhängige Signale zu einer Risiko-Zahl von 0 bis 100 zusammen, die du dir ansehen kannst
+- Zeigt nie ein grünes „Geschützt“, wenn etwas nicht stimmt, auch nicht bei reinem HTTP
+- Blockiert Werbe- und Analyse-Hosts mit dem Katalog in der Erweiterung, nicht mit einer Live-EasyList
+- Blockiert ClickFix: Wenn ein falsches CAPTCHA einen PowerShell- oder Terminal-Befehl auf die Zwischenablage legen will, ersetzt Fundament ihn durch eine Warnung. Was du selbst kopierst, bleibt unangetastet
+- Liefert eine Liste von etwa 385.000 bekannten Phishing-Hosts (Phishing.Database), die Chrome selbst abgleicht. Nichts, was du besuchst, wird irgendwohin geschickt
+- Erkennt Seiten, die sich als deine Bank, PayPal, Microsoft oder ein Wallet ausgeben, auf einer Domain, die ihnen nicht gehört
+- Stoppt gefälschte Browser-Login-Fenster (Browser-in-the-Browser) und Tech-Support-Betrugsseiten
+- Fragt, bevor eine Seite eine unbegrenzte Token-Freigabe oder eine Permit-Signatur von deinem Wallet bekommt, und behält deine Wallet-Adresse, wenn eine Seite sie auf der Zwischenablage vertauscht
+- Warnt dich, wenn eine andere Erweiterung sich mit neuen Rechten aktualisiert
+- Sagt dir, wenn Chrome veraltet ist oder Safe Browsing aus ist
+- Hebt HTTP-Unterressourcen auf HTTPS an (für ganze Seiten optional)
+- Warnt, wenn eine Seite ein Passwortfeld über HTTP hat oder ein Formular an HTTP sendet, ohne zu lesen, was du tippst
+- Markiert nachgemachte oder riskante Ziele auf den Ergebnisseiten von Google, Bing und DuckDuckGo. Die Prüfung ist lokal, Links werden nicht umgeschrieben
+- Optional: Seiten dürfen nicht nach der Benachrichtigungs-Erlaubnis fragen (standardmäßig aus)
+- Stoppt offensichtliche Malware- und HTML-Smuggling-Downloads
+- Warnt bei riskanten Navigationen und lässt dich zurückgehen oder den Grund sehen
+- Führt ein kurzes lokales Protokoll der Schutzaktionen. Das ist kein vollständiger Browserverlauf
+
+**Was es nicht tut**
+
+- Es ist kein vollständiger Antivirus (keine Prüfung des Dateiinhalts)
+- Es ersetzt nicht das Schloss-Symbol von Chrome und nicht die Sicherheit des Betriebssystems
+- Es behauptet nicht, jeden Betrug oder „100 % der Bedrohungen“ zu erkennen
+- Es schickt deine Passwörter, Cookies oder Formulardaten nirgendwohin
+- Es schreibt eine Wallet-Anfrage nicht um. Eine unbegrenzte Freigabe, eine Permit-Signatur oder eth_sign fragt dich zuerst, und Abbrechen verwirft sie
+- Es legt keine Safe-Browsing-API-Schlüssel in die Erweiterung
+
+**Datenschutz**
+
+Die Analyse läuft auf deinem Gerät. Dieser Build hat keinen Telemetrie-Schalter und keine Adresse für Zähler. Wenn du einen Fehlalarm bestätigst, öffnet Fundament ein öffentliches GitHub-Issue nur mit dem Hostnamen und den Signal-IDs. Rechte und Daten stehen in der Datenschutzerklärung.
 
 ## FAQ
 
