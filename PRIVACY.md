@@ -81,6 +81,12 @@ Settings has a separate link for phishing Fundament did not catch. It opens an e
 - Allowlist a host (skips interstitial; does not silently disable DNR unless the host is also allowed in DNR).
 - Clear history from Settings.
 
+## Contact
+
+Questions and false-alarm reports go to public GitHub issues: https://github.com/slezzz/fundament/issues
+
+A report from the warning page includes the hostname and the signal ids only after you confirm. An empty issue lets you describe a site Fundament missed, and it sends no address until you type one.
+
 ## Children / accounts
 
 No accounts. No age collection. No cross-device sync of URL data.

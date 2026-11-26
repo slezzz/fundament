@@ -76,4 +76,12 @@ describe("free store surface", () => {
     expect(badge).toBeGreaterThan(0);
     expect(popup.slice(guard, badge)).toContain("? null");
   });
+
+  it("names the public GitHub issues page as the contact", () => {
+    const url = "https://github.com/slezzz/fundament/issues";
+    expect(privacy).toContain(url);
+    expect(en).toContain(url);
+    expect(de).toContain(url);
+    expect(de).toMatch(/\bdu\b/);
+  });
 });
