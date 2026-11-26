@@ -50,4 +50,9 @@ export const storeZipDetection = [
   "a sealed attachShadow still behaves on a page of custom elements",
   "a host from the shipped phishing feed is redirected, and Continue works",
   "a program downloaded over plain HTTP is cancelled",
+  "an unlimited token approval asks before it reaches the wallet, and cancel drops it",
+  "a Permit signature asks before it reaches the wallet",
+  "eth_sign asks before it reaches the wallet",
+  "a chain id, an account list, and a small approval reach the wallet with no question",
+  "a page message to the bridge cannot turn the wallet question off",
 ];

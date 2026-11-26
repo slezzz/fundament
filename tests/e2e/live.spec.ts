@@ -12,6 +12,7 @@ import { splitCommandPage, unreadableCommandPages } from "./unreadable-command";
 import { shadowFillerPage } from "./shadow-filler";
 import { sectionCopyPage } from "./section-copy";
 import { macosLurePage } from "./macos-lure";
+import { walletPage } from "./wallet-page";
 import { DYNAMIC_RULE_ID_LIVE_START, REPORT_GITHUB_REPO } from "../../src/shared/constants";
 import { createServer, type Server } from "node:http";
 import { mkdtempSync, readFileSync, rmSync } from "node:fs";
@@ -35,6 +36,7 @@ const PAGES: Record<string, string> = {
   "/account": `<!doctype html><title>Sign in</title>
     <form action="/session" method="post"><input type="email" name="email"><input type="password" name="password"><button>Sign in</button></form>`,
   "/dl": `<!doctype html><title>Downloads</title><a id="dl" href="/setup.exe" download>Download</a>`,
+  "/wallet": walletPage,
 };
 
 const copiedButton = (PAGES["/crashfix"] ?? "").replace('id="fix"', 'id="copy"').match(/<button id="copy"[\s\S]*<\/button>/)?.[0] ?? "";
@@ -454,6 +456,75 @@ test("a dynamic rule at the live-feed id redirects only its own host", async () 
   await after.goto(`http://${probe}:${port}/clean`);
   expect(after.url()).toContain(`http://${probe}:${port}/clean`);
   await after.close();
+});
+
+async function openWallet() {
+  const page = await freshPage();
+  const dialogs: string[] = [];
+  page.on("dialog", (dialog) => {
+    dialogs.push(dialog.message());
+    void dialog.dismiss();
+  });
+  await page.goto(`http://wallet-probe.example:${port}/wallet`);
+  await page.waitForFunction(() => {
+    const eth = (window as unknown as { ethereum?: object }).ethereum;
+    if (!eth) return false;
+    return Boolean(Object.getOwnPropertyDescriptor(eth, "request")?.get);
+  });
+  return { page, dialogs };
+}
+
+async function walletReached(page: Awaited<ReturnType<typeof freshPage>>): Promise<string> {
+  await page.goto(`http://wallet-probe.example:${port}/wallet`);
+  return page.evaluate(() => sessionStorage.getItem("fundament-wallet-reached") ?? "");
+}
+
+test("an unlimited token approval asks before it reaches the wallet, and cancel drops it", async () => {
+  const { page, dialogs } = await openWallet();
+  await page.locator("#unlimited").click();
+  await expect.poll(() => dialogs.length).toBeGreaterThan(0);
+  expect(dialogs.some((text) => /unlimited token approval|unbegrenzte Token-Freigabe/i.test(text))).toBe(true);
+  expect(await walletReached(page)).toBe("");
+  await page.close();
+});
+
+test("a Permit signature asks before it reaches the wallet", async () => {
+  const { page, dialogs } = await openWallet();
+  await page.locator("#permit").click();
+  await expect.poll(() => dialogs.length).toBeGreaterThan(0);
+  expect(dialogs.some((text) => /Permit/i.test(text))).toBe(true);
+  expect(await walletReached(page)).toBe("");
+  await page.close();
+});
+
+test("eth_sign asks before it reaches the wallet", async () => {
+  const { page, dialogs } = await openWallet();
+  await page.locator("#blind").click();
+  await expect.poll(() => dialogs.length).toBeGreaterThan(0);
+  expect(dialogs.some((text) => /eth_sign/i.test(text))).toBe(true);
+  expect(await walletReached(page)).toBe("");
+  await page.close();
+});
+
+test("a chain id, an account list, and a small approval reach the wallet with no question", async () => {
+  const { page, dialogs } = await openWallet();
+  await page.locator("#plain").click();
+  await expect.poll(() => page.evaluate(() => (window as unknown as { __reached: string[] }).__reached)).toEqual([
+    "eth_chainId",
+    "eth_accounts",
+    "eth_sendTransaction:0x095ea7b3",
+  ]);
+  expect(dialogs).toEqual([]);
+  await page.close();
+});
+
+test("a page message to the bridge cannot turn the wallet question off", async () => {
+  const { page, dialogs } = await openWallet();
+  await page.locator("#silence").click();
+  await expect.poll(() => dialogs.length).toBeGreaterThan(0);
+  expect(dialogs.some((text) => /unlimited token approval|unbegrenzte Token-Freigabe/i.test(text))).toBe(true);
+  expect(await walletReached(page)).toBe("");
+  await page.close();
 });
 
 test("a program downloaded over plain HTTP is cancelled", async () => {
