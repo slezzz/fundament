@@ -367,15 +367,6 @@ const COSMETIC = [
   ".adsbygoogle",
 ];
 
-function hostAllowed(allowlist: string[], hostname: string): boolean {
-  const host = hostname.toLowerCase();
-  return allowlist.some((item) => {
-    if (typeof item !== "string" || !item.includes(".") || item.includes("*")) return false;
-    const entry = item.trim().toLowerCase();
-    return host === entry || host.endsWith(`.${entry}`);
-  });
-}
-
 function injectCosmetic(): void {
   if (document.getElementById("fundament-cosmetic")) return;
   const style = document.createElement("style");
@@ -384,6 +375,15 @@ function injectCosmetic(): void {
   (document.head || document.documentElement).appendChild(style);
 }
 /* store-omit-end */
+
+function hostAllowed(allowlist: string[], hostname: string): boolean {
+  const host = hostname.toLowerCase();
+  return allowlist.some((item) => {
+    if (typeof item !== "string" || !item.includes(".") || item.includes("*")) return false;
+    const entry = item.trim().toLowerCase();
+    return host === entry || host.endsWith(`.${entry}`);
+  });
+}
 
 function hardenBlankTargets(): void {
   for (const node of Array.from(document.querySelectorAll("a[target='_blank']")).slice(0, 300)) {

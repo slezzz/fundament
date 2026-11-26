@@ -25,6 +25,7 @@ The first Chrome Web Store package is the free product. Pro is not on its pages 
 
 ### Content scripts
 - `content.js` and `content-search.js` are wrapped in a function. They share one isolated world, and the minifier had reused one top-level name. On Google both run, so the second script replaced a function the first one calls (`s is not a function`) and the scan stopped. The manifest and the checks are unchanged. Weights unchanged.
+- The store cut that drops cosmetic hiding had also dropped `hostAllowed` and left the call. The packed `content.js` threw `ReferenceError: hostAllowed is not defined` and returned before the scan, including on `google.com` and with the bridge script removed. The function now sits outside that cut. `tests/security/page-breakage.test.ts`. Weights unchanged. The zip hash in `STORE_LISTING.md` is the pack after this fix. Do not upload the earlier hash `6d33d3f0e0db1e98b6a2c9bea623a921008861f5bb3c091a8cdbf9d6df9005fb`.
 
 ### Store package
 - `npm run pack` writes a zip with the ZIP epoch as the timestamp, sorted names, and fixed modes (files `0644`, directories `0755`). Two packs of one tree match. The SHA-256 is the release note in `STORE_LISTING.md`. `tests/security/pack-zip.test.ts`.

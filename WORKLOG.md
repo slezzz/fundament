@@ -2,6 +2,31 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-25 — The store script threw before it scanned
+
+- Hypothesis: the 72 broken pages can be classed only after a run with no extension, twice, then with the store build, with ad rules off, and with the bridge script removed.
+- The first two home pages were `other` on every arm, including the one without the bridge. The page error was `hostAllowed is not defined` in `content.js`. The store cut that removes cosmetic hiding had deleted that function and left the call. The scan returned before it collected anything. `google.com` after the function was put back is `ok`: no page error, and the two visits with no extension agree.
+- A rate from the committed zip would have measured this throw, not page breakage. The cause file stores the host and the cause only.
+- `window.__fundamentBridge` is still set on the page. That question waits until this script is the one being measured.
+
+### Self-check
+
+- Real user, real attack: A store install that throws in the content script does not finish the ClickFix scan. The throw was on our side. It is fixed in the working tree.
+- Five-minute bypass: Move `function hostAllowed` back between the store-omit comments. The new test reads the source and fails.
+- False alarm: `google.com` showed a load-time difference and no page error. That is not breakage.
+- Simpler or more complicated: One function moved out of the cut. The cause run is a separate script.
+- AGENTS.md: No weight change. The scan runs again.
+- Would I defend it: Yes, as “the committed store script threw `hostAllowed is not defined`, and the working tree does not.” Not as a breakage rate.
+- Harmless on weird input: An allowlist entry still skips the scan. Cosmetic hiding stays out of the store script.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The scan reads the page. This bug stopped the scan before the read. The page did not hide the context. We deleted the function.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? `hostAllowed` is ours.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? `google.com` was not warned. It threw.
+- Richtig: Der Store-Build warf `ReferenceError: hostAllowed is not defined` auf `google.com`, auch ohne Bridge und ohne Werberegeln. Nach dem Verschieben der Funktion ist dieselbe Seite `ok`.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil der Fehler im eigenen Skript lag und der Test den Schnitt prüft.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Funktion wieder in den Store-Schnitt legen. `tests/security/page-breakage.test.ts` erwartet sie außerhalb. Getestet. Die Ursache der alten 72 Seiten ist damit nicht gemessen.
+
+Urteil: BEHALTEN
+
 ## 2026-11-24 — The first store package is free
 
 - Hypothesis: the first public package can still show Pro, or can still carry the extended lists and the shield, as long as nobody pays.
