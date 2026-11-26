@@ -42,7 +42,7 @@ What they often imply that we will not: live global intel in the extension, anti
 - It does not replace Chrome’s lock icon or OS security
 - It does not claim to catch every scam or “100% of threats”
 - It does not send your passwords, cookies, or form data anywhere
-- It does not intercept or rewrite crypto wallet transactions
+- It does not rewrite a wallet request. An unlimited approval, a Permit signature, or eth_sign asks you first, and Cancel drops it
 - It does not put Safe Browsing API keys in the extension
 
 **Privacy**

@@ -25,6 +25,7 @@ The first Chrome Web Store package is the free product. Pro is not on its pages 
 
 ### Content scripts
 - `content.js` and `content-search.js` are wrapped in a function. They share one isolated world, and the minifier had reused one top-level name. On Google both run, so the second script replaced a function the first one calls (`s is not a function`) and the scan stopped. The manifest and the checks are unchanged. Weights unchanged.
+- The unused line “Online reputation unavailable” is gone. The Free badge stays off the store popup. The listing no longer says wallet requests are ignored: an unlimited approval, a Permit, or `eth_sign` asks first. Weights unchanged.
 - The store popup has no telemetry switch. The privacy pages say so. Weights unchanged.
 - The store build has no field for a private IOC address. The toggle still applies the bundled IOC list. A settings patch in that build drops `iocFeedUrl` and `iocFeedSha256`, and the alarm does not fetch them. `tests/unit/ioc-store.test.ts`. Weights unchanged.
 - An unlimited `approve`, a Permit signature, and `eth_sign` ask in a confirm dialog before the fake wallet sees them. Cancel means the request is not delivered. `eth_chainId`, `eth_accounts`, and a small approval do not ask. A page message cannot turn the question off. `tests/e2e/live.spec.ts`. The same tests run against the unpacked store zip. Weights unchanged.

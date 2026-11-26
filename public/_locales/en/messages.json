@@ -6,7 +6,6 @@
   "popup_settingsAria": { "message": "Settings" },
   "popup_planPro": { "message": "Pro" },
   "popup_planFree": { "message": "Free" },
-  "popup_localOnly": { "message": "Local protection active. Online reputation unavailable." },
   "popup_layerAds": { "message": "Ads" },
   "popup_layerTrackers": { "message": "Trackers" },
   "popup_layerPhish": { "message": "Phish" },

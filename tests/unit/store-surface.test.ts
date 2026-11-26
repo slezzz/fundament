@@ -64,4 +64,16 @@ describe("free store surface", () => {
     expect(en).not.toContain("turning it on");
     expect(de).not.toContain("Einschalten");
   });
+
+  it("drops the unused reputation line and keeps the plan badge off the store popup", () => {
+    const enMessages = readFileSync("public/_locales/en/messages.json", "utf8");
+    const deMessages = readFileSync("public/_locales/de/messages.json", "utf8");
+    expect(enMessages).not.toContain("Online reputation unavailable");
+    expect(deMessages).not.toContain("Online-Reputation nicht verfügbar");
+    const popup = readFileSync("src/ui/popup/App.tsx", "utf8");
+    const badge = popup.indexOf('t("popup_planFree")');
+    const guard = popup.lastIndexOf("isStorePack()", badge);
+    expect(badge).toBeGreaterThan(0);
+    expect(popup.slice(guard, badge)).toContain("? null");
+  });
 });
