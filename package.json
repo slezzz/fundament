@@ -15,7 +15,7 @@
     "preview": "vite build && echo Load dist/ in chrome://extensions",
     "test": "vitest run",
     "test:watch": "vitest",
-    "test:e2e": "npm run build && playwright test",
+    "test:e2e": "npm run build && playwright test && node scripts/e2e-store-zip.mjs",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "icons": "node scripts/generate-icons.mjs",

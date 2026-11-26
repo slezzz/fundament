@@ -68,6 +68,9 @@ declare module "*.mjs" {
   export function writeDeterministicZip(sourceDir: string, destZip: string): void;
   export function insertZipChecksum(markdown: string, sha256: string): string;
   export function freeZipProblems(bytes: Uint8Array): string[];
+  export function zipEntries(bytes: Uint8Array): { name: string; body: Uint8Array | null }[];
+  export function undefinedNameProblems(bytes: Uint8Array): string[];
+  export function storeOmitProblems(bytes: Uint8Array): string[];
   export function calibrationLoop(steps: number): number;
   export function median(samples: number[]): number;
   export function withinBudget(elapsed: number, reference: number): boolean;

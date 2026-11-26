@@ -9,7 +9,8 @@ import { mkdtempSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-const dist = resolve(process.cwd(), "dist-store");
+const packedDir = process.env.FUNDAMENT_EXTENSION_DIR;
+const dist = packedDir ? resolve(packedDir) : resolve(process.cwd(), "dist-store");
 
 function buildStoreExtension(): void {
   const env = { ...process.env, VITE_STORE_PACK: "1" } as NodeJS.ProcessEnv;
@@ -49,7 +50,7 @@ let profile = "";
 let origin = "";
 
 test.beforeAll(async () => {
-  buildStoreExtension();
+  if (!packedDir) buildStoreExtension();
   const manifest = JSON.parse(readFileSync(join(dist, "manifest.json"), "utf8")) as {
     externally_connectable?: unknown;
   };

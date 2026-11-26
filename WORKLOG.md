@@ -2,6 +2,31 @@
 
 Newest first. One entry per pass.
 
+## 2026-11-26 — The packed zip is what the tests load
+
+- `release:check` runs ESLint `no-undef` on the packed content scripts, `background.js`, and `assets/*.js`. A zip that calls `hostAllowed` after the cosmetic cut reports `'hostAllowed' is not defined`. The current zip `9544ed31…` reports nothing.
+- The three names `setImmediate`, `MSApp`, and `__REACT_DEVTOOLS_GLOBAL_HOOK__` are allowed only in an `assets` file that checks that name with `typeof`. React does that in `assets/global.js`. A content script that uses `setImmediate` still fails.
+- `npm run test:e2e` packs, unpacks `fundament-store.zip`, and runs the detection scenarios and the free-page check on that directory. 44 passed. Page cost, the dev package shape, the fingerprint shield, cosmetic hiding, the extended lists, license activation, and Relaxed/Strict are not in that run. Reasons: `tests/e2e/store-pack-scope.ts`.
+- `measure-output/` is an ESLint ignore, same as `dist/`. A local cause-run copy was being linted.
+
+### Self-check
+
+- Real user, real attack: A store install whose content script throws does not finish the scan. The check reads the zip, not the TypeScript.
+- Five-minute bypass: Move `hostAllowed` back into the store-omit block and pack. `undefinedNameProblems` reports the name. Tested on a zip with that cut.
+- False alarm: The React feature tests are the only exception, and only next to their `typeof` check.
+- Simpler or more complicated: One linter rule on the files Chrome runs. The second Edge pass is the same scenarios.
+- AGENTS.md: No weight change. The store zip hash is unchanged.
+- Would I defend it: Yes, as “the uploaded zip has no undefined name, and the detection scenarios passed on that zip.”
+- Harmless on weird input: A zip entry that is not a content script, worker, or `assets` script is not linted. HTML and rules are not scripts.
+- Woher kommt der Kontext, auf den meine Erkennung sich verlässt, und kann der Angreifer ihn für mich unsichtbar machen? The scenarios still read the page. This check only makes sure our script starts.
+- Welche Funktion, auf die sich meine Prüfung verlässt, gehört der Seite? None. `no-undef` looks at our bundle.
+- Welche legitime Seite liegt in genau der Kategorie, die ich gerade als verdächtig behandle? The check does not warn a site. It fails the pack.
+- Richtig: Der Test meldet `'hostAllowed' is not defined` auf einem Zip mit dem alten Schnitt, und das aktuelle Zip besteht `no-undef` und 44 Szenarien.
+- Gut für das Vorhaben: Ein Prüfer kann den Satz verteidigen, weil die Meldung der Name aus dem Zip ist und die Szenarien gegen das entpackte Zip liefen.
+- Was wäre der Fünf-Minuten-Bypass, und habe ich ihn getestet oder nur benannt? Die Funktion wieder in den Store-Schnitt legen. Der Test erwartet die ESLint-Meldung. Getestet.
+
+Urteil: BEHALTEN
+
 ## 2026-11-26 — Page-cause classes, before a rate
 
 - The cause run opens each host twice with no extension, then with the store build, with ad rules off, and with the bridge script removed. A disagreement between the two bare visits is noise. The file stores the host and the cause only.

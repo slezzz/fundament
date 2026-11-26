@@ -2,6 +2,7 @@ import { existsSync, readFileSync } from "node:fs";
 import { dirname, resolve } from "node:path";
 import { fileURLToPath, pathToFileURL } from "node:url";
 import { inflateRawSync } from "node:zlib";
+import { undefinedNameProblems } from "./zip-undef.mjs";
 
 /** Must match the key printed in .env.example / src/billing/publicKey.ts until keygen. */
 export const DEV_SPKI = "MCowBQYDK2VwAyEAcxixa2A8fwEmYpLqd9V5xr/eepP5wvq7rQDDDowspxw=";
@@ -41,6 +42,7 @@ export function freeZipProblems(bytes) {
   if (text.includes("/v1/license/status")) problems.push("license-status");
   if (text.includes("/pay/start")) problems.push("pay-start");
   if (text.includes("Pack URL must be https")) problems.push("user-pack");
+  for (const hit of undefinedNameProblems(bytes)) problems.push(hit);
   return problems;
 }
 

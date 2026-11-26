@@ -18,7 +18,7 @@ import { mkdtempSync, readFileSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { join, resolve } from "node:path";
 
-const dist = resolve(process.cwd(), "dist");
+const dist = resolve(process.env.FUNDAMENT_EXTENSION_DIR || resolve(process.cwd(), "dist"));
 
 const PAGES: Record<string, string> = {
   "/clean": "<!doctype html><title>Weather today</title><h1>Sunny</h1><p>Nothing to see.</p>",
